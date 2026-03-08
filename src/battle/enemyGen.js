@@ -27,13 +27,13 @@ export function generateFloorData(targetFloor) {
   const subLevel = ((floor - 1) % 5) + 1;
   const stageName = `${prefix}${biome.name}-${subLevel}`;
 
-  const powerMultiplier = Math.pow(1.15, floor - 1);
+  const powerMultiplier = Math.pow(1.19, floor - 1);
 
   // 【修正点】 hpプロパティを削除。VITとSTRのバランスを調整
   const createMob = (num) => ({
     name: `雑魚モンスター${num}`,
     str: Math.floor(22 * powerMultiplier), // 雑魚も少し痛い
-    vit: Math.floor(5 * powerMultiplier),  // VIT5 = HP50相当
+    vit: Math.floor(6 * powerMultiplier),  // VIT6 = HP60相当
     agi: Math.floor(10 * powerMultiplier)
   });
 
@@ -42,7 +42,7 @@ export function generateFloorData(targetFloor) {
     {
       name: `🔥 ${prefix}エリアボス`,
       str: Math.floor(35 * powerMultiplier), // ボスはガッツリ痛い
-      vit: Math.floor(20 * powerMultiplier), // VIT20 = HP200相当
+      vit: Math.floor(18 * powerMultiplier), // VIT18 = HP180相当
       agi: Math.floor(20 * powerMultiplier)
     }
   ];

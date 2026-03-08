@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ぼくらの無限塔</title>
+<style>
+  /* === リセット & 全体設定 === */
+  * { box-sizing: border-box; user-select: none; }
+  body {
+    margin: 0; padding: 0; background-color: #050505;
+    font-family: 'Times New Roman', 'Hiragino Mincho ProN', 'Yu Mincho', serif; /* ファンタジー風明朝体ベース */
+    color: #f2e4c9; /* 羊皮紙のような文字色 */
+    display: flex; justify-content: center;
+  }
+
+  /* === スマホ風コンテナ（PCでも中央に縦長表示） === */
+  #game-container {
+    width: 100%; max-width: 480px; height: 100dvh;
+    background: radial-gradient(circle at center, #261f22 0%, #120e10 100%); /* 薄暗いダンジョン風背景 */
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    border-left: 2px solid #5a4934; border-right: 2px solid #5a4934;
+    box-shadow: 0 0 20px rgba(200, 160, 80, 0.1);
+  }
+
+  /* === ヘッダー（ステータス＆ニュース） === */
+  header {
+    background: linear-gradient(to bottom, #2b1f18, #140d0a);
+    border-bottom: 2px solid #c49a45; /* ゴールド枠 */
+    padding: 8px; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+  }
+  .user-info { display: flex; align-items: center; font-size: 14px; margin-bottom: 6px; }
+  .username { color: #c49a45; font-weight: bold; margin-right: 10px; white-space: nowrap;}
+  .news-ticker {
+    flex-grow: 1; overflow: hidden; background: #000; padding: 2px 5px;
+    border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px;
+  }
+  .news-text {
+    display: inline-block; white-space: nowrap;
+    animation: marquee 15s linear infinite; color: #ffeb85;
+  }
+  @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+  .status-bar {
+    display: flex; justify-content: space-between; font-weight: bold; font-family: sans-serif;
+  }
+  .stat {
+    background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; border: 1px solid #4a3b26;
+    font-size: 14px; text-shadow: 1px 1px 2px #000; width: 23%; text-align: center;
+  }
+  .stat span { color: #fff; }
+
+  /* === メインコンテンツエリア === */
+  main { flex-grow: 1; overflow-y: auto; padding: 15px; position: relative; }
+  .tab-content { display: none; height: 100%; flex-direction: column; }
+  .tab-content.active { display: flex; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* タイトル装飾 */
+  h2 {
+    text-align: center; font-size: 22px; color: #c49a45; margin-top: 0;
+    border-bottom: 1px solid #c49a45; padding-bottom: 5px; text-shadow: 0 0 5px rgba(196, 154, 69, 0.5);
+  }
+
+  /* 汎用ファンタジーボタン */
+  .btn-fantasy {
+    background: linear-gradient(to bottom, #8a2020, #4a0d0d);
+    border: 2px solid #c49a45; border-radius: 8px; color: #f2e4c9;
+    font-size: 20px; font-weight: bold; font-family: serif; padding: 15px;
+    text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.1);
+    cursor: pointer; margin: 20px auto; width: 80%; display: block; text-shadow: 1px 1px 2px #000;
+  }
+  .btn-fantasy:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+
+  /* パネル装飾 */
+  .panel {
+    background: rgba(20, 15, 12, 0.8); border: 1px solid #5a4934;
+    border-radius: 6px; padding: 15px; margin-bottom: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+  }
+  .highlight-text { color: #5ce6e6; font-weight: bold; } /* 水色のハイライト */
+
+  /* === ボトムナビゲーション === */
+  nav {
+    background: linear-gradient(to top, #140d0a, #2b1f18);
+    border-top: 2px solid #c49a45; display: flex; z-index: 10;
+  }
+  .nav-btn {
+    flex: 1; padding: 12px 0; text-align: center; color: #8c7a65; font-size: 13px; font-weight: bold;
+    cursor: pointer; border-right: 1px solid #4a3b26; font-family: sans-serif; transition: 0.2s;
+  }
+  .nav-btn:last-child { border-right: none; }
+  .nav-btn.active { color: #ffdf73; background: rgba(196, 154, 69, 0.1); text-shadow: 0 0 8px rgba(255, 223, 115, 0.5); }
+  .nav-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  
+  <!-- 全画面共通ヘッダー -->
+  <header>
+    <div class="user-info">
+      <span class="username">Lv.1 たかし</span>
+      <div class="news-ticker">
+        <span class="news-text">🔔 【速報】ゆうき が 第15層「狂気のスライム」を初クリア！🎉</span>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="stat" style="color:#ff6b6b;">STR <span id="val-str">150</span></div>
+      <div class="stat" style="color:#6be6ff;">VIT <span id="val-vit">80</span></div>
+      <div class="stat" style="color:#94ff6b;">AGI <span id="val-agi">45</span></div>
+      <div class="stat" style="color:#ffd166;">LCK <span id="val-lck">12</span></div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main>
+    <!-- 1. バトルタブ -->
+    <section id="tab-battle" class="tab-content active">
+      <h2>現在の到達階層</h2>
+      <div class="panel" style="text-align: center;">
+        <div style="font-size: 28px; color: #fff; margin-bottom: 10px;">第 16 層</div>
+        <div style="font-size: 14px; color: #aaa;">環境：平原 / 敵：オーク</div>
+        <hr style="border-color: #4a3b26; margin: 15px 0;">
+        <div style="font-size: 13px;">💡 <span class="highlight-text">ゆうき</span> がこの層を初クリアしました</div>
+        <div style="font-size: 12px; color: #aaa;">(クリア時: STR 210 / VIT 90 / AGI 50)</div>
+      </div>
+      <button class="btn-fantasy">第16層 挑戦！</button>
+      <div style="text-align: center; color: #8c7a65; font-size: 14px; text-decoration: underline; cursor:pointer;">
+        ◀ 過去の階層を周回する
+      </div>
+    </section>
+
+    <!-- 2. 特訓タブ -->
+    <section id="tab-training" class="tab-content">
+      <h2>特訓場 (ミニゲーム)</h2>
+      <div class="panel">
+        <div style="color:#ff6b6b; font-weight:bold; font-size:18px;">STR (攻撃力)</div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:10px;">現在の基礎値: 150 / ミニゲームLv: 3</div>
+        <button class="btn-fantasy" style="padding: 10px; font-size:16px; margin:5px auto; width:100%;">10秒・瓦割り！</button>
+        <button class="btn-fantasy" style="padding: 10px; font-size:16px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #2d3b55, #151e2e);">大岩プッシュ(TA)</button>
+      </div>
+      <p style="text-align:center; font-size:12px; color:#8c7a65;">※他ステータスも同様に並びます</p>
+    </section>
+
+    <!-- 3. 装備タブ -->
+    <section id="tab-equip" class="tab-content">
+      <h2>武具・ガチャ</h2>
+      <div class="panel" style="text-align: center;">
+        <div style="font-size: 16px; margin-bottom: 10px;">所持コイン: <span style="color:#ffd166;">1,500 G</span></div>
+        <button class="btn-fantasy" style="background: linear-gradient(to bottom, #d4af37, #8a6d1c); color: #000;">装備ガチャを引く (100G)</button>
+      </div>
+    </section>
+
+    <!-- 4. 図鑑タブ -->
+    <section id="tab-collection" class="tab-content">
+      <h2>ドロップ図鑑</h2>
+      <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 16px;">ゴブリンの牙</strong>
+          <span style="color: #c0c0c0; font-weight:bold; font-size: 18px;">[銀]</span>
+        </div>
+        <div style="font-size: 12px; color: #aaa; margin: 5px 0;">効果: 全ステータス +2%</div>
+        <!-- プログレスバー風 -->
+        <div style="background: #000; border: 1px solid #4a3b26; border-radius: 4px; padding: 2px; margin-top:8px;">
+          <div style="background: #ffd700; width: 55%; height: 6px; border-radius: 2px;"></div>
+        </div>
+        <div style="text-align: right; font-size: 12px; margin-top: 3px;">次の[金]まで: 5 / 9個</div>
+      </div>
+    </section>
+
+    <!-- 5. 順位タブ -->
+    <section id="tab-ranking" class="tab-content">
+      <h2>身内ランキング</h2>
+      <div class="panel">
+        <div style="color:#ffd166; font-weight:bold; margin-bottom:8px;">👑 最高到達層</div>
+        <ol style="margin:0; padding-left:20px; font-size:14px; line-height:1.6;">
+          <li><span class="highlight-text">ゆうき</span> - 15層</li>
+          <li><span class="highlight-text">たかし</span> - 14層</li>
+          <li><span class="highlight-text">けんた</span> - 10層</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav id="bottom-nav">
+    <div class="nav-btn active" data-target="tab-battle"><span class="nav-icon">⚔️</span>バトル</div>
+    <div class="nav-btn" data-target="tab-training"><span class="nav-icon">🏋️</span>特訓</div>
+    <div class="nav-btn" data-target="tab-equip"><span class="nav-icon">🎒</span>装備</div>
+    <div class="nav-btn" data-target="tab-collection"><span class="nav-icon">📖</span>図鑑</div>
+    <div class="nav-btn" data-target="tab-ranking"><span class="nav-icon">👑</span>順位</div>
+  </nav>
+
+</div>
+
+<script>
+  // タブ切り替えロジック
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 全てのボタンとコンテンツを非アクティブ化
+      navBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      // クリックされたものをアクティブ化
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-target');
+      document.getElementById(targetId).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

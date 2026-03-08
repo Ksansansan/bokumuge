@@ -56,6 +56,34 @@
   #battle-modal-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center; flex-direction: column; }
   .modal-content-battle { width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b1f18, #140d0a); border: 2px solid #c49a45; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; height: 80vh; }
   #battle-log-container { flex-grow: 1; overflow-y: auto; background: #000; padding: 10px; border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px; color: #ddd; line-height: 1.6; margin-bottom: 15px; }
+/* === 新規追加：バトルGUI用CSS === */
+  #battle-gui-container {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 8px;
+    padding: 15px 10px; margin-bottom: 10px; position: relative;
+  }
+  .b-char { width: 42%; text-align: center; }
+  .b-name { font-weight: bold; font-size: 13px; margin-bottom: 5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .b-hp-box, .b-gauge-box { width: 100%; background: #222; border: 1px solid #000; border-radius: 4px; overflow: hidden; position: relative; margin-bottom: 4px; }
+  .b-hp-box { height: 16px; border-color: #4a3b26; }
+  .b-gauge-box { height: 6px; }
+  .b-hp-fill { height: 100%; width: 100%; background: #4caf50; transition: width 0.1s linear; }
+  .b-hp-fill.enemy-hp-color { background: #f44336; }
+  .b-hp-text { position: absolute; top: 0; left: 0; width: 100%; font-size: 11px; line-height: 16px; font-weight: bold; color: #fff; text-shadow: 1px 1px 1px #000; }
+  .b-gauge-fill { height: 100%; width: 0%; background: #2196f3; }
+  .b-vs { width: 10%; text-align: center; font-weight: bold; color: #c49a45; font-size: 18px; font-style: italic; }
+
+  /* ダメージポップアップ用 */
+  .dmg-popup {
+    position: absolute; color: #ffeb85; font-size: 20px; font-weight: bold;
+    text-shadow: 0 0 4px #ff0000, 1px 1px 2px #000;
+    animation: floatUp 0.8s forwards; pointer-events: none; z-index: 10;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-40px) scale(1); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -128,9 +156,41 @@
   <!-- 🔥 バトル結果表示モーダル -->
   <div id="battle-modal-overlay">
     <div class="modal-content-battle">
-      <h3 style="margin-top:0; color:#c49a45; text-align:center; border-bottom:1px solid #c49a45; padding-bottom:10px;">バトルログ</h3>
-      <div id="battle-log-container"></div>
-      <div id="battle-result-text" style="text-align:center; font-size: 22px; font-weight:bold; margin-bottom: 15px; height:30px;"></div>
+      <h3 style="margin-top:0; color:#c49a45; text-align:center; border-bottom:1px solid #c49a45; padding-bottom:10px;">BATTLE</h3>
+      
+      <!-- 追加：バトルGUI -->
+      <div id="battle-gui-container">
+        <!-- プレイヤー側 -->
+        <div class="b-char player-char">
+          <div class="b-name">たかし</div>
+          <div class="b-hp-box">
+            <div class="b-hp-fill" id="ui-p-hp"></div>
+            <div class="b-hp-text" id="ui-p-hp-txt">-- / --</div>
+          </div>
+          <div class="b-gauge-box">
+            <div class="b-gauge-fill" id="ui-p-gauge"></div>
+          </div>
+        </div>
+        
+        <div class="b-vs">VS</div>
+        
+        <!-- 敵側 -->
+        <div class="b-char enemy-char">
+          <div class="b-name" id="ui-e-name">---</div>
+          <div class="b-hp-box">
+            <div class="b-hp-fill enemy-hp-color" id="ui-e-hp"></div>
+            <div class="b-hp-text" id="ui-e-hp-txt">-- / --</div>
+          </div>
+          <div class="b-gauge-box">
+            <div class="b-gauge-fill" id="ui-e-gauge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ログエリア（少し小さくして残す） -->
+      <div id="battle-log-container" style="flex-grow: 1; font-size: 11px; height: 100px;"></div>
+      
+      <div id="battle-result-text" style="text-align:center; font-size: 20px; font-weight:bold; margin-bottom: 10px; height:25px;"></div>
       <button id="btn-close-battle" class="btn-fantasy" style="margin: 0; width: 100%; font-size: 16px; padding: 10px;">閉じる</button>
     </div>
   </div>

@@ -3,7 +3,12 @@
 export function simulateBattle(player, enemies) {
   let log =[];
   let currentEnemyIndex = 0;
-  let currentEnemy = { ...enemies[currentEnemyIndex], currentHp: enemies[currentEnemyIndex].hp };
+  
+  // 【修正点】敵のHPは VIT * 10 で初期化
+  let currentEnemy = { 
+    ...enemies[currentEnemyIndex], 
+    currentHp: enemies[currentEnemyIndex].vit * 10 
+  };
   
   let playerHp = player.vit * 10; 
   let playerGauge = 0;
@@ -16,7 +21,6 @@ export function simulateBattle(player, enemies) {
     enemyGauge += currentEnemy.agi;
     timeFrames++;
 
-    // プレイヤーの行動
     if (playerGauge >= 1000) {
       let damage = Math.max(0, player.str - currentEnemy.vit);
       currentEnemy.currentHp -= damage;
@@ -29,7 +33,11 @@ export function simulateBattle(player, enemies) {
         log.push(`▶ ${currentEnemy.name} を撃破！`);
         currentEnemyIndex++;
         if (currentEnemyIndex < enemies.length) {
-          currentEnemy = { ...enemies[currentEnemyIndex], currentHp: enemies[currentEnemyIndex].hp };
+          // 次の敵も VIT * 10 で初期化
+          currentEnemy = { 
+            ...enemies[currentEnemyIndex], 
+            currentHp: enemies[currentEnemyIndex].vit * 10 
+          };
           enemyGauge = 0;
           playerConsecutiveTurns = 0;
         }
@@ -42,7 +50,6 @@ export function simulateBattle(player, enemies) {
         playerConsecutiveTurns = 0;
       }
     } 
-    // 敵の行動
     else if (enemyGauge >= 1000) {
       let damage = Math.max(0, currentEnemy.str - player.vit);
       playerHp -= damage;
@@ -58,7 +65,6 @@ export function simulateBattle(player, enemies) {
       break;
     }
     
-    // 制限時間：5分（300秒 ＝ 18000フレーム）に変更
     if (timeFrames > 18000) {
       log.push(`❌ 制限時間（5分）を超えたためタイムアップ（敗北）です。`);
       playerHp = 0;

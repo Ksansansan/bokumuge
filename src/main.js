@@ -1,13 +1,63 @@
-// src/main.js の btnChallenge.addEventListener 内の関連部分を修正
+// src/main.js
+import { simulateBattle } from './battle/battleCalc.js';
+import { generateFloorData } from './battle/enemyGen.js';
 
-// （前略）
+const player = { str: 25, vit: 20, agi: 15, lck: 10, floor: 1 };
+
+const elStr = document.getElementById('val-str');
+const elVit = document.getElementById('val-vit');
+const elAgi = document.getElementById('val-agi');
+const elLck = document.getElementById('val-lck');
+
 const elFloorHeader = document.getElementById('floor-header');
-// 【修正】logContainer の取得を削除（もう使わないため）
+const elStageName = document.getElementById('stage-name');
+const elRecStats = document.getElementById('rec-stats');
+const elDropList = document.getElementById('drop-list');
+
 const btnChallenge = document.getElementById('btn-challenge');
 const modalBattle = document.getElementById('battle-modal-overlay');
 const resultText = document.getElementById('battle-result-text');
 const btnCloseBattle = document.getElementById('btn-close-battle');
-// （中略）
+
+// GUI要素
+const uiP_hp = document.getElementById('ui-p-hp');
+const uiP_hpTxt = document.getElementById('ui-p-hp-txt');
+const uiP_gauge = document.getElementById('ui-p-gauge');
+const uiE_name = document.getElementById('ui-e-name');
+const uiE_hp = document.getElementById('ui-e-hp');
+const uiE_hpTxt = document.getElementById('ui-e-hp-txt');
+const uiE_gauge = document.getElementById('ui-e-gauge');
+const guiContainer = document.getElementById('battle-gui-container');
+
+// バトルアニメーション用変数
+let animationId = null;
+
+function init() {
+  updateStatusUI();
+  updateFloorUI(player.floor);
+  setupTabNavigation();
+}
+
+function updateStatusUI() {
+  elStr.textContent = player.str;
+  elVit.textContent = player.vit;
+  elAgi.textContent = player.agi;
+  elLck.textContent = player.lck;
+}
+
+function updateFloorUI(floorNum) {
+  const floorData = generateFloorData(floorNum);
+  elFloorHeader.textContent = `第 ${floorData.floor} 層`;
+  elStageName.textContent = floorData.stageName;
+  elRecStats.textContent = `推奨: STR ${floorData.recommended.str} / VIT ${floorData.recommended.vit} / AGI ${floorData.recommended.agi}`;
+  elDropList.innerHTML = '';
+  floorData.drops.forEach(drop => {
+    const li = document.createElement('li');
+    li.textContent = `${drop.name} (${drop.prob}%)`;
+    if(drop.isCollection) li.style.color = "#ff6b6b";
+    elDropList.appendChild(li);
+  });
+}
 
 // ⚔️ バトル実行＆アニメーション再生
 btnChallenge.addEventListener('click', () => {
@@ -26,7 +76,7 @@ btnChallenge.addEventListener('click', () => {
   let currentEnemyAgi = 0;
   
   function renderLoop() {
-    const speed = 1; 
+    const speed = 2; 
     currentFrame += speed;
 
     while (eventIndex < result.events.length && result.events[eventIndex].frame <= currentFrame) {
@@ -102,4 +152,24 @@ btnChallenge.addEventListener('click', () => {
 
   animationId = requestAnimationFrame(renderLoop);
 });
-// （後略）
+
+btnCloseBattle.addEventListener('click', () => {
+  modalBattle.style.display = 'none';
+  if(animationId) cancelAnimationFrame(animationId);
+  updateFloorUI(player.floor); 
+});
+
+function setupTabNavigation() {
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+    });
+  });
+}
+
+init();

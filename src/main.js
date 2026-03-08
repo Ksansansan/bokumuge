@@ -1,9 +1,17 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData } from './battle/enemyGen.js';
+import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 
-const player = { str: 25, vit: 20, agi: 15, lck: 10, floor: 1 };
-
+// playerオブジェクトの定義（名前を追加）
+const player = {
+  name: "Ksansansan",
+  str: 25, vit: 20, agi: 15, lck: 10,
+  floor: 1,
+  // ミニゲーム用データ
+  exp: { str: 0, vit: 0, agi: 0, lck: 0 },
+  lv:  { str: 1, vit: 1, agi: 1, lck: 1 }
+};
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -34,8 +42,10 @@ let animationId = null;
 
 function init() {
   updateStatusUI();
+  updateTrainingUI();
   updateFloorUI(player.floor);
   setupTabNavigation();
+  initRockPush(player);
 }
 
 function updateStatusUI() {
@@ -171,5 +181,80 @@ function setupTabNavigation() {
     });
   });
 }
+
+document.getElementById('btn-play-rockpush').addEventListener('click', () => {
+  openRockPushModal();
+});
+
+// ==========================================
+// 🏋️ 特訓タブのUI更新
+// ==========================================
+function updateTrainingUI() {
+  document.getElementById('ui-base-str').textContent = player.str;
+  document.getElementById('ui-lv-str').textContent = player.lv.str;
+  
+  document.getElementById('ui-base-vit').textContent = player.vit;
+  document.getElementById('ui-lv-vit').textContent = player.lv.vit;
+
+  document.getElementById('ui-base-agi').textContent = player.agi;
+  document.getElementById('ui-lv-agi').textContent = player.lv.agi;
+
+  document.getElementById('ui-base-lck').textContent = player.lck;
+  document.getElementById('ui-lv-lck').textContent = player.lv.lck;
+}
+
+// 大岩以外の未実装ミニゲームボタンを押したときの仮処理
+const dummyGames =['daruma', 'chicken', 'guard', '1to20', 'command', 'clover', 'slot'];
+dummyGames.forEach(id => {
+  const btn = document.getElementById(`btn-play-${id}`);
+  if(btn) {
+    btn.addEventListener('click', () => {
+      alert("この特訓は現在建設中です！（次回アップデートをお待ちください）");
+    });
+  }
+});
+
+// ==========================================
+// 👑 ランキングモーダルの制御
+// ==========================================
+const modalRanking = document.getElementById('modal-ranking-overlay');
+const rankingTitle = document.getElementById('ranking-modal-title');
+const rankingList = document.getElementById('ranking-list-container');
+
+// クラス btn-show-ranking が付いたすべてのボタン（特訓タブ内・順位タブ内両方）にイベント付与
+document.querySelectorAll('.btn-show-ranking').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    // どのランキングを開いたか取得
+    const rankId = e.currentTarget.getAttribute('data-rank-id');
+    const title = e.currentTarget.textContent.replace('👑', '').trim(); // 絵文字などを除いたタイトル
+    
+    rankingTitle.textContent = title;
+    rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px;">データ取得中...</p>';
+    modalRanking.style.display = 'flex';
+
+    // ⚠️ ここは将来的に firebase.js の getRanking(rankId) 等から取得する
+    // 今回はFirebase連携前の「仮のランキング表示モック」です
+    setTimeout(() => {
+      // ランキング項目のHTML生成
+      rankingList.innerHTML = `
+        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(255,215,0,0.15); border-left:3px solid #ffd700;">
+          <span style="font-weight:bold; color:#ffd700;">1位. ゆうき</span>
+          <span style="font-weight:bold;">${rankId === 'rockPush' ? '4.85 秒' : '記録データ'}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(192,192,192,0.1); border-left:3px solid #c0c0c0;">
+          <span style="font-weight:bold; color:#c0c0c0;">2位. たかし</span>
+          <span style="font-weight:bold;">${rankId === 'rockPush' ? '5.12 秒' : '記録データ'}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(205,127,50,0.1); border-left:3px solid #cd7f32;">
+          <span style="font-weight:bold; color:#cd7f32;">3位. けんた</span>
+          <span style="font-weight:bold;">${rankId === 'rockPush' ? '6.30 秒' : '記録データ'}</span>
+        </div>
+        <p style="font-size:11px; color:#aaa; text-align:center; margin-top:10px;">
+          ※Firebase接続後にここに世界（身内）の順位が表示されます
+        </p>
+      `;
+    }, 400); // ネットワーク通信を模した0.4秒の遅延
+  });
+});
 
 init();

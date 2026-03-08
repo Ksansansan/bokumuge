@@ -1,58 +1,83 @@
-// src/minigameCore.js
+// src/minigame/minigameCore.js
 
-export class MinigameSystem {
-  constructor(initialData = null) {
-    // データベースから読み込んだ初期値（なければデフォルト）
-    this.statusData = initialData || {
-      STR: { baseValue: 10, level: 1, exp: 0 },
-      VIT: { baseValue: 10, level: 1, exp: 0 },
-      AGI: { baseValue: 10, level: 1, exp: 0 },
-      LCK: { baseValue: 10, level: 1, exp: 0 }
-    };
+// ステータスごとの設定
+const STATUS_CONFIG = {
+  str: { name: "STR" },
+  vit: { name: "VIT" },
+  agi: { name: "AGI" },
+  lck: { name: "LCK" }
+};
+
+/**
+ * 経験値を加算し、レベルアップ処理を行う関数
+ */
+export function applyMinigameResult(player, statKey, expGained, baseGained) {
+  // データ構造の初期化保証
+  if (!player.exp) player.exp = { str: 0, vit: 0, agi: 0, lck: 0 };
+  if (!player.lv) player.lv = { str: 1, vit: 1, agi: 1, lck: 1 };
+  
+  // ★合計レベルを計算
+  const totalLevel = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
+
+  const currentLv = player.lv[statKey];
+  
+  // ★倍率取得関数に totalLevel を渡す
+  const multiplier = getLevelMultiplier(currentLv, totalLevel);
+  
+  // 倍率適用後の上昇量
+  const actualBaseGain = Math.floor(baseGained * multiplier);
+  player[statKey] += actualBaseGain;
+
+  // 経験値加算
+  player.exp[statKey] += expGained;
+
+  // レベルアップ判定
+  let leveledUp = false;
+  let reqExp = getRequiredExp(player.lv[statKey]);
+
+  // 一気に複数レベルアップすることもあるのでwhileループ
+  while (player.exp[statKey] >= reqExp) {
+    player.exp[statKey] -= reqExp;
+    player.lv[statKey]++;
+    leveledUp = true;
+    reqExp = getRequiredExp(player.lv[statKey]);
   }
 
-  // 次のレベルに必要な経験値を計算 (Lvが上がるごとに1.5倍に増える)
-  getRequiredExp(level) {
-    return Math.floor(100 * Math.pow(1.5, level - 1));
-  }
+  return {
+    statKey,
+    actualBaseGain,
+    multiplier,
+    leveledUp,
+    currentLv: player.lv[statKey],
+    currentExp: player.exp[statKey],
+    nextExp: reqExp
+  };
+}
 
-  // レベルに基づく基礎値の「倍率」を計算 (1レベルにつき +5%ボーナス)
-  getMultiplier(level) {
-    return 1.0 + ((level - 1) * 0.05);
-  }
+/**
+ * レベルごとの倍率計算
+ * @param {Number} level そのステータスのレベル
+ * @param {Number} totalLevel 全ステータスの合計レベル
+ */
+export function getLevelMultiplier(level, totalLevel) {
+  // 基本倍率: Lv1につき +5% (1.2倍にするならここを 0.2 に変えるなど調整)
+  const baseMult = 1.0 + ((level - 1) * 0.12);
+  
+  // ★シナジーボーナス: 合計Lv 1につき +1% の全体底上げ
+  // STR Lv50まで上げたら、VIT Lv1でも最初から 1.5倍 でスタートできる！
+  const synergyBonus = totalLevel * 0.01;
+  
+  return baseMult + synergyBonus;
+}
 
-  // 最終的なステータス値（基礎値 × レベル倍率）を取得
-  getFinalValue(type) {
-    const stat = this.statusData[type];
-    const multiplier = this.getMultiplier(stat.level);
-    return Math.floor(stat.baseValue * multiplier);
-  }
-
-  // ミニゲームクリア時の処理 (引数: 鍛えたステータス, 獲得経験値, 獲得基礎値)
-  finishMinigame(type, gainedExp, gainedBase) {
-    const stat = this.statusData[type];
-    
-    stat.baseValue += gainedBase;
-    stat.exp += gainedExp;
-    
-    let leveledUp = false;
-    let reqExp = this.getRequiredExp(stat.level);
-    
-    // 経験値が閾値を超えたらレベルアップ（一気に複数レベル上がるのも対応）
-    while (stat.exp >= reqExp) {
-      stat.exp -= reqExp;
-      stat.level++;
-      leveledUp = true;
-      reqExp = this.getRequiredExp(stat.level); // 次の必要経験値を再計算
-    }
-    
-    return {
-      leveledUp,
-      currentLevel: stat.level,
-      currentExp: stat.exp,
-      requiredExp: reqExp,
-      currentBaseValue: stat.baseValue,
-      currentMultiplier: this.getMultiplier(stat.level)
-    };
-  }
+/**
+ * 次のレベルに必要な経験値
+ * 序盤はサクサク、後半はキツくする曲線
+ */
+export function getRequiredExp(level) {
+  // Lv1->2: 100
+  // Lv2->3: 120
+  // Lv10->11: ~400
+  // 急激すぎると心が折れるので、1.2乗くらいの緩やかなカーブにするのがおすすめ
+  return Math.floor(100 * Math.pow(level, 1.19));
 }

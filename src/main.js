@@ -1,6 +1,6 @@
 // src/main.js
-import { simulateBattle } from './battleCalc.js';
-import { generateFloorData } from './enemyGen.js';
+import { simulateBattle } from './battle/battleCalc.js';
+import { generateFloorData } from './battle/enemyGen.js';
 
 // ==========================================
 // プレイヤーの初期ステータス（ハードコーディング）

@@ -1,16 +1,17 @@
-// src/enemyGen.js
+// src/battle/enemyGen.js
 
+// mobName と bossName を追加
 const BIOMES =[
-  { name: "始まりの草原", mobDrop: "スライムの粘液", bossDrop: "ゴブリン王の王冠" },
-  { name: "暗い洞窟", mobDrop: "コウモリの羽", bossDrop: "岩魔像の核" },
-  { name: "迷いの森", mobDrop: "トレントの枝", bossDrop: "大蜘蛛の毒牙" },
-  { name: "灼熱の砂漠", mobDrop: "サソリの尾", bossDrop: "砂ワームの体液" },
-  { name: "死の火山", mobDrop: "燃える石", bossDrop: "火竜の逆鱗" },
-  { name: "極寒の雪山", mobDrop: "氷狼の牙", bossDrop: "氷竜の鱗" },
-  { name: "朽ちた遺跡", mobDrop: "古代の歯車", bossDrop: "守護兵のコア" },
-  { name: "瘴気の沼地", mobDrop: "毒ガエルの舌", bossDrop: "腐竜の骨" },
-  { name: "浮遊する島", mobDrop: "風精の羽", bossDrop: "天空獣の角" },
-  { name: "魔王の居城", mobDrop: "悪魔の血", bossDrop: "魔王の欠片" }
+  { name: "始まりの草原", mobName: "スライム", bossName: "ゴブリン王", mobDrop: "スライムの粘液", bossDrop: "ゴブリン王の王冠" },
+  { name: "暗い洞窟", mobName: "大コウモリ", bossName: "ロックゴーレム", mobDrop: "コウモリの羽", bossDrop: "岩魔像の核" },
+  { name: "迷いの森", mobName: "トレント", bossName: "ジャイアントスパイダー", mobDrop: "トレントの枝", bossDrop: "大蜘蛛の毒牙" },
+  { name: "灼熱の砂漠", mobName: "デザートスコーピオン", bossName: "サンドワーム", mobDrop: "サソリの尾", bossDrop: "砂ワームの体液" },
+  { name: "死の火山", mobName: "フレイムロック", bossName: "ファイアドラゴン", mobDrop: "燃える石", bossDrop: "火竜の逆鱗" },
+  { name: "極寒の雪山", mobName: "アイスウルフ", bossName: "フロストドラゴン", mobDrop: "氷狼の牙", bossDrop: "氷竜の鱗" },
+  { name: "朽ちた遺跡", mobName: "古代の機械兵", bossName: "遺跡の守護神", mobDrop: "古代の歯車", bossDrop: "守護兵のコア" },
+  { name: "瘴気の沼地", mobName: "ポイズントード", bossName: "ゾンビドラゴン", mobDrop: "毒ガエルの舌", bossDrop: "腐竜の骨" },
+  { name: "浮遊する島", mobName: "ウィンドシルフ", bossName: "スカイビースト", mobDrop: "風精の羽", bossDrop: "天空獣の角" },
+  { name: "魔王の居城", mobName: "レッサーデーモン", bossName: "魔王の影", mobDrop: "悪魔の血", bossDrop: "魔王の欠片" }
 ];
 
 const PREFIXES = ["", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[創] ", "[終] "];
@@ -27,37 +28,37 @@ export function generateFloorData(targetFloor) {
   const subLevel = ((floor - 1) % 5) + 1;
   const stageName = `${prefix}${biome.name}-${subLevel}`;
 
-  const powerMultiplier = Math.pow(1.19, floor - 1);
+  const powerMultiplier = Math.pow(1.15, floor - 1);
 
-  // 【修正点】 hpプロパティを削除。VITとSTRのバランスを調整
+  // 【修正】雑魚に A, B, C などを付ける
   const createMob = (num) => ({
-    name: `雑魚モンスター${num}`,
-    str: Math.floor(22 * powerMultiplier), // 雑魚も少し痛い
-    vit: Math.floor(6 * powerMultiplier),  // VIT6 = HP60相当
+    name: `${biome.mobName} ${String.fromCharCode(64 + num)}`, // 1=A, 2=B, 3=C
+    str: Math.floor(22 * powerMultiplier), 
+    vit: Math.floor(5 * powerMultiplier),  
     agi: Math.floor(10 * powerMultiplier)
   });
 
+  // 【修正】ボスに専用の名前を付ける
   const enemies =[
     createMob(1), createMob(2), createMob(3),
     {
-      name: `🔥 ${prefix}エリアボス`,
-      str: Math.floor(35 * powerMultiplier), // ボスはガッツリ痛い
-      vit: Math.floor(18 * powerMultiplier), // VIT18 = HP180相当
+      name: `🔥 ${prefix}${biome.bossName}`,
+      str: Math.floor(35 * powerMultiplier),
+      vit: Math.floor(20 * powerMultiplier),
       agi: Math.floor(20 * powerMultiplier)
     }
   ];
 
-  // --- 推奨ステータス逆算ロジック (敵HPを enemy.vit * 10 で計算) ---
-  const TARGET_FRAMES = 45 * 60; // 45秒
+  // 推奨ステータス逆算（前回のまま変更なし）
+  const TARGET_FRAMES = 45 * 60; 
   const recommendedAgi = enemies[3].agi;
 
-  // 1. 必要なSTRの計算
   let recommendedStr = enemies[3].vit + 1;
   while (true) {
     let requiredFrames = 0;
     for (const enemy of enemies) {
       const dmg = Math.max(1, recommendedStr - enemy.vit);
-      const enemyHp = enemy.vit * 10; // 敵のHPはVIT×10
+      const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmg);
       requiredFrames += hitsNeeded * (1000 / recommendedAgi);
     }
@@ -65,7 +66,6 @@ export function generateFloorData(targetFloor) {
     recommendedStr++;
   }
 
-  // 2. 必要なVITの計算
   let recommendedVit = 1;
   while (true) {
     let playerHp = recommendedVit * 10;
@@ -75,26 +75,19 @@ export function generateFloorData(targetFloor) {
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmgToEnemy);
       const framesAlive = hitsNeeded * (1000 / recommendedAgi);
-      
       const enemyAttacks = Math.floor(framesAlive * enemy.agi / 1000);
       const dmgFromEnemy = Math.max(0, enemy.str - recommendedVit);
       
       playerHp -= (enemyAttacks * dmgFromEnemy);
-      if (playerHp <= 0) {
-        isSurvived = false;
-        break;
-      }
+      if (playerHp <= 0) { isSurvived = false; break; }
     }
     if (isSurvived) break;
     recommendedVit++;
   }
 
   return {
-    floor,
-    isMaxFloor: floor >= MAX_FLOOR,
-    stageName,
-    recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi },
-    enemies,
+    floor, isMaxFloor: floor >= MAX_FLOOR, stageName,
+    recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi }, enemies,
     drops:[
       { name: "装備ガチャチケット", prob: 100, isCollection: false },
       { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: 30, isCollection: true }

@@ -26,7 +26,7 @@ btnChallenge.addEventListener('click', () => {
   let currentEnemyAgi = 0;
   
   function renderLoop() {
-    const speed = 2; 
+    const speed = 1; 
     currentFrame += speed;
 
     while (eventIndex < result.events.length && result.events[eventIndex].frame <= currentFrame) {

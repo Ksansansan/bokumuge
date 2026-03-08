@@ -20,26 +20,17 @@
   }
 
   /* === ヘッダー === */
-  header {
-    background: linear-gradient(to bottom, #2b1f18, #140d0a);
-    border-bottom: 2px solid #c49a45; padding: 8px; z-index: 10;
-  }
+  header { background: linear-gradient(to bottom, #2b1f18, #140d0a); border-bottom: 2px solid #c49a45; padding: 8px; z-index: 10; }
   .user-info { display: flex; align-items: center; font-size: 14px; margin-bottom: 6px; }
   .username { color: #c49a45; font-weight: bold; margin-right: 10px; }
-  .news-ticker {
-    flex-grow: 1; overflow: hidden; background: #000; padding: 2px 5px;
-    border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px;
-  }
-  .news-text {
-    display: inline-block; white-space: nowrap;
-    animation: marquee 15s linear infinite; color: #ffeb85;
-  }
+  .news-ticker { flex-grow: 1; overflow: hidden; background: #000; padding: 2px 5px; border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px; }
+  .news-text { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; color: #ffeb85; }
   @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
   .status-bar { display: flex; justify-content: space-between; font-weight: bold; font-family: sans-serif; }
   .stat { background: rgba(0,0,0,0.5); padding: 4px; border-radius: 4px; border: 1px solid #4a3b26; font-size: 13px; width: 23%; text-align: center; }
   .stat span { color: #fff; }
 
-  /* === メインコンテンツエリア === */
+  /* === メインコンテンツ === */
   main { flex-grow: 1; overflow-y: auto; padding: 15px; position: relative; }
   .tab-content { display: none; flex-direction: column; animation: fadeIn 0.3s ease; }
   .tab-content.active { display: flex; }
@@ -47,54 +38,24 @@
 
   h2 { text-align: center; font-size: 20px; color: #c49a45; margin-top: 0; border-bottom: 1px solid #c49a45; padding-bottom: 5px; }
   .panel { background: rgba(20, 15, 12, 0.8); border: 1px solid #5a4934; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
-  .highlight-text { color: #5ce6e6; font-weight: bold; }
-
-  /* 汎用ボタン */
-  .btn-fantasy {
-    background: linear-gradient(to bottom, #8a2020, #4a0d0d); border: 2px solid #c49a45; border-radius: 8px;
-    color: #f2e4c9; font-size: 18px; font-weight: bold; font-family: serif; padding: 12px;
-    text-align: center; cursor: pointer; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.6);
-  }
+  
+  .btn-fantasy { background: linear-gradient(to bottom, #8a2020, #4a0d0d); border: 2px solid #c49a45; border-radius: 8px; color: #f2e4c9; font-size: 18px; font-weight: bold; font-family: serif; padding: 12px; text-align: center; cursor: pointer; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.6); }
   .btn-fantasy:active { transform: translateY(2px); }
 
-  /* バトル用アクション */
   .battle-actions { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
   .btn-arrow { background: #2b1f18; border: 2px solid #8c7a65; border-radius: 6px; color: #f2e4c9; font-size: 20px; padding: 10px 15px; cursor: pointer; }
   .btn-arrow.disabled { opacity: 0.3; pointer-events: none; }
 
-  /* 装備UI */
-  .equip-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-  .equip-box { background: rgba(0,0,0,0.6); border: 1px solid #5a4934; border-radius: 6px; padding: 10px; position: relative; text-align: center; }
-  .equip-box .slot-name { font-size: 11px; color: #8c7a65; position: absolute; top: 5px; left: 8px; }
-  .equip-box .rarity { font-size: 12px; font-weight: bold; position: absolute; top: 5px; right: 8px; }
-  .inv-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-  .inv-item { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #4a3b26; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; }
-  
-  /* レアリティカラー */
-  .r-n { color: #aaa; } .r-r { color: #5ce6e6; } .r-sr { color: #b16bff; } .r-ssr { color: #ffd166; } .r-ur { color: #ff6b6b; text-shadow: 0 0 5px #ff6b6b; }
-
-  /* ランキングUI */
-  .rank-category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-  .btn-rank-cat { background: #2b1f18; border: 1px solid #4a3b26; color: #aaa; padding: 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
-  .btn-rank-cat.active { background: #4a3b26; color: #ffd166; border-color: #c49a45; font-weight: bold; }
-  .rank-item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #33281c; background: rgba(0,0,0,0.3); margin-bottom: 4px; border-radius: 4px; }
-  .rank-item.first { border-color: #ffd700; background: rgba(255, 215, 0, 0.15); }
-  .rank-item.second { border-color: #c0c0c0; background: rgba(192, 192, 192, 0.1); }
-  .rank-item.third { border-color: #cd7f32; background: rgba(205, 127, 50, 0.1); }
-  .rank-num { width: 30px; text-align: center; font-weight: bold; }
-  .first .rank-num { color: #ffd700; font-size: 18px; }
-  .second .rank-num { color: #c0c0c0; font-size: 16px; }
-  .third .rank-num { color: #cd7f32; font-size: 16px; }
-
-  /* ボトムナビゲーション */
+  /* === ボトムナビゲーション === */
   nav { background: linear-gradient(to top, #140d0a, #2b1f18); border-top: 2px solid #c49a45; display: flex; z-index: 10; }
   .nav-btn { flex: 1; padding: 12px 0; text-align: center; color: #8c7a65; font-size: 13px; font-weight: bold; cursor: pointer; border-right: 1px solid #4a3b26; font-family: sans-serif; }
   .nav-btn.active { color: #ffdf73; background: rgba(196, 154, 69, 0.1); }
   .nav-icon { display: block; font-size: 18px; margin-bottom: 2px; }
 
-  /* モーダル */
-  #modal-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-  .modal-content { background: radial-gradient(circle at center, #2b1f18, #140d0a); border: 2px solid #c49a45; border-radius: 8px; padding: 20px; width: 85%; color: #f2e4c9; }
+  /* === モーダル === */
+  #battle-modal-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center; flex-direction: column; }
+  .modal-content-battle { width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b1f18, #140d0a); border: 2px solid #c49a45; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; height: 80vh; }
+  #battle-log-container { flex-grow: 1; overflow-y: auto; background: #000; padding: 10px; border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px; color: #ddd; line-height: 1.6; margin-bottom: 15px; }
 </style>
 </head>
 <body>
@@ -104,165 +65,55 @@
   <header>
     <div class="user-info">
       <span class="username">たかし</span>
-      <div class="news-ticker"><span class="news-text">🔔 【速報】ゆうき が 始まりの草原-3 を初クリア！🎉</span></div>
+      <div class="news-ticker"><span class="news-text">🔔 ぼくらの無限塔へようこそ！</span></div>
     </div>
     <div class="status-bar">
-      <div class="stat" style="color:#ff6b6b;">STR <span id="val-str">150</span></div>
-      <div class="stat" style="color:#6be6ff;">VIT <span id="val-vit">80</span></div>
-      <div class="stat" style="color:#94ff6b;">AGI <span id="val-agi">45</span></div>
-      <div class="stat" style="color:#ffd166;">LCK <span id="val-lck">12</span></div>
+      <div class="stat" style="color:#ff6b6b;">STR <span id="val-str">0</span></div>
+      <div class="stat" style="color:#6be6ff;">VIT <span id="val-vit">0</span></div>
+      <div class="stat" style="color:#94ff6b;">AGI <span id="val-agi">0</span></div>
+      <div class="stat" style="color:#ffd166;">LCK <span id="val-lck">0</span></div>
     </div>
   </header>
 
   <main>
     <!-- ⚔️ 1. バトルタブ -->
     <section id="tab-battle" class="tab-content active">
-      <h2>第 16 層</h2>
-      <div class="panel text-center">
-        <div style="font-size: 22px; color: #fff; margin-bottom: 5px; text-align:center;">始まりの草原-3</div>
-        <div style="font-size: 13px; color: #aaa; margin-bottom: 15px; text-align:center;">推奨: STR 200 / VIT 85 / AGI 48</div>
+      <h2 id="floor-header">第 1 層</h2>
+      <div class="panel" style="text-align: center;">
+        <div id="stage-name" style="font-size: 22px; color: #fff; margin-bottom: 5px;"></div>
+        <div id="rec-stats" style="font-size: 13px; color: #aaa; margin-bottom: 15px;"></div>
         
         <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
           <div style="color: #ffd166; font-size: 13px; margin-bottom: 5px; font-weight:bold;">🎁 ドロップ情報</div>
-          <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #ddd; line-height: 1.5;">
-            <li>装備ガチャチケット (100%)</li>
-            <li>スライムの粘液 [図鑑] (30%)</li>
-          </ul>
+          <ul id="drop-list" style="margin: 0; padding-left: 20px; font-size: 12px; color: #ddd; line-height: 1.5; text-align:left;"></ul>
         </div>
-
-        <hr style="border-color: #4a3b26; margin: 15px 0;">
-        <div style="font-size: 13px;">💡 <span class="highlight-text">ゆうき</span> がこの層を初クリアしました</div>
-        <div style="font-size: 11px; color: #aaa; margin-top: 4px;">タイム: 01:23 / STR 210, VIT 90, AGI 50, LCK 15</div>
       </div>
       
       <div class="battle-actions">
-        <button class="btn-arrow">◀</button>
-        <button class="btn-fantasy" style="margin: 0; width: 60%; font-size: 22px;">挑戦！</button>
-        <button class="btn-arrow disabled">▶</button> <!-- 最新層なので右は押せない想定 -->
+        <button class="btn-arrow disabled">◀</button>
+        <button id="btn-challenge" class="btn-fantasy" style="margin: 0; width: 60%; font-size: 22px;">挑戦！</button>
+        <button class="btn-arrow disabled">▶</button>
       </div>
     </section>
 
-    <!-- 🏋️ 2. 特訓タブ -->
+    <!-- 🏋️ 2. 特訓タブ (ガワのみ) -->
     <section id="tab-training" class="tab-content">
-      <h2>特訓場</h2>
-      
-      <!-- STRパネル -->
-      <div class="panel">
-        <div style="color:#ff6b6b; font-weight:bold; font-size:22px; text-shadow: 0 0 5px rgba(255,107,107,0.5);">STR (攻撃力)</div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 5px;">
-          <div style="font-size: 14px; color: #fff;">基礎値: <span style="font-size: 22px; color: #ffeb85; font-weight:bold;">150</span></div>
-          <div style="font-size: 13px; color: #fff;">Lv: <span style="font-size: 20px; color: #ffeb85; font-weight:bold;">3</span> <span style="font-size:11px; color:#aaa;">(倍率 x1.15)</span></div>
-        </div>
-        <div style="background: #000; border: 1px solid #4a3b26; border-radius: 4px; padding: 2px; margin-top: 5px;">
-          <div style="background: #ff6b6b; width: 60%; height: 8px; border-radius: 2px;"></div>
-        </div>
-        <div style="text-align: right; font-size: 11px; color: #aaa; margin-top: 2px; margin-bottom: 12px;">EXP: 120 / 200</div>
-        <button class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%;">大岩プッシュ (TA)</button>
-        <button class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">だるま落とし (TA)</button>
-      </div>
-
-      <!-- LCKパネル(例として省略せず記載) -->
-      <div class="panel">
-        <div style="color:#ffd166; font-weight:bold; font-size:22px; text-shadow: 0 0 5px rgba(255,209,102,0.5);">LCK (運)</div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 5px;">
-          <div style="font-size: 14px; color: #fff;">基礎値: <span style="font-size: 22px; color: #ffeb85; font-weight:bold;">12</span></div>
-          <div style="font-size: 13px; color: #fff;">Lv: <span style="font-size: 20px; color: #ffeb85; font-weight:bold;">1</span> <span style="font-size:11px; color:#aaa;">(倍率 x1.00)</span></div>
-        </div>
-        <div style="background: #000; border: 1px solid #4a3b26; border-radius: 4px; padding: 2px; margin-top: 5px;">
-          <div style="background: #ffd166; width: 20%; height: 8px; border-radius: 2px;"></div>
-        </div>
-        <div style="text-align: right; font-size: 11px; color: #aaa; margin-top: 2px; margin-bottom: 12px;">EXP: 10 / 50</div>
-        <button class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">四つ葉のクローバー探し (固定時間)</button>
-        <button class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b); color:#fff;">狙え！スロット (エンドレス)</button>
-      </div>
+      <h2>特訓場</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
     </section>
 
-    <!-- 🎒 3. 装備タブ -->
+    <!-- 🎒 3. 装備タブ (ガワのみ) -->
     <section id="tab-equip" class="tab-content">
-      <h2>現在の装備</h2>
-      <div class="equip-slots">
-        <div class="equip-box"><div class="slot-name">武器</div><div class="rarity r-sr">SR</div><div style="font-size:14px; font-weight:bold; margin-top:15px; color:#fff;">鋼の剣</div><div style="font-size:11px; color:#ffeb85; margin-top:4px;">STR x1.5</div></div>
-        <div class="equip-box"><div class="slot-name">防具</div><div class="rarity r-r">R</div><div style="font-size:14px; font-weight:bold; margin-top:15px; color:#fff;">革の鎧</div><div style="font-size:11px; color:#ffeb85; margin-top:4px;">VIT x1.2 +10</div></div>
-        <div class="equip-box"><div class="slot-name">靴</div><div class="rarity r-ssr">SSR</div><div style="font-size:14px; font-weight:bold; margin-top:15px; color:#fff;">疾風のブーツ</div><div style="font-size:11px; color:#ffeb85; margin-top:4px;">AGI x2.0</div></div>
-        <div class="equip-box"><div class="slot-name">アクセ</div><div class="rarity r-n">N</div><div style="font-size:14px; font-weight:bold; margin-top:15px; color:#fff;">木の指輪</div><div style="font-size:11px; color:#ffeb85; margin-top:4px;">LCK x1.0 +1</div></div>
-      </div>
-
-      <h2>装備ガチャ</h2>
-      <div class="panel" style="text-align: center;">
-        <div style="font-size: 15px; margin-bottom: 12px;">所持コイン: <span style="color:#ffd166; font-weight:bold;">1,500 G</span></div>
-        <button class="btn-fantasy" style="background: linear-gradient(to bottom, #d4af37, #8a6d1c); color: #000; width:80%;">ガチャを引く (100G)</button>
-        <div style="margin-top: 15px;">
-          <span id="btn-show-prob" style="font-size: 13px; color: #5ce6e6; text-decoration: underline; cursor: pointer;">排出確率を見る</span>
-        </div>
-      </div>
-
-      <h2>所持装備 (インベントリ)</h2>
-      <div class="panel">
-        <div class="inv-grid">
-          <div class="inv-item r-sr">SR</div><div class="inv-item r-r">R</div><div class="inv-item r-n">N</div><div class="inv-item r-n">N</div><div class="inv-item r-ssr">SSR</div>
-          <div class="inv-item r-n">N</div><div class="inv-item r-r">R</div><div class="inv-item" style="border:1px dashed #4a3b26;"></div><div class="inv-item" style="border:1px dashed #4a3b26;"></div><div class="inv-item" style="border:1px dashed #4a3b26;"></div>
-        </div>
-      </div>
+      <h2>武具・ガチャ</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
     </section>
 
-    <!-- 📖 4. 図鑑タブ -->
+    <!-- 📖 4. 図鑑タブ (ガワのみ) -->
     <section id="tab-collection" class="tab-content">
-      <h2>ドロップ図鑑</h2>
-      
-      <!-- 雑魚アイテム -->
-      <div class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong style="font-size: 16px;">スライムの粘液</strong><span style="color: #c0c0c0; font-weight:bold; font-size: 18px;">[銀]</span>
-        </div>
-        <div style="font-size: 11px; color: #aaa; margin: 4px 0;">ドロップ層: 1〜5層 (雑魚)</div>
-        <div style="font-size: 13px; color: #ff6b6b; font-weight:bold; margin: 6px 0;">効果: STR +3%</div>
-        <div style="background: #000; border: 1px solid #4a3b26; border-radius: 4px; padding: 2px; margin-top:8px;">
-          <div style="background: #c0c0c0; width: 55%; height: 6px; border-radius: 2px;"></div>
-        </div>
-        <div style="text-align: right; font-size: 11px; margin-top: 3px; color:#aaa;">次の[金]まで: 5 / 9個</div>
-      </div>
-
-      <!-- ボスアイテム -->
-      <div class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong style="font-size: 16px;">ゴブリン王の王冠</strong><span style="color: #cd7f32; font-weight:bold; font-size: 18px;">[銅]</span>
-        </div>
-        <div style="font-size: 11px; color: #aaa; margin: 4px 0;">ドロップ層: 10層 (ボス)</div>
-        <div style="font-size: 13px; color: #ffeb85; font-weight:bold; margin: 6px 0;">効果: 全ステータス +2%</div>
-        <div style="background: #000; border: 1px solid #4a3b26; border-radius: 4px; padding: 2px; margin-top:8px;">
-          <div style="background: #cd7f32; width: 33%; height: 6px; border-radius: 2px;"></div>
-        </div>
-        <div style="text-align: right; font-size: 11px; margin-top: 3px; color:#aaa;">次の[銀]まで: 1 / 3個</div>
-      </div>
+      <h2>ドロップ図鑑</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
     </section>
 
-    <!-- 👑 5. 順位タブ -->
+    <!-- 👑 5. 順位タブ (ガワのみ) -->
     <section id="tab-ranking" class="tab-content">
-      <h2>身内ランキング</h2>
-      
-      <div class="rank-category-grid">
-        <button class="btn-rank-cat active">最高到達層</button>
-        <button class="btn-rank-cat">大岩プッシュ王</button>
-        <button class="btn-rank-cat">総合STR</button>
-        <button class="btn-rank-cat">総合LCK</button>
-      </div>
-
-      <div class="panel">
-        <div style="color:#ffd166; font-weight:bold; margin-bottom:12px; text-align:center; font-size:16px;">👑 最高到達層 ランキング</div>
-        
-        <div class="rank-item first">
-          <div class="rank-num">1</div><div class="rank-name" style="flex-grow:1; font-weight:bold; padding-left:10px;">ゆうき</div><div style="color:#ffeb85; font-weight:bold;">16層</div>
-        </div>
-        <div class="rank-item second">
-          <div class="rank-num">2</div><div class="rank-name" style="flex-grow:1; font-weight:bold; padding-left:10px;">たかし</div><div style="color:#ffeb85; font-weight:bold;">15層</div>
-        </div>
-        <div class="rank-item third">
-          <div class="rank-num">3</div><div class="rank-name" style="flex-grow:1; font-weight:bold; padding-left:10px;">けんた</div><div style="color:#ffeb85; font-weight:bold;">10層</div>
-        </div>
-        <div class="rank-item">
-          <div class="rank-num" style="color:#aaa;">4</div><div class="rank-name" style="flex-grow:1; padding-left:10px;">さとし</div><div style="color:#aaa;">8層</div>
-        </div>
-      </div>
+      <h2>身内ランキング</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
     </section>
   </main>
 
@@ -274,46 +125,20 @@
     <div class="nav-btn" data-target="tab-ranking"><span class="nav-icon">👑</span>順位</div>
   </nav>
 
-  <!-- 排出確率モーダル -->
-  <div id="modal-overlay">
-    <div class="modal-content">
-      <h3 style="margin-top:0; color:#c49a45; border-bottom:1px solid #c49a45; padding-bottom:5px;">提供割合</h3>
-      <p style="font-size:13px; color:#aaa;">あなたのLCKボーナス: <span style="color:#ffd166; font-weight:bold; font-size:16px;">x1.24</span></p>
-      <ul style="font-size:14px; line-height:1.8; padding-left:20px;">
-        <li><span class="r-ur font-weight-bold">UR</span> : 1.2% <span style="color:#5ce6e6; font-size:12px;">(+0.2%)</span></li>
-        <li><span class="r-ssr font-weight-bold">SSR</span> : 5.0% <span style="color:#5ce6e6; font-size:12px;">(+1.0%)</span></li>
-        <li><span class="r-sr font-weight-bold">SR</span> : 15.0%</li>
-        <li><span class="r-r font-weight-bold">R</span> : 30.0%</li>
-        <li><span class="r-n font-weight-bold">N</span> : 48.8%</li>
-      </ul>
-      <button id="btn-close-modal" class="btn-fantasy" style="width:100%; margin-top:20px; padding:10px; font-size:16px;">閉じる</button>
+  <!-- 🔥 バトル結果表示モーダル -->
+  <div id="battle-modal-overlay">
+    <div class="modal-content-battle">
+      <h3 style="margin-top:0; color:#c49a45; text-align:center; border-bottom:1px solid #c49a45; padding-bottom:10px;">バトルログ</h3>
+      <div id="battle-log-container"></div>
+      <div id="battle-result-text" style="text-align:center; font-size: 22px; font-weight:bold; margin-bottom: 15px; height:30px;"></div>
+      <button id="btn-close-battle" class="btn-fantasy" style="margin: 0; width: 100%; font-size: 16px; padding: 10px;">閉じる</button>
     </div>
   </div>
 
 </div>
 
-<script>
-  // タブ切り替え
-  const navBtns = document.querySelectorAll('.nav-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
-  navBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      navBtns.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.getAttribute('data-target')).classList.add('active');
-    });
-  });
-
-  // モーダル制御
-  const modal = document.getElementById('modal-overlay');
-  document.getElementById('btn-show-prob').addEventListener('click', () => {
-    modal.style.display = 'flex';
-  });
-  document.getElementById('btn-close-modal').addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-</script>
+<!-- ロジックの読み込み -->
+<script type="module" src="./src/main.js"></script>
 
 </body>
 </html>

@@ -5,7 +5,7 @@ import { applyMinigameResult } from './minigameCore.js';
 const RANKS = [
   { name: "S", timeLimit: 5.0, strBase: 7, exp: 30, color: "#ffeb85" },
   { name: "A", timeLimit: 7.0, strBase: 6, exp: 25, color: "#ff6b6b" },
-  { name: "B", timeLimit: 9.9, strBase: 5, exp: 20, color: "#5ce6e6" },
+  { name: "B", timeLimit: 9.0, strBase: 5, exp: 20, color: "#5ce6e6" },
   { name: "C", timeLimit: 12.0, strBase: 4, exp: 15, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, strBase: 3, exp: 15, color: "#aaa" }
 ];

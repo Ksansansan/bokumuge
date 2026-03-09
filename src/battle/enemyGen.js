@@ -28,24 +28,41 @@ export function generateFloorData(targetFloor) {
   const subLevel = ((floor - 1) % 5) + 1;
   const stageName = `${prefix}${biome.name}-${subLevel}`;
 
-  const powerMultiplier = Math.pow(1.15, floor - 1);
+  const powerMultiplier = Math.pow(1.15, floor - 1); // 指数
+  const linearBonus = floor - 1; // 階層比例（定数加算）
 
-  // 【修正】雑魚に A, B, C などを付ける
-  const createMob = (num) => ({
-    name: `${biome.mobName} ${String.fromCharCode(64 + num)}`, // 1=A, 2=B, 3=C
-    str: Math.floor(22 * powerMultiplier + 16 * (floor - 1)), 
-    vit: Math.floor(5 * powerMultiplier + 3.5 * (floor - 1)),  
-    agi: Math.floor(9 * powerMultiplier + 8 * (floor - 1))
-  });
+  // 基本となる雑魚のステータス（STRはVITより少し高めに設定）
+  const baseStr = 12 * linearBonus + 16 * powerMultiplier;
+  const baseVit = 9 * linearBonus + 12 * powerMultiplier;
+  const baseAgi = 8 * linearBonus + 9 * powerMultiplier;
 
-  // 【修正】ボスに専用の名前を付ける
+  const createMob = (num) => {
+    // ★雑魚の個性付け (A=STR型, B=VIT型, C=AGI型)
+    let strMult = 1.0, vitMult = 1.0, agiMult = 1.0;
+    if (num === 1) { strMult = 1.3; vitMult = 0.9; agiMult = 0.9; } // A
+    if (num === 2) { strMult = 0.9; vitMult = 1.3; agiMult = 0.9; } // B
+    if (num === 3) { strMult = 0.9; vitMult = 0.9; agiMult = 1.3; } // C
+
+    return {
+      name: `${biome.mobName} ${String.fromCharCode(64 + num)}`, // A, B, C...
+      str: Math.floor(baseStr * strMult),
+      vit: Math.floor(baseVit * vitMult),
+      agi: Math.floor(baseAgi * agiMult)
+    };
+  };
+
+  // ボスのステータス (雑魚より一回り強い)
+  const bossStr = 20 * linearBonus + 25 * powerMultiplier;
+  const bossVit = 14 * linearBonus + 20 * powerMultiplier;
+  const bossAgi = 12 * linearBonus + 16 * powerMultiplier;
+
   const enemies =[
     createMob(1), createMob(2), createMob(3),
     {
       name: `🔥 ${prefix}${biome.bossName}`,
-      str: Math.floor(35 * powerMultiplier + 28 * (floor - 1)),
-      vit: Math.floor(20 * powerMultiplier + 14 * (floor - 1)),
-      agi: Math.floor(18 * powerMultiplier + 16 * (floor - 1))
+      str: Math.floor(bossStr),
+      vit: Math.floor(bossVit),
+      agi: Math.floor(bossAgi)
     }
   ];
 
@@ -58,7 +75,7 @@ export function generateFloorData(targetFloor) {
     let requiredFrames = 0;
     for (const enemy of enemies) {
       const dmg = Math.max(1, recommendedStr - enemy.vit);
-      const enemyHp = enemy.vit * 10;
+      const enemyHp = enemy.vit * 5;
       const hitsNeeded = Math.ceil(enemyHp / dmg);
       requiredFrames += hitsNeeded * (1000 / recommendedAgi);
     }
@@ -68,11 +85,11 @@ export function generateFloorData(targetFloor) {
 
   let recommendedVit = 1;
   while (true) {
-    let playerHp = recommendedVit * 10;
+    let playerHp = recommendedVit * 5;
     let isSurvived = true;
     for (const enemy of enemies) {
       const dmgToEnemy = Math.max(1, recommendedStr - enemy.vit);
-      const enemyHp = enemy.vit * 10;
+      const enemyHp = enemy.vit * 5;
       const hitsNeeded = Math.ceil(enemyHp / dmgToEnemy);
       const framesAlive = hitsNeeded * (1000 / recommendedAgi);
       const enemyAttacks = Math.floor(framesAlive * enemy.agi / 1000);

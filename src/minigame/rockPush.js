@@ -33,9 +33,9 @@ export function initRockPush(playerObj) {
     rockBtn: document.getElementById('rp-rock-btn'),
     timerText: document.getElementById('rp-timer'),
     countText: document.getElementById('rp-count'),
-    bestText: document.getElementById('rp-best-time')
+    bestText: document.getElementById('rp-best-time'),
     btnQuit: document.getElementById('rp-btn-quit'),
-    btnReset: document.getElementById('rp-btn-reset')
+    btnReset: document.getElementById('rp-btn-reset'),
   };
 
   dom.btnStart.addEventListener('click', startGame);

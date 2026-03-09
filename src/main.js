@@ -159,23 +159,34 @@ function updateStatusUI() {
 async function updateFloorUI(floorNum) {
   const floorData = generateFloorData(floorNum);
   
-  elFloorHeader.textContent = `第 ${floorData.floor} 層`;
-  elStageName.textContent = floorData.stageName;
-  elRecStats.textContent = `推奨: STR ${floorData.recommended.str} / VIT ${floorData.recommended.vit} / AGI ${floorData.recommended.agi}`;
+  // UI基本情報の更新
+  document.getElementById('floor-header').textContent = `第 ${floorData.floor} 層`;
+  document.getElementById('stage-name').textContent = floorData.stageName;
+  document.getElementById('rec-stats').textContent = `推奨: STR ${floorData.recommended.str} / VIT ${floorData.recommended.vit} / AGI ${floorData.recommended.agi}`;
   
-  // ▼ ◀ ▶ ボタンの有効/無効切り替え
-  document.getElementById('btn-prev').className = floorNum <= 1 ? 'btn-arrow disabled' : 'btn-arrow';
-  document.getElementById('btn-next').className = floorNum >= player.maxClearedFloor ? 'btn-arrow disabled' : 'btn-arrow';
+  // ◀ ▶ ボタンの状態制御
+  const prevBtn = document.getElementById('btn-prev');
+  const nextBtn = document.getElementById('btn-next');
+  
+  prevBtn.className = (floorNum <= 1) ? 'btn-arrow disabled' : 'btn-arrow';
+  // maxClearedFloor が 3 なら、1層, 2層, 3層までは見れるようにする
+  nextBtn.className = (floorNum >= (player.maxClearedFloor || 1)) ? 'btn-arrow disabled' : 'btn-arrow';
 
-  // ▼ Firebaseから「その階層の最速クリア者」を取得して表示
-  // ※ここでは仮に、Firebaseから取得する処理を入れる
-  const record = await getFastestRecord(floorNum); // 新規関数
-  if (record) {
-    document.getElementById('clear-record').innerHTML = 
-      `💡 <span class="highlight-text">${record.name}</span> がこの層を初クリアしました<br>` +
-      `タイム: ${record.time} / STR ${record.str}, VIT ${record.vit}, AGI ${record.agi}, LCK ${record.lck}`;
-  } else {
-    document.getElementById('clear-record').innerHTML = "💡 まだクリア者がいません！";
+  // ★初クリア者情報の読み込み (firebase.js からインポートした getFirstClearRecord を使う)
+  const recordEl = document.getElementById('clear-record');
+  recordEl.innerHTML = "💡 記録を確認中...";
+
+  try {
+    const record = await getFirstClearRecord(floorNum);
+    if (record) {
+      recordEl.innerHTML = `💡 <span class="highlight-text" style="color:#5ce6e6;">${record.name}</span> がこの層を初クリア！<br>` +
+                           `<span style="font-size:10px; color:#aaa;">(タイム: ${record.time} / STR ${record.str}, VIT ${record.vit}, AGI ${record.agi})</span>`;
+    } else {
+      recordEl.innerHTML = "💡 まだクリア者がいません！最初の踏破者になろう！";
+    }
+  } catch (err) {
+    console.error("初クリア記録の取得失敗:", err);
+    recordEl.innerHTML = "💡 記録の読み込みに失敗しました。";
   }
 }
 
@@ -259,6 +270,7 @@ btnChallenge.addEventListener('click', () => {
       btnCloseBattle.style.display = 'block';
       if (result.isWin) {
           resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
+         handleVictory(result, floorData.floor); 
           // 未クリアの階層を突破した場合のみ保存
           if (player.floor >= player.maxClearedFloor) {
               player.maxClearedFloor = player.floor + 1;
@@ -391,21 +403,33 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
 });
 
 // ★勝利時の処理を修正（初クリア者の判定）
+// --- 勝利時の処理（初クリア保存と進行度更新） ---
 async function handleVictory(result, floorNum) {
   resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
   resultText.style.color = '#ffd166';
 
-  // 1. 初クリア者（世界で最初の人）かチェックして保存
-  await checkAndSaveFirstClear(player, floorNum, result.clearTime);
+  console.log(`[Battle] 第${floorNum}層 勝利。初クリア確認中...`);
 
-  // 2. プレイヤー自身の進行度を更新
-  if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
-    player.maxClearedFloor = floorNum + 1;
-    player.floor = floorNum + 1; // 自動で次の階層へ
+  try {
+    // 1. 世界初のクリア者かチェックして保存 (firebase.js)
+    const isFirst = await checkAndSaveFirstClear(player, floorNum, result.clearTime);
+    if(isFirst) console.log("🌟 あなたがこの階層の初クリア者として記録されました！");
+
+    // 2. プレイヤー自身の「最高到達階層」を更新
+    // 記録がないか、今の階層が最高記録なら +1
+    if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
+      player.maxClearedFloor = floorNum + 1;
+      // 自動で次の階層にするのではなく、ユーザーが「次へ」を押せるようにする
+    }
+
+    // 3. 全ステータスをFirebaseにセーブ
+    await savePlayerData(player);
+    
+    // UIを更新（◀▶ボタンの状態を最新にする）
+    updateFloorUI(floorNum); 
+    updateStatusUI();
+    
+  } catch (err) {
+    console.error("勝利データの保存に失敗しました:", err);
   }
-
-  // 3. Firebaseにセーブ（関数が混じらないように注意）
-  await savePlayerData(player);
-  
-  updateFloorUI(player.floor);
 }

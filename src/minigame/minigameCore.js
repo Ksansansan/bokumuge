@@ -61,13 +61,13 @@ export function applyMinigameResult(player, statKey, expGained, baseGained) {
  */
 export function getLevelMultiplier(level, totalLevel) {
   // 基本倍率: Lv1につき +5% (1.2倍にするならここを 0.2 に変えるなど調整)
-  const baseMult = 1.0 + ((level - 1) * 0.12);
+  const baseMult = Math.floor(100 * Math.pow(1.12, (level - 1)));
   
   // ★シナジーボーナス: 合計Lv 1につき +1% の全体底上げ
   // STR Lv50まで上げたら、VIT Lv1でも最初から 1.5倍 でスタートできる！
-  const synergyBonus = totalLevel * 0.01;
+  const synergyBonus = 1.0 + totalLevel * 0.01;
   
-  return baseMult + synergyBonus;
+  return baseMult * synergyBonus;
 }
 
 /**
@@ -79,5 +79,5 @@ export function getRequiredExp(level) {
   // Lv2->3: 120
   // Lv10->11: ~400
   // 急激すぎると心が折れるので、1.2乗くらいの緩やかなカーブにするのがおすすめ
-  return Math.floor(100 * Math.pow(level, 1.19));
+  return Math.floor(100 * Math.pow(1.19, (level - 1)));
 }

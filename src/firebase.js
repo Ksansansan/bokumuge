@@ -101,3 +101,18 @@ export async function getRankingData(rankId) {
   }
   return rankings;
 }
+
+export async function getFastestRecord(floor) {
+  const docRef = doc(db, "records", `floor_${floor}`);
+  const snap = await getDoc(docRef);
+  return snap.exists() ? snap.data() : null;
+}
+
+// 勝利時に記録を保存する処理（simulateBattle の後で呼ぶ）
+export async function saveClearRecord(player, floor, time) {
+  const data = {
+    name: player.name, time: time, 
+    str: player.str, vit: player.vit, agi: player.agi, lck: player.lck
+  };
+  await setDoc(doc(db, "records", `floor_${floor}`), data);
+}

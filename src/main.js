@@ -343,5 +343,3 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
     rankingList.innerHTML = html;
   });
 });
-
-init();

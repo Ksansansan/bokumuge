@@ -34,11 +34,26 @@ export function initRockPush(playerObj) {
     timerText: document.getElementById('rp-timer'),
     countText: document.getElementById('rp-count'),
     bestText: document.getElementById('rp-best-time')
+    btnQuit: document.getElementById('rp-btn-quit'),
+    btnReset: document.getElementById('rp-btn-reset')
   };
 
   dom.btnStart.addEventListener('click', startGame);
   dom.btnRetry.addEventListener('click', startGame);
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
+// ★「やめる」ボタン：タイマーを止めて説明画面へ
+  dom.btnQuit.addEventListener('click', () => {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    showView('info');
+  });
+
+  // ★「リトライ」ボタン：タイマーを止めて最初から
+  dom.btnReset.addEventListener('click', () => {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    startGame();
+  });
 
   const handleTap = (e) => {
     if (e.type === 'touchstart') e.preventDefault();

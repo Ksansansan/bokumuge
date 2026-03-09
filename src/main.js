@@ -3,6 +3,7 @@ import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData } from './firebase.js';
+import { getRequiredExp } from './minigame/minigameCore.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -272,17 +273,23 @@ document.getElementById('btn-play-rockpush').addEventListener('click', () => {
 // 🏋️ 特訓タブのUI更新
 // ==========================================
 function updateTrainingUI() {
-  document.getElementById('ui-base-str').textContent = player.str;
-  document.getElementById('ui-lv-str').textContent = player.lv.str;
+  const stats = ['str', 'vit', 'agi', 'lck'];
   
-  document.getElementById('ui-base-vit').textContent = player.vit;
-  document.getElementById('ui-lv-vit').textContent = player.lv.vit;
+  stats.forEach(s => {
+    const level = player.lv[s];
+    const exp = player.exp[s];
+    const nextExp = getRequiredExp(level);
+    const progress = (exp / nextExp) * 100;
 
-  document.getElementById('ui-base-agi').textContent = player.agi;
-  document.getElementById('ui-lv-agi').textContent = player.lv.agi;
-
-  document.getElementById('ui-base-lck').textContent = player.lck;
-  document.getElementById('ui-lv-lck').textContent = player.lv.lck;
+    // 数値の更新
+    document.getElementById(`ui-base-${s}`).textContent = player[s];
+    document.getElementById(`ui-lv-${s}`).textContent = level;
+    document.getElementById(`ui-exp-txt-${s}`).textContent = `${exp}/${nextExp}`;
+    
+    // バーの更新
+    const bar = document.getElementById(`ui-exp-bar-${s}`);
+    if (bar) bar.style.width = `${progress}%`;
+  });
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理

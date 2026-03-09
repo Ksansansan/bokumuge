@@ -4,6 +4,7 @@ import { generateFloorData } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData } from './firebase.js';
 import { getRequiredExp } from './minigame/minigameCore.js';
+import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');

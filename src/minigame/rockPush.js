@@ -136,17 +136,29 @@ async function finishGame() {
   document.getElementById('rp-res-rank').style.color = rank.color;
   document.getElementById('rp-res-next').textContent = nextRankStr;
   
-  let gainHtml = `STR 基礎値: <span style="color:#ff6b6b;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>` +
-                 `EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>`;
+  // 獲得情報の詳細表示（Lvとx/yを追加）
+  let gainHtml = `
+    <div style="font-size:16px; margin-bottom:10px;">
+      Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span>
+    </div>
+    STR 基礎値: <span style="color:#ff6b6b;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
+    EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>
+  `;
   
+  // 経験値バー
+  const progress = Math.floor((result.currentExp / result.nextExp) * 100);
+  gainHtml += `
+    <div style="width:100%; background:#111; border:1px solid #4a3b26; height:8px; margin-top:8px; border-radius:4px; overflow:hidden;">
+      <div style="width:${progress}%; background:#5ce6e6; height:100%;"></div>
+    </div>
+  `;
+
   if (result.leveledUp) {
-    gainHtml += `<br><span style="color:#ffd166; font-weight:bold; font-size:16px;">🎉 ミニゲームLv UP! -> Lv.${result.currentLv}</span>`;
-  } else {
-    const progress = Math.floor((result.currentExp / result.nextExp) * 100);
-    gainHtml += `<br><div style="width:100%; background:#333; height:4px; margin-top:5px;"><div style="width:${progress}%; background:#5ce6e6; height:100%;"></div></div>`;
+    gainHtml += `<div style="color:#ffd166; font-weight:bold; font-size:16px; margin-top:5px; animation: blink 0.5s infinite;">🎉 ミニゲームLv UP! -> Lv.${result.currentLv}</div>`;
   }
 
   document.getElementById('rp-res-gained').innerHTML = gainHtml;
+  
   document.getElementById('rp-res-newrecord').style.display = isNewRecord ? 'block' : 'none';
 
   showView('result');

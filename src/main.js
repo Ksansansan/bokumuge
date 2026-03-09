@@ -127,6 +127,7 @@ function init() {
   updateTrainingUI();
   updateFloorUI(player.floor);
   setupTabNavigation();
+  player.updateTrainingUI = updateTrainingUI; 
   initRockPush(player);
 }
 

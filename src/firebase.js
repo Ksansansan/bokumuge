@@ -130,14 +130,13 @@ export async function checkAndSaveFirstClear(player, floor, time) {
   const snap = await getDoc(docRef);
 
   if (!snap.exists()) {
-    // まだ誰もクリアしていない場合のみ保存（＝初クリア者）
     const data = {
       name: player.name,
       time: time,
       str: player.str,
       vit: player.vit,
       agi: player.agi,
-      lck: player.lck,
+      lck: player.lck, // ← ログイン中の player オブジェクトから取得
       timestamp: Date.now()
     };
     await setDoc(docRef, data);

@@ -131,7 +131,7 @@ async function finishGame() {
 
   // ヘッダーUI更新
   document.getElementById('val-str').textContent = playerRef.str;
-
+  savePlayerData(playerRef);
   // 自己ベスト更新
   const isNewRecord = await savePersonalBest(playerRef.name, "rockPush", time);
 

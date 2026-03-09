@@ -60,7 +60,7 @@ export function initRockPush(playerObj) {
     if (e.touches && e.touches.length > 1) return;
 
     const now = Date.now();
-    if (now - lastTapTime < 20) return;
+    if (now - lastTapTime < 13) return;
     lastTapTime = now;
 
     if (remainingTaps > 0) {

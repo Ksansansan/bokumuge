@@ -2,16 +2,10 @@
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
+import { loginOrRegister, savePlayerData, getRankingData } from './firebase.js';
 
-// playerオブジェクトの定義（名前を追加）
-const player = {
-  name: "Ksansansan",
-  str: 25, vit: 20, agi: 15, lck: 10,
-  floor: 1,
-  // ミニゲーム用データ
-  exp: { str: 0, vit: 0, agi: 0, lck: 0 },
-  lv:  { str: 1, vit: 1, agi: 1, lck: 1 }
-};
+let player = null;
+
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -39,6 +33,34 @@ const guiContainer = document.getElementById('battle-gui-container');
 
 // バトルアニメーション用変数
 let animationId = null;
+
+// ==========================================
+// 🚪 ログイン処理
+// ==========================================
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const username = document.getElementById('login-username').value.trim();
+  const pin = document.getElementById('login-pin').value.trim();
+  const errorEl = document.getElementById('login-error');
+
+  if (!username || !/^\d{4}$/.test(pin)) {
+    errorEl.textContent = "名前と数字4桁を入力してください";
+    return;
+  }
+
+  document.getElementById('btn-login').textContent = "通信中...";
+  const res = await loginOrRegister(username, pin);
+
+  if (res.success) {
+    player = res.data;
+    document.getElementById('modal-login').style.display = 'none'; // ログイン画面を消す
+    document.querySelector('.username').textContent = player.name; // ヘッダーの名前更新
+    init(); // ゲーム初期化開始！
+  } else {
+    errorEl.textContent = res.message;
+    document.getElementById('btn-login').textContent = "ゲームスタート";
+  }
+});
+
 
 function init() {
   updateStatusUI();
@@ -86,7 +108,7 @@ btnChallenge.addEventListener('click', () => {
   let currentEnemyAgi = 0;
   
   function renderLoop() {
-    const speed = 2; 
+    const speed = 1; 
     currentFrame += speed;
 
     while (eventIndex < result.events.length && result.events[eventIndex].frame <= currentFrame) {
@@ -149,6 +171,7 @@ btnChallenge.addEventListener('click', () => {
         resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
         resultText.style.color = '#ffd166';
         player.floor++; 
+        savePlayerData(player);
       } else {
         resultText.textContent = `💀 敗北...`;
         resultText.style.color = '#ff6b6b';
@@ -215,45 +238,50 @@ dummyGames.forEach(id => {
 });
 
 // ==========================================
-// 👑 ランキングモーダルの制御
+// 👑 ランキングモーダルへの実データ反映
 // ==========================================
 const modalRanking = document.getElementById('modal-ranking-overlay');
 const rankingTitle = document.getElementById('ranking-modal-title');
 const rankingList = document.getElementById('ranking-list-container');
 
-// クラス btn-show-ranking が付いたすべてのボタン（特訓タブ内・順位タブ内両方）にイベント付与
 document.querySelectorAll('.btn-show-ranking').forEach(btn => {
   btn.addEventListener('click', async (e) => {
-    // どのランキングを開いたか取得
     const rankId = e.currentTarget.getAttribute('data-rank-id');
-    const title = e.currentTarget.textContent.replace('👑', '').trim(); // 絵文字などを除いたタイトル
+    const title = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨]/g, '').trim(); 
     
     rankingTitle.textContent = title;
-    rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px;">データ取得中...</p>';
+    rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">データ取得中...</p>';
     modalRanking.style.display = 'flex';
 
-    // ⚠️ ここは将来的に firebase.js の getRanking(rankId) 等から取得する
-    // 今回はFirebase連携前の「仮のランキング表示モック」です
-    setTimeout(() => {
-      // ランキング項目のHTML生成
-      rankingList.innerHTML = `
-        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(255,215,0,0.15); border-left:3px solid #ffd700;">
-          <span style="font-weight:bold; color:#ffd700;">1位. ゆうき</span>
-          <span style="font-weight:bold;">${rankId === 'rockPush' ? '4.85 秒' : '記録データ'}</span>
+    // ▼ Firebaseから本物のランキングデータを取得！
+    const data = await getRankingData(rankId);
+    
+    if (data.length === 0) {
+      rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px;">まだ記録がありません</p>';
+      return;
+    }
+
+    let html = '';
+    const colors =["#ffd700", "#c0c0c0", "#cd7f32", "#aaa"]; // 1位金, 2位銀, 3位銅, 4位以降グレー
+    
+    data.forEach((item, index) => {
+      const color = index < 3 ? colors[index] : colors[3];
+      const bg = index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.15)` : 'rgba(0,0,0,0.3)';
+      
+      // 値のフォーマット（階層なら「〇層」、レベルなら「Lv.〇」など）
+      let displayScore = item.score;
+      if(rankId === 'floor') displayScore += ' 層';
+      else if(rankId === 'totalLv') displayScore = 'Lv.' + displayScore;
+      
+      html += `
+        <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:3px solid ${color};">
+          <span style="font-weight:bold; color:${color};">${index + 1}位. ${item.name}</span>
+          <span style="font-weight:bold; color:#fff;">${displayScore}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(192,192,192,0.1); border-left:3px solid #c0c0c0;">
-          <span style="font-weight:bold; color:#c0c0c0;">2位. たかし</span>
-          <span style="font-weight:bold;">${rankId === 'rockPush' ? '5.12 秒' : '記録データ'}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #4a3b26; background:rgba(205,127,50,0.1); border-left:3px solid #cd7f32;">
-          <span style="font-weight:bold; color:#cd7f32;">3位. けんた</span>
-          <span style="font-weight:bold;">${rankId === 'rockPush' ? '6.30 秒' : '記録データ'}</span>
-        </div>
-        <p style="font-size:11px; color:#aaa; text-align:center; margin-top:10px;">
-          ※Firebase接続後にここに世界（身内）の順位が表示されます
-        </p>
       `;
-    }, 400); // ネットワーク通信を模した0.4秒の遅延
+    });
+    
+    rankingList.innerHTML = html;
   });
 });
 

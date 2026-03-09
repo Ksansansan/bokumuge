@@ -159,37 +159,47 @@ function updateStatusUI() {
 async function updateFloorUI(floorNum) {
   const floorData = generateFloorData(floorNum);
   
-  // UI基本情報の更新
   document.getElementById('floor-header').textContent = `第 ${floorData.floor} 層`;
   document.getElementById('stage-name').textContent = floorData.stageName;
-  document.getElementById('rec-stats').textContent = `推奨: STR ${floorData.recommended.str} / VIT ${floorData.recommended.vit} / AGI ${floorData.recommended.agi}`;
+
+  // --- 推奨ステータスの色分け ---
+  const rec = floorData.recommended;
+  document.getElementById('rec-stats').innerHTML = `
+    推奨: <span style="color:#ff6b6b;">STR ${rec.str}</span> / 
+    <span style="color:#6be6ff;">VIT ${rec.vit}</span> / 
+    <span style="color:#94ff6b;">AGI ${rec.agi}</span>
+  `;
   
-  // ◀ ▶ ボタンの状態制御
+  // ◀ ▶ ボタン制御
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
-  
   prevBtn.className = (floorNum <= 1) ? 'btn-arrow disabled' : 'btn-arrow';
-  // maxClearedFloor が 3 なら、1層, 2層, 3層までは見れるようにする
   nextBtn.className = (floorNum >= (player.maxClearedFloor || 1)) ? 'btn-arrow disabled' : 'btn-arrow';
 
-  // ★初クリア者情報の読み込み (firebase.js からインポートした getFirstClearRecord を使う)
+  // --- 初クリア者情報の表示（色分け ＆ LCK追加） ---
   const recordEl = document.getElementById('clear-record');
   recordEl.innerHTML = "💡 記録を確認中...";
 
   try {
     const record = await getFirstClearRecord(floorNum);
     if (record) {
-      recordEl.innerHTML = `💡 <span class="highlight-text" style="color:#5ce6e6;">${record.name}</span> がこの層を初クリア！<br>` +
-                           `<span style="font-size:10px; color:#aaa;">(タイム: ${record.time} / STR ${record.str}, VIT ${record.vit}, AGI ${record.agi})</span>`;
+      recordEl.innerHTML = `
+        <div style="margin-bottom:5px;">💡 <span class="highlight-text" style="color:#5ce6e6; font-size:18px;">${record.name}</span> が初クリア！</div>
+        <div style="font-size:13px; color:#fff;">
+          タイム: <span style="color:#ffeb85;">${record.time}</span> / 
+          <span style="color:#ff6b6b;">STR ${record.str}</span> / 
+          <span style="color:#6be6ff;">VIT ${record.vit}</span> / 
+          <span style="color:#94ff6b;">AGI ${record.agi}</span> / 
+          <span style="color:#ffd166;">LCK ${record.lck || 0}</span>
+        </div>
+      `;
     } else {
-      recordEl.innerHTML = "💡 まだクリア者がいません！最初の踏破者になろう！";
+      recordEl.innerHTML = "💡 まだクリア者がいません！最初の挑戦者になろう！";
     }
   } catch (err) {
-    console.error("初クリア記録の取得失敗:", err);
     recordEl.innerHTML = "💡 記録の読み込みに失敗しました。";
   }
 }
-
 // ⚔️ バトル実行
 btnChallenge.addEventListener('click', () => {
   const floorData = generateFloorData(player.floor);

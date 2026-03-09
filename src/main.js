@@ -129,6 +129,21 @@ function init() {
   setupTabNavigation();
   player.updateTrainingUI = updateTrainingUI; 
   initRockPush(player);
+
+  // ◀ ▶ ボタンのイベント設定
+  document.getElementById('btn-prev').addEventListener('click', () => {
+    if (player.floor > 1) {
+      player.floor--;
+      updateFloorUI(player.floor);
+    }
+  });
+  document.getElementById('btn-next').addEventListener('click', () => {
+    // 実際にクリアした階層までしか進めないようにする
+    if (player.floor < player.maxClearedFloor) { 
+      player.floor++;
+      updateFloorUI(player.floor);
+    }
+  });
 }
 
 function updateStatusUI() {
@@ -138,18 +153,28 @@ function updateStatusUI() {
   elLck.textContent = player.lck;
 }
 
-function updateFloorUI(floorNum) {
+// 階層UI更新関数（Firebaseから初クリア者を取得して表示）
+async function updateFloorUI(floorNum) {
   const floorData = generateFloorData(floorNum);
+  
   elFloorHeader.textContent = `第 ${floorData.floor} 層`;
   elStageName.textContent = floorData.stageName;
   elRecStats.textContent = `推奨: STR ${floorData.recommended.str} / VIT ${floorData.recommended.vit} / AGI ${floorData.recommended.agi}`;
-  elDropList.innerHTML = '';
-  floorData.drops.forEach(drop => {
-    const li = document.createElement('li');
-    li.textContent = `${drop.name} (${drop.prob}%)`;
-    if(drop.isCollection) li.style.color = "#ff6b6b";
-    elDropList.appendChild(li);
-  });
+  
+  // ▼ ◀ ▶ ボタンの有効/無効切り替え
+  document.getElementById('btn-prev').className = floorNum <= 1 ? 'btn-arrow disabled' : 'btn-arrow';
+  document.getElementById('btn-next').className = floorNum >= player.maxClearedFloor ? 'btn-arrow disabled' : 'btn-arrow';
+
+  // ▼ Firebaseから「その階層の最速クリア者」を取得して表示
+  // ※ここでは仮に、Firebaseから取得する処理を入れる
+  const record = await getFastestRecord(floorNum); // 新規関数
+  if (record) {
+    document.getElementById('clear-record').innerHTML = 
+      `💡 <span class="highlight-text">${record.name}</span> がこの層を初クリアしました<br>` +
+      `タイム: ${record.time} / STR ${record.str}, VIT ${record.vit}, AGI ${record.agi}, LCK ${record.lck}`;
+  } else {
+    document.getElementById('clear-record').innerHTML = "💡 まだクリア者がいません！";
+  }
 }
 
 // ⚔️ バトル実行＆アニメーション再生

@@ -147,38 +147,71 @@
       </div>
     </section>
 
-    <!-- 🏋️ 2. 特訓タブ -->
+   <!-- 🏋️ 2. 特訓タブ -->
     <section id="tab-training" class="tab-content">
       <h2>特訓場</h2>
       
       <!-- STRパネル -->
       <div class="panel">
-        <div style="color:#ff6b6b; font-weight:bold; font-size:20px;">STR (攻撃力)</div>
-        <div style="font-size:12px; color:#aaa; margin-bottom:10px;">基礎値: <span id="ui-base-str">25</span> / Lv: <span id="ui-lv-str">1</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="color:#ff6b6b; font-weight:bold; font-size:20px;">STR (攻撃力)</div>
+          <div style="font-size:12px; color:#fff;">Lv: <span id="ui-lv-str">1</span> (<span id="ui-exp-txt-str">0/100</span>)</div>
+        </div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:5px;">基礎値: <span id="ui-base-str">25</span></div>
+        
+        <!-- 経験値バー -->
+        <div style="width:100%; background:#111; border:1px solid #4a3b26; height:6px; margin-bottom:10px; border-radius:3px; overflow:hidden;">
+          <div id="ui-exp-bar-str" style="width:0%; background:#ff6b6b; height:100%; transition: width 0.3s;"></div>
+        </div>
+
         <button id="btn-play-rockpush" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%;">大岩プッシュ (TA)</button>
         <button id="btn-play-daruma" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">だるま落とし (TA)</button>
       </div>
 
       <!-- VITパネル -->
       <div class="panel">
-        <div style="color:#6be6ff; font-weight:bold; font-size:20px;">VIT (体力・防御)</div>
-        <div style="font-size:12px; color:#aaa; margin-bottom:10px;">基礎値: <span id="ui-base-vit">20</span> / Lv: <span id="ui-lv-vit">1</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="color:#6be6ff; font-weight:bold; font-size:20px;">VIT (体力・防御)</div>
+          <div style="font-size:12px; color:#fff;">Lv: <span id="ui-lv-vit">1</span> (<span id="ui-exp-txt-vit">0/100</span>)</div>
+        </div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:5px;">基礎値: <span id="ui-base-vit">20</span></div>
+        
+        <div style="width:100%; background:#111; border:1px solid #4a3b26; height:6px; margin-bottom:10px; border-radius:3px; overflow:hidden;">
+          <div id="ui-exp-bar-vit" style="width:0%; background:#6be6ff; height:100%; transition: width 0.3s;"></div>
+        </div>
+
         <button id="btn-play-chicken" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #205c7a, #0d314a);">崖っぷちダッシュ (エンドレス)</button>
         <button id="btn-play-guard" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #207a7a, #0d4a4a);">飛来物ガード (エンドレス)</button>
       </div>
 
       <!-- AGIパネル -->
       <div class="panel">
-        <div style="color:#94ff6b; font-weight:bold; font-size:20px;">AGI (素早さ)</div>
-        <div style="font-size:12px; color:#aaa; margin-bottom:10px;">基礎値: <span id="ui-base-agi">15</span> / Lv: <span id="ui-lv-agi">1</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="color:#6be6ff; font-weight:bold; font-size:20px;">AGI (素早さ)</div>
+          <div style="font-size:12px; color:#fff;">Lv: <span id="ui-lv-agi">1</span> (<span id="ui-exp-txt-agi">0/100</span>)</div>
+        </div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:5px;">基礎値: <span id="ui-base-agi">20</span></div>
+        
+        <div style="width:100%; background:#111; border:1px solid #4a3b26; height:6px; margin-bottom:10px; border-radius:3px; overflow:hidden;">
+          <div id="ui-exp-bar-agi" style="width:0%; background:#6be6ff; height:100%; transition: width 0.3s;"></div>
+        </div>
+        
         <button id="btn-play-1to20" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #3a7a20, #1d4a0d);">1〜20 早押し (TA)</button>
         <button id="btn-play-command" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #5c7a20, #314a0d);">コマンド早入力 (TA)</button>
       </div>
 
       <!-- LCKパネル -->
       <div class="panel">
-        <div style="color:#ffd166; font-weight:bold; font-size:20px;">LCK (運)</div>
-        <div style="font-size:12px; color:#aaa; margin-bottom:10px;">基礎値: <span id="ui-base-lck">10</span> / Lv: <span id="ui-lv-lck">1</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="color:#6be6ff; font-weight:bold; font-size:20px;">LCK (運)</div>
+          <div style="font-size:12px; color:#fff;">Lv: <span id="ui-lv-lck">1</span> (<span id="ui-exp-txt-lck">0/100</span>)</div>
+        </div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:5px;">基礎値: <span id="ui-base-lck">20</span></div>
+        
+        <div style="width:100%; background:#111; border:1px solid #4a3b26; height:6px; margin-bottom:10px; border-radius:3px; overflow:hidden;">
+          <div id="ui-exp-bar-lck" style="width:0%; background:#6be6ff; height:100%; transition: width 0.3s;"></div>
+        </div>
+        
         <button id="btn-play-clover" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し (固定時間)</button>
         <button id="btn-play-slot" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c);">狙え！スロット (エンドレス)</button>
       </div>

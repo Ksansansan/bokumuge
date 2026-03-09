@@ -39,9 +39,9 @@ export function generateFloorData(targetFloor) {
   const createMob = (num) => {
     // ★雑魚の個性付け (A=STR型, B=VIT型, C=AGI型)
     let strMult = 1.0, vitMult = 1.0, agiMult = 1.0;
-    if (num === 1) { strMult = 1.3; vitMult = 0.9; agiMult = 0.9; } // A
-    if (num === 2) { strMult = 0.9; vitMult = 1.3; agiMult = 0.9; } // B
-    if (num === 3) { strMult = 0.9; vitMult = 0.9; agiMult = 1.3; } // C
+    if (num === 1) { strMult = 1.2; vitMult = 0.9; agiMult = 0.9; } // A
+    if (num === 2) { strMult = 0.9; vitMult = 1.2; agiMult = 0.9; } // B
+    if (num === 3) { strMult = 0.9; vitMult = 0.9; agiMult = 1.2; } // C
 
     return {
       name: `${biome.mobName} ${String.fromCharCode(64 + num)}`, // A, B, C...

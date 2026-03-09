@@ -87,7 +87,21 @@
 </style>
 </head>
 <body>
-
+<!-- 🚪 ログイン画面モーダル -->
+  <div id="modal-login" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 1000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <h1 style="color:#c49a45; font-family:serif; font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(196,154,69,0.5);">ぼくらの無限塔</h1>
+    <div style="background: rgba(20, 15, 12, 0.8); border: 1px solid #c49a45; border-radius: 8px; padding: 25px; width: 80%; max-width: 300px;">
+      <p style="font-size: 13px; text-align:center; margin-top:0; color:#aaa; line-height: 1.5;">名前と4桁の数字を決めてください。<br>次回以降、同じ入力で続きから遊べます。</p>
+      
+      <input type="text" id="login-username" placeholder="ユーザー名" style="width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #4a3b26; color: #fff; border-radius: 4px; font-size: 16px;">
+      
+      <input type="password" id="login-pin" placeholder="数字4桁 (例: 1234)" maxlength="4" pattern="\d{4}" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #4a3b26; color: #fff; border-radius: 4px; font-size: 16px;">
+      
+      <button id="btn-login" class="btn-fantasy" style="width: 100%; margin: 0; padding: 12px;">ゲームスタート</button>
+      <p id="login-error" style="color: #ff6b6b; font-size: 13px; text-align: center; margin-top: 15px; height: 13px;"></p>
+    </div>
+  </div>
+  
 <div id="game-container">
   
   <header>
@@ -174,11 +188,22 @@
 
     <!-- 👑 5. 順位タブ -->
     <section id="tab-ranking" class="tab-content">
-      <h2>身内ランキング</h2>
+      <h2>ランキング</h2>
       <div class="panel">
         <p style="font-size:13px; color:#aaa; text-align:center; margin-bottom:15px;">見たいランキングを選んでください</p>
         
         <!-- ランキングボタン一覧 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <!-- 本編系ランキング -->
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="floor" style="font-size:13px; padding:8px; margin:0;">👑 最高到達層</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="totalLv" style="font-size:13px; padding:8px; margin:0;">👑 総特訓レベル</button>
+          
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="str" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #7a2020, #4a0d0d);">💪 STRランキング</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="vit" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #205c7a, #0d314a);">🛡️ VITランキング</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="agi" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #3a7a20, #1d4a0d);">⚡ AGIランキング</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="lck" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #a88820, #5c480b);">🍀 LCKランキング</button>
+          
+          <!-- ミニゲーム系ランキング -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <button class="btn-fantasy btn-show-ranking" data-rank-id="floor" style="font-size:14px; padding:10px; margin:0; width:100%; grid-column: span 2;">👑 最高到達層</button>
           

@@ -20,7 +20,7 @@ let isTimerRunning = false; // ★タイマー稼働フラグ
 let dom = {};
 let onUpdateCallback = null;
 
-export function initRockPush(playerObj) {
+export function initRockPush(playerObj, updateFn) {
   playerRef = playerObj;
   onUpdateCallback = updateUIFn;
   dom = {

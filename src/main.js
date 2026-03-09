@@ -127,19 +127,21 @@ function init() {
   updateTrainingUI();
   updateFloorUI(player.floor);
   setupTabNavigation();
-  player.updateTrainingUI = updateTrainingUI; 
-  initRockPush(player);
 
-  // ◀ ▶ ボタンのイベント設定
+  // ★修正：playerオブジェクトに関数を入れず、第2引数として渡す
+  initRockPush(player, updateTrainingUI); 
+
+  // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
       player.floor--;
       updateFloorUI(player.floor);
     }
   });
+
   document.getElementById('btn-next').addEventListener('click', () => {
-    // 実際にクリアした階層までしか進めないようにする
-    if (player.floor < player.maxClearedFloor) { 
+    // 自分が今までクリアした最高階層（maxClearedFloor）まで移動可能
+    if (player.floor < (player.maxClearedFloor || 1)) {
       player.floor++;
       updateFloorUI(player.floor);
     }
@@ -177,15 +179,17 @@ async function updateFloorUI(floorNum) {
   }
 }
 
-// ⚔️ バトル実行＆アニメーション再生
+// ⚔️ バトル実行
 btnChallenge.addEventListener('click', () => {
   const floorData = generateFloorData(player.floor);
   const result = simulateBattle(player, floorData.enemies);
   
-  // 【修正】logContainer の初期化を削除
   resultText.textContent = '';
   modalBattle.style.display = 'flex';
   btnCloseBattle.style.display = 'none';
+
+  // ★修正：戦闘画面のプレイヤー名をログイン中の名前にセット
+  document.querySelector('.player-char .b-name').textContent = player.name;
 
   let currentFrame = 0;
   let eventIndex = 0;
@@ -385,3 +389,23 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
     rankingList.innerHTML = html;
   });
 });
+
+// ★勝利時の処理を修正（初クリア者の判定）
+async function handleVictory(result, floorNum) {
+  resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
+  resultText.style.color = '#ffd166';
+
+  // 1. 初クリア者（世界で最初の人）かチェックして保存
+  await checkAndSaveFirstClear(player, floorNum, result.clearTime);
+
+  // 2. プレイヤー自身の進行度を更新
+  if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
+    player.maxClearedFloor = floorNum + 1;
+    player.floor = floorNum + 1; // 自動で次の階層へ
+  }
+
+  // 3. Firebaseにセーブ（関数が混じらないように注意）
+  await savePlayerData(player);
+  
+  updateFloorUI(player.floor);
+}

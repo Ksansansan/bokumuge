@@ -254,10 +254,14 @@ btnChallenge.addEventListener('click', () => {
     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
       if (result.isWin) {
-        resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
-        resultText.style.color = '#ffd166';
-        player.floor++; 
-        savePlayerData(player);
+          resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
+          // 未クリアの階層を突破した場合のみ保存
+          if (player.floor >= player.maxClearedFloor) {
+              player.maxClearedFloor = player.floor + 1;
+              saveClearRecord(player, player.floor, result.clearTime);
+          }
+          player.floor++; 
+          savePlayerData(player);
       } else {
         resultText.textContent = `💀 敗北...`;
         resultText.style.color = '#ff6b6b';

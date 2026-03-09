@@ -211,6 +211,12 @@ btnChallenge.addEventListener('click', () => {
 
   // ★修正：戦闘画面のプレイヤー名をログイン中の名前にセット
   document.querySelector('.player-char .b-name').textContent = player.name;
+  
+  // ★戦闘開始時にプレイヤーのステータスをUIにセット
+  document.getElementById('ui-p-name').textContent = player.name;
+  document.getElementById('ui-p-stat-str').textContent = player.str;
+  document.getElementById('ui-p-stat-vit').textContent = player.vit;
+  document.getElementById('ui-p-stat-agi').textContent = player.agi;
 
   let currentFrame = 0;
   let eventIndex = 0;
@@ -235,6 +241,10 @@ btnChallenge.addEventListener('click', () => {
         eMaxHp = ev.enemy.maxHp; eHp = eMaxHp;
         uiE_name.textContent = ev.enemy.name;
         currentEnemyAgi = ev.enemy.agi;
+        // ★敵が切り替わった瞬間に、敵のステータスUIを更新
+        document.getElementById('ui-e-stat-str').textContent = ev.enemy.str;
+        document.getElementById('ui-e-stat-vit').textContent = ev.enemy.vit;
+        document.getElementById('ui-e-stat-agi').textContent = ev.enemy.agi;
         eGaugeVal = 0; 
       }
       else if (ev.type === 'attack') {
@@ -418,28 +428,21 @@ async function handleVictory(result, floorNum) {
   resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
   resultText.style.color = '#ffd166';
 
-  console.log(`[Battle] 第${floorNum}層 勝利。初クリア確認中...`);
-
   try {
-    // 1. 世界初のクリア者かチェックして保存 (firebase.js)
     const isFirst = await checkAndSaveFirstClear(player, floorNum, result.clearTime);
-    if(isFirst) console.log("🌟 あなたがこの階層の初クリア者として記録されました！");
+    if(isFirst) console.log("🌟 初クリア者として記録！");
 
-    // 2. プレイヤー自身の「最高到達階層」を更新
-    // 記録がないか、今の階層が最高記録なら +1
     if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
       player.maxClearedFloor = floorNum + 1;
-      // 自動で次の階層にするのではなく、ユーザーが「次へ」を押せるようにする
+      // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）
     }
 
-    // 3. 全ステータスをFirebaseにセーブ
     await savePlayerData(player);
     
-    // UIを更新（◀▶ボタンの状態を最新にする）
+    // UIを更新（最高到達階層が更新されたので、▶ボタンが押せるようになる）
     updateFloorUI(floorNum); 
     updateStatusUI();
-    
   } catch (err) {
-    console.error("勝利データの保存に失敗しました:", err);
+    console.error(err);
   }
 }

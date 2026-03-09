@@ -14,7 +14,7 @@ const BIOMES =[
   { name: "魔王の居城", mobName: "レッサーデーモン", bossName: "魔王の影", mobDrop: "悪魔の血", bossDrop: "魔王の欠片" }
 ];
 
-const PREFIXES = ["", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[創] ", "[終] "];
+const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
 const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
 
 export function generateFloorData(targetFloor) {
@@ -33,9 +33,9 @@ export function generateFloorData(targetFloor) {
   // 【修正】雑魚に A, B, C などを付ける
   const createMob = (num) => ({
     name: `${biome.mobName} ${String.fromCharCode(64 + num)}`, // 1=A, 2=B, 3=C
-    str: Math.floor(22 * powerMultiplier), 
-    vit: Math.floor(5 * powerMultiplier),  
-    agi: Math.floor(10 * powerMultiplier)
+    str: Math.floor(22 * powerMultiplier + 16 * (floor - 1)), 
+    vit: Math.floor(5 * powerMultiplier + 3.5 * (floor - 1)),  
+    agi: Math.floor(9 * powerMultiplier + 8 * (floor - 1))
   });
 
   // 【修正】ボスに専用の名前を付ける
@@ -43,9 +43,9 @@ export function generateFloorData(targetFloor) {
     createMob(1), createMob(2), createMob(3),
     {
       name: `🔥 ${prefix}${biome.bossName}`,
-      str: Math.floor(35 * powerMultiplier),
-      vit: Math.floor(20 * powerMultiplier),
-      agi: Math.floor(20 * powerMultiplier)
+      str: Math.floor(35 * powerMultiplier + 28 * (floor - 1)),
+      vit: Math.floor(20 * powerMultiplier + 14 * (floor - 1)),
+      agi: Math.floor(18 * powerMultiplier + 16 * (floor - 1))
     }
   ];
 

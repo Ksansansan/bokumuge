@@ -274,17 +274,22 @@ document.getElementById('btn-play-rockpush').addEventListener('click', () => {
 // ==========================================
 function updateTrainingUI() {
   const stats = ['str', 'vit', 'agi', 'lck'];
+  const totalLv = stats.reduce((sum, s) => sum + player.lv[s], 0); // 合計Lv計算
   
   stats.forEach(s => {
     const level = player.lv[s];
     const exp = player.exp[s];
     const nextExp = getRequiredExp(level);
     const progress = (exp / nextExp) * 100;
+    
+    // ★現在の倍率を取得 (minigameCoreから)
+    const mult = getLevelMultiplier(level, totalLv);
 
     // 数値の更新
     document.getElementById(`ui-base-${s}`).textContent = player[s];
     document.getElementById(`ui-lv-${s}`).textContent = level;
     document.getElementById(`ui-exp-txt-${s}`).textContent = `${exp}/${nextExp}`;
+    document.getElementById(`ui-mult-${s}`).textContent = mult.toFixed(2); // 倍率表示
     
     // バーの更新
     const bar = document.getElementById(`ui-exp-bar-${s}`);

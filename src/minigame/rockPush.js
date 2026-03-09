@@ -18,10 +18,11 @@ let timerInterval = null;
 let lastTapTime = 0;
 let isTimerRunning = false; // ★タイマー稼働フラグ
 let dom = {};
+let onUpdateCallback = null;
 
 export function initRockPush(playerObj) {
   playerRef = playerObj;
-  
+  onUpdateCallback = updateUIFn;
   dom = {
     overlay: document.getElementById('modal-rock-push'),
     viewInfo: document.getElementById('rp-view-info'),
@@ -141,6 +142,7 @@ async function finishGame() {
    if (playerRef.updateTrainingUI) {
     playerRef.updateTrainingUI();
   }
+  if (onUpdateCallback) onUpdateCallback();
   // ★ここでFirebaseにセーブ
   await savePlayerData(playerRef);
 

@@ -2,7 +2,7 @@
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
-import { loginOrRegister, savePlayerData, getRankingData, getFastestRecord } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 
 const elStr = document.getElementById('val-str');

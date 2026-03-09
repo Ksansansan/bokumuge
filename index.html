@@ -62,7 +62,7 @@
   #battle-log-container { flex-grow: 1; overflow-y: auto; background: #000; padding: 10px; border: 1px solid #4a3b26; border-radius: 4px; font-size: 12px; color: #ddd; line-height: 1.6; margin-bottom: 15px; }
 /* === バトルGUI用CSS === */
   #battle-gui-container {
-    flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+    flex-grow: 1; display: flex; flex-direction: column; justify-content: space-evenly;
     background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; border-radius: 8px;
     margin-bottom: 15px; padding: 20px; position: relative;
   }
@@ -82,6 +82,7 @@
     position: absolute; color: #ffeb85; font-size: 26px; font-weight: bold;
     text-shadow: 0 0 4px #ff0000, 1px 1px 2px #000;
     animation: floatUp 0.8s forwards; pointer-events: none; z-index: 10;
+    top: 35%; /* ★名前やバーに被らないよう、画面の少し下から発生させる */
   }
   @keyframes floatUp {
     0% { transform: translateY(0) scale(1); opacity: 1; }
@@ -283,10 +284,12 @@
       
       <!-- 中央に大きく配置されるバトル画面 -->
       <div id="battle-gui-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        
+        <!-- 上部：キャラ名とHPバー -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
           <!-- プレイヤー側 -->
           <div class="b-char player-char">
-            <div class="b-name">たかし</div>
+            <div class="b-name" id="ui-p-name">たかし</div>
             <div class="b-hp-box">
               <div class="b-hp-fill" id="ui-p-hp"></div>
               <div class="b-hp-text" id="ui-p-hp-txt">-- / --</div>
@@ -296,7 +299,7 @@
             </div>
           </div>
           
-          <div class="b-vs">VS</div>
+          <div class="b-vs" style="margin-top: 15px;">VS</div>
           
           <!-- 敵側 -->
           <div class="b-char enemy-char">
@@ -308,6 +311,22 @@
             <div class="b-gauge-box">
               <div class="b-gauge-fill" id="ui-e-gauge"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- ★追加：下部ステータス表示 -->
+        <div style="display: flex; justify-content: space-between; width: 100%; border-top: 1px dashed #4a3b26; padding-top: 15px; margin-top: 25px;">
+          <!-- プレイヤー側のステータス -->
+          <div style="width: 45%; font-size: 14px; line-height: 1.6; color: #ccc;">
+            <div style="display:flex; justify-content:space-between;"><span>STR</span><span id="ui-p-stat-str" style="color:#ff6b6b; font-weight:bold;">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>VIT</span><span id="ui-p-stat-vit" style="color:#6be6ff; font-weight:bold;">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>AGI</span><span id="ui-p-stat-agi" style="color:#94ff6b; font-weight:bold;">0</span></div>
+          </div>
+          <!-- 敵側のステータス -->
+          <div style="width: 45%; font-size: 14px; line-height: 1.6; color: #ccc;">
+            <div style="display:flex; justify-content:space-between;"><span id="ui-e-stat-str" style="color:#ff6b6b; font-weight:bold;">0</span><span>STR</span></div>
+            <div style="display:flex; justify-content:space-between;"><span id="ui-e-stat-vit" style="color:#6be6ff; font-weight:bold;">0</span><span>VIT</span></div>
+            <div style="display:flex; justify-content:space-between;"><span id="ui-e-stat-agi" style="color:#94ff6b; font-weight:bold;">0</span><span>AGI</span></div>
           </div>
         </div>
       </div>

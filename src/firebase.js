@@ -116,3 +116,32 @@ export async function saveClearRecord(player, floor, time) {
   };
   await setDoc(doc(db, "records", `floor_${floor}`), data);
 }
+
+// その階層の初クリアデータを取得
+export async function getFirstClearRecord(floor) {
+  const docRef = doc(db, "firstClears", `floor_${floor}`);
+  const snap = await getDoc(docRef);
+  return snap.exists() ? snap.data() : null;
+}
+
+// 初クリア者がいなければ自分を登録する
+export async function checkAndSaveFirstClear(player, floor, time) {
+  const docRef = doc(db, "firstClears", `floor_${floor}`);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) {
+    // まだ誰もクリアしていない場合のみ保存（＝初クリア者）
+    const data = {
+      name: player.name,
+      time: time,
+      str: player.str,
+      vit: player.vit,
+      agi: player.agi,
+      lck: player.lck,
+      timestamp: Date.now()
+    };
+    await setDoc(docRef, data);
+    return true;
+  }
+  return false;
+}

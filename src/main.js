@@ -4,8 +4,6 @@ import { generateFloorData } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData } from './firebase.js';
 
-let player = null;
-
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -34,34 +32,95 @@ const guiContainer = document.getElementById('battle-gui-container');
 // バトルアニメーション用変数
 let animationId = null;
 
+let player = null; // ログイン成功後にデータが入る
+
+// ==========================================
+// 🛡️ 入力チェック（インジェクション対策と文字数制限）
+// ==========================================
+function getByteLength(str) {
+  let count = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    // 半角英数字や半角カナなどは1、それ以外（漢字やひらがな）は2としてカウント
+    if ((c >= 0x0 && c < 0x81) || (c === 0xf8f0) || (c >= 0xff61 && c < 0xffa0) || (c >= 0xf8f1 && c < 0xf8f4)) {
+      count += 1;
+    } else {
+      count += 2;
+    }
+  }
+  return count;
+}
+
+function sanitizeUsername(str) {
+  // FirestoreのドキュメントIDに使えない文字（ / . #[ ] $ ）やHTMLタグ(< >)を削除
+  return str.replace(/[/#\.\[\]\$<>]/g, '').trim();
+}
+
+// ==========================================
+// 👁️ パスワードの表示/非表示トグル
+// ==========================================
+const pinInput = document.getElementById('login-pin');
+const btnTogglePin = document.getElementById('btn-toggle-pin');
+btnTogglePin.addEventListener('click', () => {
+  if (pinInput.type === 'password') {
+    pinInput.type = 'text';
+    btnTogglePin.textContent = '🙈';
+  } else {
+    pinInput.type = 'password';
+    btnTogglePin.textContent = '👁️';
+  }
+});
+
 // ==========================================
 // 🚪 ログイン処理
 // ==========================================
 document.getElementById('btn-login').addEventListener('click', async () => {
-  const username = document.getElementById('login-username').value.trim();
-  const pin = document.getElementById('login-pin').value.trim();
+  const rawUsername = document.getElementById('login-username').value;
+  const pin = pinInput.value;
   const errorEl = document.getElementById('login-error');
+  const btnLogin = document.getElementById('btn-login');
 
-  if (!username || !/^\d{4}$/.test(pin)) {
-    errorEl.textContent = "名前と数字4桁を入力してください";
+  // サニタイズと文字数チェック
+  const username = sanitizeUsername(rawUsername);
+  
+  if (!username) {
+    errorEl.textContent = "ユーザー名を入力してください";
+    return;
+  }
+  if (getByteLength(username) > 12) {
+    errorEl.textContent = "ユーザー名が長すぎます（半角12文字まで）";
+    return;
+  }
+  if (!/^\d{4}$/.test(pin)) {
+    errorEl.textContent = "PINは数字4桁で入力してください";
     return;
   }
 
-  document.getElementById('btn-login').textContent = "通信中...";
-  const res = await loginOrRegister(username, pin);
+  btnLogin.textContent = "通信中...";
+  errorEl.textContent = "";
 
-  if (res.success) {
-    player = res.data;
-    document.getElementById('modal-login').style.display = 'none'; // ログイン画面を消す
-    document.querySelector('.username').textContent = player.name; // ヘッダーの名前更新
-    init(); // ゲーム初期化開始！
-  } else {
-    errorEl.textContent = res.message;
-    document.getElementById('btn-login').textContent = "ゲームスタート";
+  try {
+    const res = await loginOrRegister(username, pin);
+
+    if (res.success) {
+      player = res.data;
+      document.getElementById('modal-login').style.display = 'none'; // ログイン画面を消す
+      document.querySelector('.username').textContent = player.name; // ヘッダーの名前更新
+      init(); // ⚠️ ここで初めてゲームを初期化する！
+    } else {
+      errorEl.textContent = res.message;
+      btnLogin.textContent = "ゲームスタート";
+    }
+  } catch (err) {
+    console.error(err);
+    errorEl.innerHTML = "通信エラーが発生しました。";
+    btnLogin.textContent = "ゲームスタート";
   }
 });
 
-
+// ==========================================
+// 🎮 ゲーム初期化とUI更新
+// ==========================================
 function init() {
   updateStatusUI();
   updateTrainingUI();

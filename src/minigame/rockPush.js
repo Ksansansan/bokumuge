@@ -17,6 +17,7 @@ let remainingTaps = 0;
 let startTime = 0;
 let timerInterval = null;
 let lastTapTime = 0;
+let isTimerRunning = false;
 let dom = {};
 
 export function initRockPush(playerObj) {
@@ -61,6 +62,9 @@ export function initRockPush(playerObj) {
     lastTapTime = now;
 
     if (remainingTaps > 0) {
+      if (!isTimerRunning) {
+        startTimer();
+      }
       remainingTaps--;
       dom.countText.textContent = remainingTaps;
       
@@ -97,12 +101,19 @@ function showView(viewName) {
 function startGame() {
   showView('play');
   remainingTaps = TOTAL_TAPS;
+  isTimerRunning = false; // ★まだ動かさない
   dom.countText.textContent = remainingTaps;
-  dom.timerText.textContent = "0.00";
-  startTime = Date.now();
+  dom.timerText.textContent = "0.00"; // ★待機中表示
+  dom.timerText.style.color = "#ffeb85";
   lastTapTime = 0;
-  
   clearInterval(timerInterval);
+}
+
+// ★タイマー開始ロジックを分離
+function startTimer() {
+  isTimerRunning = true;
+  startTime = Date.now();
+  dom.timerText.style.color = "#5ce6e6";
   timerInterval = setInterval(() => {
     const elapsed = (Date.now() - startTime) / 1000;
     dom.timerText.textContent = elapsed.toFixed(2);

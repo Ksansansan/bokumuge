@@ -32,7 +32,7 @@ export function generateFloorData(targetFloor) {
   const linearBonus = floor - 1; // 階層比例（定数加算）
 
   // 基本となる雑魚のステータス（STRはVITより少し高めに設定）
-  const baseStr = 17 * linearBonus + 24 * powerMultiplier;
+  const baseStr = 14 * linearBonus + 18 * powerMultiplier;
   const baseVit = 9 * linearBonus + 12 * powerMultiplier;
   const baseAgi = 12 * linearBonus + 16 * powerMultiplier;
 
@@ -52,7 +52,7 @@ export function generateFloorData(targetFloor) {
   };
 
   // ボスのステータス (雑魚より一回り強い)
-  const bossStr = 28 * linearBonus + 40 * powerMultiplier;
+  const bossStr = 22.5 * linearBonus + 30 * powerMultiplier;
   const bossVit = 15 * linearBonus + 20 * powerMultiplier;
   const bossAgi = 21 * linearBonus + 26 * powerMultiplier;
 

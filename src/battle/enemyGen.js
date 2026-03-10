@@ -67,7 +67,7 @@ export function generateFloorData(targetFloor) {
   ];
 
   // 推奨ステータス逆算（前回のまま変更なし）
-  const TARGET_FRAMES = 45 * 60; 
+  const TARGET_FRAMES = 30 * 60; 
   const recommendedAgi = enemies[3].agi;
 
   let recommendedStr = enemies[3].vit + 1;

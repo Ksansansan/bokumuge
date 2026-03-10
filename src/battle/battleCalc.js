@@ -27,7 +27,7 @@ export function simulateBattle(player, enemies) {
     timeFrames++;
 
     if (playerGauge >= 1000) {
-      let damage = Math.max(0, player.str - currentEnemy.vit);
+      let damage = Math.max(0, player.str - Math.floor(currentEnemy.vit * 0.5));
       currentEnemy.currentHp -= damage;
       playerGauge -= 1000;
       playerConsecutiveTurns++;
@@ -60,7 +60,7 @@ export function simulateBattle(player, enemies) {
       }
     } 
     else if (enemyGauge >= 1000) {
-      let damage = Math.max(0, currentEnemy.str - player.vit);
+      let damage = Math.max(0, currentEnemy.str - Math.floor(player.vit * 0.5));
       playerHp -= damage;
       enemyGauge -= 1000;
       playerConsecutiveTurns = 0;
@@ -70,7 +70,7 @@ export function simulateBattle(player, enemies) {
       events.push({ frame: timeFrames, type: 'attack', actor: 'enemy', damage: damage, hpRemaining: playerHp });
     }
 
-    if (Math.max(0, player.str - currentEnemy.vit) === 0 && Math.max(0, currentEnemy.str - player.vit) === 0) {
+    if (Math.max(0, player.str - Math.floor(currentEnemy.vit * 0.5)) === 0 && Math.max(0, currentEnemy.str - Math.floor(player.vit * 0.5)) === 0) {
       log.push(`❌ お互いにダメージを与えられないため、戦闘はタイムアップ（敗北）となります。`);
       playerHp = 0;
       break;

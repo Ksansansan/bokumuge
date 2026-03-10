@@ -1,7 +1,7 @@
 // src/battle/enemyGen.js
 
 // mobName と bossName を追加
-const BIOMES =[
+export const BIOMES =[
   { name: "始まりの草原", mobName: "スライム", bossName: "ゴブリン王", mobDrop: "スライムの粘液", bossDrop: "ゴブリン王の王冠" },
   { name: "暗い洞窟", mobName: "大コウモリ", bossName: "ロックゴーレム", mobDrop: "コウモリの羽", bossDrop: "岩魔像の核" },
   { name: "迷いの森", mobName: "トレント", bossName: "ジャイアントスパイダー", mobDrop: "トレントの枝", bossDrop: "大蜘蛛の毒牙" },
@@ -14,8 +14,8 @@ const BIOMES =[
   { name: "魔王の居城", mobName: "レッサーデーモン", bossName: "魔王の影", mobDrop: "悪魔の血", bossDrop: "魔王の欠片" }
 ];
 
-const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
-const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
+export const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
+export const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
 
 // 図鑑ボーナス用の属性を取得する関数
 export function getDropStatType(floor, isBoss) {

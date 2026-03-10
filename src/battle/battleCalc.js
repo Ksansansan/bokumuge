@@ -76,8 +76,8 @@ export function simulateBattle(player, enemies) {
       break;
     }
     
-    if (timeFrames > 10800) {
-      log.push(`❌ 制限時間（3分）を超えたためタイムアップ（敗北）です。`);
+    if (timeFrames > 5400) {
+      log.push(`❌ 制限時間（1分半）を超えたためタイムアップ（敗北）です。`);
       playerHp = 0;
       break;
     }

@@ -54,7 +54,7 @@ export function generateFloorData(targetFloor) {
   // ボスのステータス (雑魚より一回り強い)
   const bossStr = 18 * linearBonus + 24 * powerMultiplier;
   const bossVit = 22.5 * linearBonus + 30 * powerMultiplier;
-  const bossAgi = 21 * linearBonus + 26 * powerMultiplier;
+  const bossAgi = 20 * linearBonus + 26 * powerMultiplier;
 
   const enemies =[
     createMob(1), createMob(2), createMob(3),

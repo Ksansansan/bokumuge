@@ -34,7 +34,7 @@ export async function loginOrRegister(username, pin) {
       name: username,
       pin: pin,
       str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1,
+      floor: 1,maxClearedFloor: 1, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 },
       lv:  { str: 1, vit: 1, agi: 1, lck: 1 },
       totalLv: 4

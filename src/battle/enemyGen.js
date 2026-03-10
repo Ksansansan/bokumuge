@@ -17,6 +17,13 @@ const BIOMES =[
 const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
 const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
 
+// 図鑑ボーナス用の属性を取得する関数
+export function getDropStatType(floor, isBoss) {
+  if (isBoss) return "ALL";
+  const g = Math.ceil(floor / 5);
+  const types =["STR", "VIT", "AGI", "LCK"];
+  return types[(g - 1) % 4];
+}
 export function generateFloorData(targetFloor) {
   const floor = Math.min(targetFloor, MAX_FLOOR);
   
@@ -103,11 +110,11 @@ export function generateFloorData(targetFloor) {
   }
 
   return {
-    floor, isMaxFloor: floor >= MAX_FLOOR, stageName,
+    floor, isMaxFloor: floor >= MAX_FLOOR, stageName, biome,
     recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi }, enemies,
     drops:[
       { name: "装備ガチャチケット", prob: 100, isCollection: false },
-      { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: 30, isCollection: true }
+      { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: subLevel === 5 ? 30 : 20, isCollection: true }
     ]
   };
 }

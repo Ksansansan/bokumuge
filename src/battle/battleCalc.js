@@ -3,6 +3,7 @@
 export function simulateBattle(player, enemies) {
   let log = [];
   let events =[]; // UI描画用のイベント履歴
+  let drops =[];
   let currentEnemyIndex = 0;
   
   let currentEnemy = { 
@@ -37,7 +38,14 @@ export function simulateBattle(player, enemies) {
       events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
       
       if (currentEnemy.currentHp <= 0) {
-        log.push(`▶ ${currentEnemy.name} を撃破！`);
+        // ★ドロップ抽選
+        if (currentEnemyIndex < 3) {
+          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+        } else {
+          drops.push({ name: "装備ガチャチケット", type: 'gacha' });
+          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
+        }
+
         currentEnemyIndex++;
         if (currentEnemyIndex < enemies.length) {
           currentEnemy = { 
@@ -93,9 +101,9 @@ export function simulateBattle(player, enemies) {
   return {
     isWin: playerHp > 0 && currentEnemyIndex >= enemies.length,
     clearTime: formatTime(timeFrames),
-    totalFrames: timeFrames, // アニメーション終了時間用に追加
+    totalFrames: timeFrames,
     remainingHp: playerHp,
-    log,
+    drops: drops, // ドロップ情報を返す
     events
   };
 }

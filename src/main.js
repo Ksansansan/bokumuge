@@ -1,6 +1,6 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
-import { generateFloorData } from './battle/enemyGen.js';
+import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
@@ -34,6 +34,50 @@ const guiContainer = document.getElementById('battle-gui-container');
 let animationId = null;
 
 let player = null; // ログイン成功後にデータが入る
+
+// ★インフレ対応：数値をK, M, Bにする関数
+export function formatNumber(num) {
+  if (num < 1000) return Math.floor(num).toString();
+  const suffixes =["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+  const exponent = Math.floor(Math.log10(num) / 3);
+  const suffix = suffixes[exponent] || "";
+  const shortValue = num / Math.pow(10, exponent * 3);
+  return shortValue.toFixed(3) + suffix;
+}
+
+// ★図鑑のランクを取得する関数
+function getCollectionRank(count) {
+  if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b" };
+  if (count >= 27) return { rank: 4, name: "金", color: "#ffd700" };
+  if (count >= 9) return { rank: 3, name: "銀", color: "#c0c0c0" };
+  if (count >= 3) return { rank: 2, name: "銅", color: "#cd7f32" };
+  if (count >= 1) return { rank: 1, name: "木", color: "#8c7a65" };
+  return { rank: 0, name: "未取得", color: "#555" };
+}
+
+// ★戦闘用に「バフ込みのステータス」を計算する関数
+function getBattleStats(p) {
+  let bonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
+  
+  // 図鑑バフの計算（最高到達階層までのアイテムをチェック）
+  for (let f = 1; f <= (p.maxClearedFloor || 1); f += 5) {
+    const floorData = generateFloorData(f);
+    const g = Math.ceil(f / 5);
+    
+    const mobCount = p.inventory?.[floorData.biome.mobDrop] || 0;
+    bonuses[getDropStatType(f, false)] += g * getCollectionRank(mobCount).rank;
+
+    const bossCount = p.inventory?.[floorData.biome.bossDrop] || 0;
+    bonuses['ALL'] += g * getCollectionRank(bossCount).rank;
+  }
+
+  return {
+    str: Math.floor(p.str * (1 + (bonuses.STR + bonuses.ALL) / 100)),
+    vit: Math.floor(p.vit * (1 + (bonuses.VIT + bonuses.ALL) / 100)),
+    agi: Math.floor(p.agi * (1 + (bonuses.AGI + bonuses.ALL) / 100)),
+    lck: Math.floor(p.lck * (1 + (bonuses.LCK + bonuses.ALL) / 100))
+  };
+}
 
 // ==========================================
 // 🛡️ 入力チェック（インジェクション対策と文字数制限）
@@ -126,8 +170,8 @@ function init() {
   updateStatusUI();
   updateTrainingUI();
   updateFloorUI(player.floor);
+  updateCollectionUI();
   setupTabNavigation();
-
   // ★修正：playerオブジェクトに関数を入れず、第2引数として渡す
   initRockPush(player, updateTrainingUI); 
 
@@ -149,10 +193,11 @@ function init() {
 }
 
 function updateStatusUI() {
-  elStr.textContent = player.str;
-  elVit.textContent = player.vit;
-  elAgi.textContent = player.agi;
-  elLck.textContent = player.lck;
+  const battleStats = getBattleStats(player);
+  document.getElementById('val-str').textContent = formatNumber(battleStats.str);
+  document.getElementById('val-vit').textContent = formatNumber(battleStats.vit);
+  document.getElementById('val-agi').textContent = formatNumber(battleStats.agi);
+  document.getElementById('val-lck').textContent = formatNumber(battleStats.lck);
 }
 
 // 階層UI更新関数（Firebaseから初クリア者を取得して表示）
@@ -200,115 +245,115 @@ async function updateFloorUI(floorNum) {
     recordEl.innerHTML = "💡 記録の読み込みに失敗しました。";
   }
 }
-// ⚔️ バトル実行
+// --- ⚔️ バトル実行 ---
 btnChallenge.addEventListener('click', () => {
   const floorData = generateFloorData(player.floor);
-  const result = simulateBattle(player, floorData.enemies);
+  // ★戦闘には「バフ込みステータス」を渡す
+  const battleStats = getBattleStats(player);
+  const result = simulateBattle(battleStats, floorData);
   
   resultText.textContent = '';
+  document.getElementById('battle-drop-result').style.display = 'none';
   modalBattle.style.display = 'flex';
   btnCloseBattle.style.display = 'none';
 
-  // ★修正：戦闘画面のプレイヤー名をログイン中の名前にセット
-  document.querySelector('.player-char .b-name').textContent = player.name;
-  
-  // ★戦闘開始時にプレイヤーのステータスをUIにセット
   document.getElementById('ui-p-name').textContent = player.name;
-  document.getElementById('ui-p-stat-str').textContent = player.str;
-  document.getElementById('ui-p-stat-vit').textContent = player.vit;
-  document.getElementById('ui-p-stat-agi').textContent = player.agi;
+  document.getElementById('ui-p-stat-str').textContent = formatNumber(battleStats.str);
+  document.getElementById('ui-p-stat-vit').textContent = formatNumber(battleStats.vit);
+  document.getElementById('ui-p-stat-agi').textContent = formatNumber(battleStats.agi);
 
-  let currentFrame = 0;
-  let eventIndex = 0;
+  // 初回の敵ステータスをすぐにセット（Aのステータス更新バグ対策）
+  document.getElementById('ui-e-stat-str').textContent = formatNumber(floorData.enemies[0].str);
+  document.getElementById('ui-e-stat-vit').textContent = formatNumber(floorData.enemies[0].vit);
+  document.getElementById('ui-e-stat-agi').textContent = formatNumber(floorData.enemies[0].agi);
+
+  let currentFrame = 0, eventIndex = 0;
   let pMaxHp = 1, pHp = 1, eMaxHp = 1, eHp = 1;
-  let pGaugeVal = 0, eGaugeVal = 0;
-  let currentEnemyAgi = 0;
+  let pGaugeVal = 0, eGaugeVal = 0, currentEnemyAgi = 0;
   
+  const timerBar = document.getElementById('battle-timer-bar');
+  const timerText = document.getElementById('battle-timer-text');
+
   function renderLoop() {
-    const speed = 1; 
+    const speed = 2; 
     currentFrame += speed;
+
+    // タイマーの更新（90秒＝5400F）
+    const elapsedSec = currentFrame / 60;
+    timerText.textContent = elapsedSec.toFixed(2);
+    timerBar.style.width = `${Math.max(0, 100 - (elapsedSec / 90) * 100)}%`;
 
     while (eventIndex < result.events.length && result.events[eventIndex].frame <= currentFrame) {
       const ev = result.events[eventIndex];
       
-      if (ev.type === 'start') {
-        pMaxHp = ev.playerMaxHp; pHp = pMaxHp;
+      if (ev.type === 'start' || ev.type === 'next_enemy') {
+        if(ev.type === 'start') { pMaxHp = ev.playerMaxHp; pHp = pMaxHp; } else { eGaugeVal = 0; }
         eMaxHp = ev.enemy.maxHp; eHp = eMaxHp;
-        uiE_name.textContent = ev.enemy.name;
+        document.getElementById('ui-e-name').textContent = ev.enemy.name;
         currentEnemyAgi = ev.enemy.agi;
+        
+        document.getElementById('ui-e-stat-str').textContent = formatNumber(ev.enemy.str);
+        document.getElementById('ui-e-stat-vit').textContent = formatNumber(ev.enemy.vit);
+        document.getElementById('ui-e-stat-agi').textContent = formatNumber(ev.enemy.agi);
       } 
-      else if (ev.type === 'next_enemy') {
-        eMaxHp = ev.enemy.maxHp; eHp = eMaxHp;
-        uiE_name.textContent = ev.enemy.name;
-        currentEnemyAgi = ev.enemy.agi;
-        // ★敵が切り替わった瞬間に、敵のステータスUIを更新
-        document.getElementById('ui-e-stat-str').textContent = ev.enemy.str;
-        document.getElementById('ui-e-stat-vit').textContent = ev.enemy.vit;
-        document.getElementById('ui-e-stat-agi').textContent = ev.enemy.agi;
-        eGaugeVal = 0; 
-      }
       else if (ev.type === 'attack') {
-        // ダメージポップアップの生成
         const dmgText = document.createElement('div');
         dmgText.className = 'dmg-popup';
-        dmgText.textContent = ev.damage;
-        
-        if(ev.actor === 'player') {
-          dmgText.style.right = '20%'; 
-          eHp = ev.hpRemaining;
-          pGaugeVal = 0; 
-        } else {
-          dmgText.style.left = '20%';
-          pHp = ev.hpRemaining;
-          eGaugeVal = 0;
-        }
-        guiContainer.appendChild(dmgText);
+        dmgText.textContent = formatNumber(ev.damage);
+        if(ev.actor === 'player') { dmgText.style.right = '20%'; eHp = ev.hpRemaining; pGaugeVal = 0; } 
+        else { dmgText.style.left = '20%'; pHp = ev.hpRemaining; eGaugeVal = 0; }
+        document.getElementById('battle-gui-container').appendChild(dmgText);
         setTimeout(() => dmgText.remove(), 800);
-        
-        // 【修正】文字ログ出力部分を削除
       }
-      else if (ev.type === 'stopper') {
-        eGaugeVal = 1000; 
-      }
+      else if (ev.type === 'stopper') { eGaugeVal = 1000; }
       eventIndex++;
     }
 
-    pGaugeVal += player.agi * speed;
+    pGaugeVal += battleStats.agi * speed;
     eGaugeVal += currentEnemyAgi * speed;
     if(pGaugeVal > 1000) pGaugeVal = 1000;
     if(eGaugeVal > 1000) eGaugeVal = 1000;
 
-    uiP_hp.style.width = `${Math.max(0, (pHp / pMaxHp) * 100)}%`;
-    uiP_hpTxt.textContent = `${Math.max(0, pHp)} / ${pMaxHp}`;
-    uiP_gauge.style.width = `${(pGaugeVal / 1000) * 100}%`;
+    document.getElementById('ui-p-hp').style.width = `${Math.max(0, (pHp / pMaxHp) * 100)}%`;
+    document.getElementById('ui-p-hp-txt').textContent = `${formatNumber(Math.max(0, pHp))} / ${formatNumber(pMaxHp)}`;
+    document.getElementById('ui-p-gauge').style.width = `${(pGaugeVal / 1000) * 100}%`;
 
-    uiE_hp.style.width = `${Math.max(0, (eHp / eMaxHp) * 100)}%`;
-    uiE_hpTxt.textContent = `${Math.max(0, eHp)} / ${eMaxHp}`;
-    uiE_gauge.style.width = `${(eGaugeVal / 1000) * 100}%`;
+    document.getElementById('ui-e-hp').style.width = `${Math.max(0, (eHp / eMaxHp) * 100)}%`;
+    document.getElementById('ui-e-hp-txt').textContent = `${formatNumber(Math.max(0, eHp))} / ${formatNumber(eMaxHp)}`;
+    document.getElementById('ui-e-gauge').style.width = `${(eGaugeVal / 1000) * 100}%`;
 
     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
+
+      // ★ドロップ結果の表示とインベントリ追加
+      if (result.drops.length > 0) {
+        if(!player.inventory) player.inventory = {};
+        const dropListEl = document.getElementById('battle-drop-list');
+        dropListEl.innerHTML = '';
+        
+        result.drops.forEach(d => {
+          player.inventory[d.name] = (player.inventory[d.name] || 0) + 1;
+          const li = document.createElement('li');
+          li.textContent = `${d.name} を獲得！`;
+          li.style.color = d.type === 'boss' ? '#ffd166' : '#fff';
+          dropListEl.appendChild(li);
+        });
+        document.getElementById('battle-drop-result').style.display = 'block';
+      }
+
       if (result.isWin) {
-          resultText.textContent = `🎉 勝利！ タイム: ${result.clearTime}`;
-         handleVictory(result, floorData.floor); 
-          // 未クリアの階層を突破した場合のみ保存
-          if (player.floor >= player.maxClearedFloor) {
-              player.maxClearedFloor = player.floor + 1;
-              saveClearRecord(player, player.floor, result.clearTime);
-          }
-          player.floor++; 
-          savePlayerData(player);
+        handleVictory(result, floorData.floor); 
       } else {
         resultText.textContent = `💀 敗北...`;
         resultText.style.color = '#ff6b6b';
+        savePlayerData(player); // 負けてもドロップは保存
+        updateCollectionUI();
       }
       cancelAnimationFrame(animationId);
       return;
     }
-
     animationId = requestAnimationFrame(renderLoop);
   }
-
   animationId = requestAnimationFrame(renderLoop);
 });
 
@@ -444,5 +489,43 @@ async function handleVictory(result, floorNum) {
     updateStatusUI();
   } catch (err) {
     console.error(err);
+  }
+}
+
+// --- 📖 図鑑UI更新関数 ---
+function updateCollectionUI() {
+  const container = document.getElementById('collection-list-container');
+  container.innerHTML = '';
+
+  for (let f = 1; f <= (player.maxClearedFloor || 1); f += 5) {
+    const floorData = generateFloorData(f);
+    const g = Math.ceil(f / 5);
+    const statType = getDropStatType(f, false);
+
+    // 雑魚ドロップパネル
+    const mobCount = player.inventory?.[floorData.biome.mobDrop] || 0;
+    const mobRank = getCollectionRank(mobCount);
+    container.innerHTML += `
+      <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 16px; color:${mobRank.color};">${floorData.biome.mobDrop} [${mobRank.name}]</strong>
+          <span style="color:#aaa; font-size:12px;">所持: ${mobCount}個</span>
+        </div>
+        <div style="font-size: 13px; color: #5ce6e6; font-weight:bold; margin: 4px 0;">効果: ${statType} +${g * mobRank.rank}%</div>
+      </div>
+    `;
+
+    // ボスドロップパネル
+    const bossCount = player.inventory?.[floorData.biome.bossDrop] || 0;
+    const bossRank = getCollectionRank(bossCount);
+    container.innerHTML += `
+      <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 16px; color:${bossRank.color};">${floorData.biome.bossDrop} [${bossRank.name}]</strong>
+          <span style="color:#aaa; font-size:12px;">所持: ${bossCount}個</span>
+        </div>
+        <div style="font-size: 13px; color: #ffd166; font-weight:bold; margin: 4px 0;">効果: 全ステータス +${g * bossRank.rank}%</div>
+      </div>
+    `;
   }
 }

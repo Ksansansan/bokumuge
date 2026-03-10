@@ -1,9 +1,10 @@
 // src/battle/battleCalc.js
 
-export function simulateBattle(player, enemies) {
-  let log = [];
-  let events =[]; // UI描画用のイベント履歴
-  let drops =[];
+export function simulateBattle(player, floorData) {
+  const enemies = floorData.enemies;
+  let log =[];
+  let events = [];
+  let drops =[]; // ドロップアイテム格納用
   let currentEnemyIndex = 0;
   
   let currentEnemy = { 

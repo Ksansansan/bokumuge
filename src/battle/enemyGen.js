@@ -33,7 +33,7 @@ export function generateFloorData(targetFloor) {
 
   // 基本となる雑魚のステータス（STRはVITより少し高めに設定） （ボスの半分）
   const baseStr = 9 * linearBonus + 12 * powerMultiplier;
-  const baseVit = 13 * linearBonus + 17.5 * powerMultiplier;
+  const baseVit = 12 * linearBonus + 16 * powerMultiplier;
   const baseAgi = 10 * linearBonus + 13 * powerMultiplier;
 
   const createMob = (num) => {
@@ -53,7 +53,7 @@ export function generateFloorData(targetFloor) {
 
   // ボスのステータス (雑魚より一回り強い)
   const bossStr = 18 * linearBonus + 24 * powerMultiplier;
-  const bossVit = 26 * linearBonus + 35 * powerMultiplier;
+  const bossVit = 24 * linearBonus + 32 * powerMultiplier;
   const bossAgi = 20 * linearBonus + 26 * powerMultiplier;
 
   const enemies =[

@@ -74,7 +74,7 @@ export function generateFloorData(targetFloor) {
   while (true) {
     let requiredFrames = 0;
     for (const enemy of enemies) {
-      const dmg = Math.max(1, recommendedStr - enemy.vit * 0.5);
+      const dmg = Math.max(1, recommendedStr - enemy.vit * 0.2);
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmg);
       requiredFrames += hitsNeeded * (1000 / recommendedAgi);
@@ -88,12 +88,12 @@ export function generateFloorData(targetFloor) {
     let playerHp = recommendedVit * 10;
     let isSurvived = true;
     for (const enemy of enemies) {
-      const dmgToEnemy = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.5));
+      const dmgToEnemy = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.2));
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmgToEnemy);
       const framesAlive = hitsNeeded * (1000 / recommendedAgi);
       const enemyAttacks = Math.floor(framesAlive * enemy.agi / 1000);
-      const dmgFromEnemy = Math.max(0, enemy.str - Math.floor(recommendedVit * 0.5));
+      const dmgFromEnemy = Math.max(0, enemy.str - Math.floor(recommendedVit * 0.2));
       
       playerHp -= (enemyAttacks * dmgFromEnemy);
       if (playerHp <= 0) { isSurvived = false; break; }

@@ -210,9 +210,9 @@ async function updateFloorUI(floorNum) {
   // --- 推奨ステータスの色分け ---
   const rec = floorData.recommended;
   document.getElementById('rec-stats').innerHTML = `
-    推奨: <span style="color:#ff6b6b;">STR ${rec.str}</span> / 
-    <span style="color:#6be6ff;">VIT ${rec.vit}</span> / 
-    <span style="color:#94ff6b;">AGI ${rec.agi}</span>
+    推奨: <span style="color:#ff6b6b;">STR ${formatNumber(rec.str)}</span> / 
+    <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
+    <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
   `;
   
   // ◀ ▶ ボタン制御
@@ -232,10 +232,10 @@ async function updateFloorUI(floorNum) {
         <div style="margin-bottom:5px;">💡 <span class="highlight-text" style="color:#5ce6e6; font-size:18px;">${record.name}</span> が初クリア！</div>
         <div style="font-size:13px; color:#fff;">
           タイム: <span style="color:#ffeb85;">${record.time}</span> / 
-          <span style="color:#ff6b6b;">STR ${record.str}</span> / 
-          <span style="color:#6be6ff;">VIT ${record.vit}</span> / 
-          <span style="color:#94ff6b;">AGI ${record.agi}</span> / 
-          <span style="color:#ffd166;">LCK ${record.lck || 0}</span>
+          <span style="color:#ff6b6b;">STR ${formatNumber(record.str)}</span> / 
+          <span style="color:#6be6ff;">VIT ${formatNumber(record.vit)}</span> / 
+          <span style="color:#94ff6b;">AGI ${formatNumber(record.agi)}</span> / 
+          <span style="color:#ffd166;">LCK ${formatNumber(record.lck)}</span>
         </div>
       `;
     } else {

@@ -14,8 +14,8 @@ export const BIOMES =[
   { name: "魔王の居城", mobName: "レッサーデーモン", bossName: "魔王の影", mobDrop: "悪魔の血", bossDrop: "魔王の欠片" }
 ];
 
-export const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
-export const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
+const PREFIXES = ["", "[激] ", "[凶] ", "[狂] ", "[絶] ", "[神] ", "[魔] ", "[獄] ", "[滅] ", "[天] "];
+const MAX_FLOOR = BIOMES.length * 5 * PREFIXES.length;
 
 // 図鑑ボーナス用の属性を取得する関数
 export function getDropStatType(floor, isBoss) {

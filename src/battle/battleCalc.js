@@ -7,11 +7,11 @@ export function simulateBattle(player, enemies) {
   
   let currentEnemy = { 
     ...enemies[currentEnemyIndex], 
-    maxHp: enemies[currentEnemyIndex].vit * 5,
-    currentHp: enemies[currentEnemyIndex].vit * 5 
+    maxHp: enemies[currentEnemyIndex].vit * 10,
+    currentHp: enemies[currentEnemyIndex].vit * 10 
   };
   
-  let playerMaxHp = player.vit * 5;
+  let playerMaxHp = player.vit * 10;
   let playerHp = playerMaxHp; 
   let playerGauge = 0;
   let enemyGauge = 0;
@@ -42,8 +42,8 @@ export function simulateBattle(player, enemies) {
         if (currentEnemyIndex < enemies.length) {
           currentEnemy = { 
             ...enemies[currentEnemyIndex], 
-            maxHp: enemies[currentEnemyIndex].vit * 5,
-            currentHp: enemies[currentEnemyIndex].vit * 5 
+            maxHp: enemies[currentEnemyIndex].vit * 10,
+            currentHp: enemies[currentEnemyIndex].vit * 10 
           };
           enemyGauge = 0;
           playerConsecutiveTurns = 0;

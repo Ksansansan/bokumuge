@@ -224,10 +224,24 @@
       <h2>武具・ガチャ</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
     </section>
 
-    <!-- 📖 4. 図鑑タブ (ガワのみ) -->
+    <!-- 📖 4. 図鑑タブ -->
     <section id="tab-collection" class="tab-content">
       <h2>ドロップ図鑑</h2>
       <p style="font-size:12px; color:#aaa; text-align:center;">敵を倒して図鑑を埋め、強力なステータス補正を得よう！</p>
+
+      <!-- ★追加：合計ステータス上昇量パネル -->
+      <div id="collection-total-summary" class="panel" style="background: rgba(196, 154, 69, 0.1); border: 1px solid #c49a45; padding: 10px; margin-bottom: 15px;">
+        <div style="text-align: center; font-size: 13px; color: #c49a45; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(196, 154, 69, 0.3); padding-bottom: 5px;">
+          ✨ 現在の図鑑バフ合計値
+        </div>
+        <div style="display: flex; justify-content: space-around; text-align: center;">
+          <div><div style="color:#ff6b6b; font-size:11px;">STR</div><div id="total-buff-str" style="font-size:16px; font-weight:bold;">+0%</div></div>
+          <div><div style="color:#6be6ff; font-size:11px;">VIT</div><div id="total-buff-vit" style="font-size:16px; font-weight:bold;">+0%</div></div>
+          <div><div style="color:#94ff6b; font-size:11px;">AGI</div><div id="total-buff-agi" style="font-size:16px; font-weight:bold;">+0%</div></div>
+          <div><div style="color:#ffd166; font-size:11px;">LCK</div><div id="total-buff-lck" style="font-size:16px; font-weight:bold;">+0%</div></div>
+        </div>
+      </div>
+      
       <div id="collection-list-container">
         <p style="text-align:center; color:#555;">読み込み中...</p>
       </div>

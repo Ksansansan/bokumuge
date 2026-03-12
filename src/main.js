@@ -507,6 +507,7 @@ function updateCollectionUI() {
   container.innerHTML = '';
 
   let totalCollected = 0;
+  let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
   const rankThresholds = [0, 1, 3, 9, 27, 81, Infinity];
   for (let f = 1; f <= (player.maxClearedFloor || 1); f += 5) {
     const floorData = generateFloorData(f);
@@ -522,7 +523,15 @@ function updateCollectionUI() {
       const count = player.inventory?.[item.name] || 0;
       totalCollected += count;
       const rankInfo = getCollectionRank(count);
-      
+      const buffValue = g * rankInfo.rank;
+
+      // ★合計バフへの加算
+      if (item.type === 'boss') {
+        totalBonuses.ALL += buffValue;
+      } else {
+        totalBonuses[statType] += buffValue;
+      }
+
       // 次のランクの閾値
       const nextIdx = rankInfo.rank + 1;
       const nextGoal = rankThresholds[nextIdx];
@@ -547,5 +556,12 @@ function updateCollectionUI() {
         `;
       });
     }
+    
+    // ★追加：サマリーパネルの数値を更新
+    document.getElementById('total-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
+    document.getElementById('total-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
+    document.getElementById('total-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
+    document.getElementById('total-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
+    
     player.collectionCount = totalCollected; // 保存用
   }

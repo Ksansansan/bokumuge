@@ -45,8 +45,8 @@ export function simulateBattle(player, floorData) {
             rawDrops.push({ name: floorData.biome.mobDrop, type: 'mob' });
           }
         } else {
-          drops.push({ name: "装備ガチャチケット", type: 'gacha' });
-          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
+          rawDrops.push({ name: "装備ガチャチケット", type: 'gacha' });
+          if (Math.random() < 0.30) rawDrops.push({ name: floorData.biome.bossDrop, type: 'boss' });
         }
 
         currentEnemyIndex++;

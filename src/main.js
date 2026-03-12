@@ -214,7 +214,13 @@ async function updateFloorUI(floorNum) {
     <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
     <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
   `;
-  
+  // ★【重要】ドロップ情報の表示
+  const dropList = document.getElementById('drop-list');
+  dropList.innerHTML = `
+    <li>装備ガチャチケット (ボス100%)</li>
+    <li>${floorData.biome.mobDrop} [図鑑] (雑魚20%)</li>
+    <li>${floorData.biome.bossDrop} [図鑑] (ボス30%)</li>
+  `;
   // ◀ ▶ ボタン制御
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
@@ -332,13 +338,14 @@ btnChallenge.addEventListener('click', () => {
         dropListEl.innerHTML = '';
         
         result.drops.forEach(d => {
-          player.inventory[d.name] = (player.inventory[d.name] || 0) + 1;
+          player.inventory[d.name] = (player.inventory[d.name] || 0) + d.count;
           const li = document.createElement('li');
-          li.textContent = `${d.name} を獲得！`;
-          li.style.color = d.type === 'boss' ? '#ffd166' : '#fff';
+          // ★ x2 などの表示を追加
+          li.innerHTML = `<span style="color:${d.type==='boss'?'#ffd166':'#fff'}">${d.name}</span> <span style="color:#5ce6e6; font-weight:bold;">x${d.count}</span> を獲得！`;
           dropListEl.appendChild(li);
         });
         document.getElementById('battle-drop-result').style.display = 'block';
+        updateCollectionUI(); // ★リザルトが出た瞬間に図鑑を裏で更新
       }
 
       if (result.isWin) {
@@ -487,6 +494,7 @@ async function handleVictory(result, floorNum) {
     // UIを更新（最高到達階層が更新されたので、▶ボタンが押せるようになる）
     updateFloorUI(floorNum); 
     updateStatusUI();
+    updateCollectionUI();
   } catch (err) {
     console.error(err);
   }
@@ -495,37 +503,49 @@ async function handleVictory(result, floorNum) {
 // --- 📖 図鑑UI更新関数 ---
 function updateCollectionUI() {
   const container = document.getElementById('collection-list-container');
+  if (!container) return;
   container.innerHTML = '';
 
+  let totalCollected = 0;
+  const rankThresholds = [0, 1, 3, 9, 27, 81, Infinity];
   for (let f = 1; f <= (player.maxClearedFloor || 1); f += 5) {
     const floorData = generateFloorData(f);
     const g = Math.ceil(f / 5);
     const statType = getDropStatType(f, false);
 
-    // 雑魚ドロップパネル
-    const mobCount = player.inventory?.[floorData.biome.mobDrop] || 0;
-    const mobRank = getCollectionRank(mobCount);
-    container.innerHTML += `
-      <div class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong style="font-size: 16px; color:${mobRank.color};">${floorData.biome.mobDrop} [${mobRank.name}]</strong>
-          <span style="color:#aaa; font-size:12px;">所持: ${mobCount}個</span>
-        </div>
-        <div style="font-size: 13px; color: #5ce6e6; font-weight:bold; margin: 4px 0;">効果: ${statType} +${g * mobRank.rank}%</div>
-      </div>
-    `;
+    const items = [
+      { name: floorData.biome.mobDrop, type: 'mob', color: '#5ce6e6' },
+      { name: floorData.biome.bossDrop, type: 'boss', color: '#ffd166' }
+    ];
 
-    // ボスドロップパネル
-    const bossCount = player.inventory?.[floorData.biome.bossDrop] || 0;
-    const bossRank = getCollectionRank(bossCount);
-    container.innerHTML += `
-      <div class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong style="font-size: 16px; color:${bossRank.color};">${floorData.biome.bossDrop} [${bossRank.name}]</strong>
-          <span style="color:#aaa; font-size:12px;">所持: ${bossCount}個</span>
-        </div>
-        <div style="font-size: 13px; color: #ffd166; font-weight:bold; margin: 4px 0;">効果: 全ステータス +${g * bossRank.rank}%</div>
-      </div>
-    `;
+    items.forEach(item => {
+      const count = player.inventory?.[item.name] || 0;
+      totalCollected += count;
+      const rankInfo = getCollectionRank(count);
+      
+      // 次のランクの閾値
+      const nextIdx = rankInfo.rank + 1;
+      const nextGoal = rankThresholds[nextIdx];
+      const goalText = nextGoal === Infinity ? "MAX" : `${count}/${nextGoal}`;
+      const progress = nextGoal === Infinity ? 100 : (count / nextGoal) * 100;
+
+      container.innerHTML += `
+          <div class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="font-size: 16px; color:${rankInfo.color};">${item.name} [${rankInfo.name}]</strong>
+              <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
+            </div>
+            <div style="font-size: 12px; color: ${item.color}; margin: 4px 0;">
+              効果: ${item.type === 'boss' ? '全ステータス' : statType} +${g * rankInfo.rank}%
+            </div>
+            <!-- 進捗バー -->
+            <div style="background: #111; border: 1px solid #4a3b26; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
+              <div style="background: ${rankInfo.color}; width: ${progress}%; height: 100%;"></div>
+            </div>
+            <div style="text-align: right; font-size: 10px; color: #aaa; margin-top: 2px;">次ランクまで: ${goalText}</div>
+          </div>
+        `;
+      });
+    }
+    player.collectionCount = totalCollected; // 保存用
   }
-}

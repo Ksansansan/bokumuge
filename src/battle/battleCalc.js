@@ -4,7 +4,7 @@ export function simulateBattle(player, floorData) {
   const enemies = floorData.enemies;
   let log =[];
   let events = [];
-  let drops =[]; // ドロップアイテム格納用
+  let rawDrops = [];
   let currentEnemyIndex = 0;
   
   let currentEnemy = { 
@@ -41,7 +41,9 @@ export function simulateBattle(player, floorData) {
       if (currentEnemy.currentHp <= 0) {
         // ★ドロップ抽選
         if (currentEnemyIndex < 3) {
-          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+          if (Math.random() < 0.20) {
+            rawDrops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+          }
         } else {
           drops.push({ name: "装備ガチャチケット", type: 'gacha' });
           if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
@@ -99,12 +101,22 @@ export function simulateBattle(player, floorData) {
     return `${m}:${s}`;
   };
 
+   const aggregatedDrops = [];
+  rawDrops.forEach(d => {
+    const existing = aggregatedDrops.find(x => x.name === d.name);
+    if (existing) {
+      existing.count++;
+    } else {
+      aggregatedDrops.push({ ...d, count: 1 });
+    }
+  });
+  
   return {
     isWin: playerHp > 0 && currentEnemyIndex >= enemies.length,
     clearTime: formatTime(timeFrames),
     totalFrames: timeFrames,
     remainingHp: playerHp,
-    drops: drops, // ドロップ情報を返す
+    drops: aggregatedDrops,
     events
   };
 }

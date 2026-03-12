@@ -37,7 +37,9 @@ export async function loginOrRegister(username, pin) {
       floor: 1,maxClearedFloor: 1, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 },
       lv:  { str: 1, vit: 1, agi: 1, lck: 1 },
-      totalLv: 4
+      totalLv: 4,
+      winCount: 0,      // 累計勝利数
+      collectionCount: 0 // 図鑑の総アイテム数（個数）
     };
     await setDoc(userRef, initialData);
     return { success: true, data: initialData };
@@ -82,7 +84,7 @@ export async function getRankingData(rankId) {
   let q;
 
   // ステータス・階層・レベル系のランキング
-  if (["str", "vit", "agi", "lck", "floor", "totalLv"].includes(rankId)) {
+  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount"].includes(rankId)) {
     // usersコレクションから、指定された値が高い順(desc)に10人取得
     q = query(collection(db, "users"), orderBy(rankId, "desc"), limit(10));
     const querySnapshot = await getDocs(q);

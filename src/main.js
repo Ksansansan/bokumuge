@@ -275,7 +275,7 @@ btnChallenge.addEventListener('click', () => {
   const timerText = document.getElementById('battle-timer-text');
 
   function renderLoop() {
-    const speed = 2; 
+    const speed = 1; 
     currentFrame += speed;
 
     // タイマーの更新（90秒＝5400F）

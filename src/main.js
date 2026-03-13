@@ -514,15 +514,15 @@ async function renderRanking() {
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
       else if(["rockPush", "daruma"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
-      
+      const borderLeftStyle = `4px solid ${color}`; 
       // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
       const selfClass = isMe ? 'rank-row-self' : '';
       
       html += `
-        <div class="${selfClass}" style="display:flex; justify-content:space-between; padding:10px; margin-bottom:8px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:4px solid ${color};">
+        <div class="${selfClass}" style="display:flex; justify-content:space-between; padding:10px; margin-bottom:8px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:${borderLeftStyle};">
           <div style="display:flex; align-items:center;">
             <span style="font-weight:bold; color:${color}; font-size:16px; margin-right:8px;">${index + 1}位.</span>
-            <span style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(あなた)</span>' : ''}</span>
+            <span style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(YOU)</span>' : ''}</span>
           </div>
           <span style="font-weight:bold; color:#fff; font-family:monospace;">${displayScore}</span>
         </div>

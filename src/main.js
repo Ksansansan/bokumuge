@@ -172,6 +172,8 @@ function init() {
   updateFloorUI(player.floor);
   updateCollectionUI();
   setupTabNavigation();
+  player.updateStatusUI = updateStatusUI; 
+  player.updateTrainingUI = updateTrainingUI; 
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
   // ◀ ▶ ボタン

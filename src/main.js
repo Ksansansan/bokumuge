@@ -488,7 +488,7 @@ async function handleVictory(result, floorNum) {
       player.maxClearedFloor = floorNum + 1;
       // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）
     }
-
+    player.winCount++;
     await savePlayerData(player);
     
     // UIを更新（最高到達階層が更新されたので、▶ボタンが押せるようになる）

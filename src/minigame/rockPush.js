@@ -37,10 +37,13 @@ export function initRockPush(playerObj, updateUIFn) {
     bestText: document.getElementById('rp-best-time'),
     btnQuit: document.getElementById('rp-btn-quit'),
     btnReset: document.getElementById('rp-btn-reset'),
+    
   };
 
-  dom.btnStart.addEventListener('click', startGame);
-  dom.btnRetry.addEventListener('click', startGame);
+  dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
+  dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
+  
+
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
 // ★「やめる」ボタン：タイマーを止めて説明画面へ
   dom.btnQuit.addEventListener('click', () => {
@@ -50,10 +53,19 @@ export function initRockPush(playerObj, updateUIFn) {
   });
 
   // ★「リトライ」ボタン：タイマーを止めて最初から
-  dom.btnReset.addEventListener('click', () => {
-    clearInterval(timerInterval);
-    isTimerRunning = false;
-    startGame();
+  dom.btnReset.addEventListener('click', () => { 
+    if(!isProcessing) { clearInterval(timerInterval); startGame(); } 
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (dom.overlay.style.display !== 'flex' || isProcessing) return;
+    if (e.key.toLowerCase() === 'r') {
+      // プレイ中、またはリザルト画面にいる時だけ Rキー でリトライ
+      if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
+        clearInterval(timerInterval);
+        startGame();
+      }
+    }
   });
 
   const handleTap = (e) => {
@@ -99,6 +111,7 @@ function showView(viewName) {
 }
 
 function startGame() {
+  if (isProcessing) return;
   showView('play');
   remainingTaps = TOTAL_TAPS;
   isTimerRunning = false; // ★まだ動かさない
@@ -123,6 +136,7 @@ function startTimer() {
 async function finishGame() {
   clearInterval(timerInterval);
   isTimerRunning = false;
+  isProcessing = true;
   const time = (Date.now() - startTime) / 1000;
   
   let rankIndex = RANKS.findIndex(r => time < r.timeLimit);
@@ -181,4 +195,5 @@ async function finishGame() {
   document.getElementById('rp-res-newrecord').style.display = isNewRecord ? 'block' : 'none';
 
   showView('result');
+  isProcessing = false;
 }

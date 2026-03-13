@@ -2,10 +2,9 @@
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
-import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, getPersonalBest } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
-
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -437,12 +436,34 @@ dummyGames.forEach(id => {
 const modalRanking = document.getElementById('modal-ranking-overlay');
 const rankingTitle = document.getElementById('ranking-modal-title');
 const rankingList = document.getElementById('ranking-list-container');
+const toggleContainer = document.getElementById('ranking-toggle-container');
+const btnRankBase = document.getElementById('btn-rank-base');
+const btnRankTotal = document.getElementById('btn-rank-total');
+const myRankingContainer = document.getElementById('my-ranking-container');
+
+let currentRankId = "";
+let currentRankTitle = "";
+let isTotalMode = false; // false=基礎値, true=総合値
+// タブ切り替えイベント
+btnRankBase.addEventListener('click', () => { isTotalMode = false; renderRanking(); });
+btnRankTotal.addEventListener('click', () => { isTotalMode = true; renderRanking(); });
 
 document.querySelectorAll('.btn-show-ranking').forEach(btn => {
   btn.addEventListener('click', async (e) => {
     const rankId = e.currentTarget.getAttribute('data-rank-id');
-    const title = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨]/g, '').trim(); 
+    const title = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖]/g, '').trim(); 
+     isTotalMode = false; // デフォルトは基礎値
     
+    // ステータス系ならタブを表示
+    if (["str", "vit", "agi", "lck"].includes(currentRankId)) {
+      toggleContainer.style.display = 'flex';
+    } else {
+      toggleContainer.style.display = 'none';
+    }
+
+    modalRanking.style.display = 'flex';
+    renderRanking();
+
     rankingTitle.textContent = title;
     rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">データ取得中...</p>';
     modalRanking.style.display = 'flex';
@@ -483,6 +504,79 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
     rankingList.innerHTML = html;
   });
 });
+
+async function renderRanking() {
+  // タブの見た目更新
+  btnRankBase.style.background = isTotalMode ? "#222" : "#c49a45";
+  btnRankBase.style.color = isTotalMode ? "#c49a45" : "#000";
+  btnRankTotal.style.background = isTotalMode ? "#c49a45" : "#222";
+  btnRankTotal.style.color = isTotalMode ? "#000" : "#c49a45";
+
+  rankingTitle.textContent = currentRankTitle + (toggleContainer.style.display === 'flex' ? (isTotalMode ? " (総合値)" : " (基礎値)") : "");
+  rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">データ取得中...</p>';
+  myRankingContainer.innerHTML = '';
+
+  const data = await getRankingData(currentRankId, isTotalMode);
+  
+  // ▼ 自分のスコアを取得
+  let myScore = null;
+  if (["str", "vit", "agi", "lck"].includes(currentRankId)) {
+    myScore = isTotalMode ? (player.battleStats ? player.battleStats[currentRankId] : player[currentRankId]) : player[currentRankId];
+  } else if (["floor", "totalLv", "winCount", "collectionCount"].includes(currentRankId)) {
+    myScore = player[currentRankId] || (currentRankId==='floor'?1:0);
+  } else {
+    myScore = await getPersonalBest(player.name, currentRankId); // ミニゲーム
+  }
+
+  // リストの描画
+  let html = '';
+  const colors =["#ffd700", "#c0c0c0", "#cd7f32", "#aaa"];
+  let iAmInTop10 = false;
+  
+  if (data.length === 0) {
+    html = '<p style="text-align:center; color:#aaa; font-size:12px;">まだ記録がありません</p>';
+  } else {
+    data.forEach((item, index) => {
+      const isMe = item.name === player.name;
+      if (isMe) iAmInTop10 = true;
+
+      const color = index < 3 ? colors[index] : colors[3];
+      // 自分の場合は背景を光らせる
+      const bg = isMe ? 'rgba(92, 230, 230, 0.2)' : (index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.1)` : 'rgba(0,0,0,0.3)');
+      const borderLeft = isMe ? '3px solid #5ce6e6' : `3px solid ${color}`;
+      
+      let displayScore = item.score;
+      if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
+      else if(currentRankId === 'floor') displayScore += ' 層';
+      else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
+      else if(["rockPush", "daruma"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
+      
+      html += `
+        <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:${borderLeft};">
+          <span style="font-weight:bold; color:${isMe ? '#5ce6e6' : color};">${index + 1}位. ${item.name} ${isMe ? '(あなた)' : ''}</span>
+          <span style="font-weight:bold; color:#fff;">${displayScore}</span>
+        </div>
+      `;
+    });
+  }
+  rankingList.innerHTML = html;
+
+  // ▼ 圏外の場合の固定表示
+  if (!iAmInTop10 && myScore !== null) {
+    let displayMyScore = myScore;
+    if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayMyScore = formatNumber(myScore);
+    else if(currentRankId === 'floor') displayMyScore += ' 層';
+    else if(currentRankId === 'totalLv') displayMyScore = 'Lv.' + displayMyScore;
+    else if(["rockPush", "daruma"].includes(currentRankId)) displayMyScore = myScore.toFixed(2) + ' 秒';
+
+    myRankingContainer.innerHTML = `
+      <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">
+        <span style="font-weight:bold; color:#5ce6e6;">圏外. ${player.name} (あなた)</span>
+        <span style="font-weight:bold; color:#fff;">${displayMyScore}</span>
+      </div>
+    `;
+  }
+}
 
 // ★勝利時の処理を修正（初クリア者の判定）
 // --- 勝利時の処理（初クリア保存と進行度更新） ---

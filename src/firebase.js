@@ -97,20 +97,18 @@ export async function getPersonalBest(userId, gameId) {
 // あらゆるランキングデータを取得する汎用関数
 // ==========================================
 // --- ランキングデータの取得（参照先フィールドの変更） ---
-export async function getRankingData(rankId) {
+export async function getRankingData(rankId, isTotal = false) {
   const rankings =[];
   let q;
 
-  // DBのフィールド名マッピング
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
 
   if (["str", "vit", "agi", "lck"].includes(rankId)) {
-    // ★ステータスランキングはバフ込みの rankStr 等を見る
-    const dbField = statMap[rankId];
+    // ★ isTotalがtrueなら rankStr(バフ込み)、falseなら str(基礎値) を参照
+    const dbField = isTotal ? statMap[rankId] : rankId;
     q = query(collection(db, "users"), orderBy(dbField, "desc"), limit(10));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
-      // 過去データ互換性のため、rankStrが無ければ基礎値(str)を使う
       let score = doc.data()[dbField] || doc.data()[rankId] || 0;
       rankings.push({ name: doc.data().name, score: score });
     });
@@ -124,10 +122,11 @@ export async function getRankingData(rankId) {
     });
   } 
   else {
+    // ミニゲーム系
     q = query(collection(db, "minigames", rankId, "scores"), orderBy("time", "asc"), limit(10));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
-      rankings.push({ name: doc.data().userId, score: doc.data().time.toFixed(2) + " 秒" });
+      rankings.push({ name: doc.data().userId, score: doc.data().time }); // 数値のまま返すよう修正
     });
   }
   

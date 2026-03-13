@@ -87,19 +87,19 @@
   @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 50% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-40px) scale(1); opacity: 0; } }
 
   @keyframes rank-self-pulse {
-  0% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3), inset 0 0 5px rgba(92, 230, 230, 0.2); border-color: rgba(92, 230, 230, 0.5); }
-  50% { box-shadow: 0 0 18px rgba(92, 230, 230, 0.6), inset 0 0 10px rgba(92, 230, 230, 0.4); border-color: rgba(92, 230, 230, 1); }
-  100% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3), inset 0 0 5px rgba(92, 230, 230, 0.2); border-color: rgba(92, 230, 230, 0.5); }
+  0% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(92, 230, 230, 0.6); }
+  100% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3); }
   }
-
   .rank-row-self {
-  animation: rank-self-pulse 2s infinite;
-  z-index: 1;
-  position: relative;
-  /* border ではなく outline を使うことで、JSで指定する border-left を生かす */
-  outline: 1px solid rgba(92, 230, 230, 0.8);
-  outline-offset: -1px; 
-}
+    animation: rank-self-pulse 2s infinite;
+    z-index: 1;
+    position: relative;
+    /* border-left は JSのインラインスタイルを優先させるため、上・右・下だけを水色で上書きする */
+    border-top: 1px solid rgba(92, 230, 230, 0.8) !important;
+    border-right: 1px solid rgba(92, 230, 230, 0.8) !important;
+    border-bottom: 1px solid rgba(92, 230, 230, 0.8) !important;
+  }
 </style>
 </head>
 <body>

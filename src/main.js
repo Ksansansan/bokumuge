@@ -4,6 +4,7 @@ import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
+import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -172,9 +173,8 @@ function init() {
   updateFloorUI(player.floor);
   updateCollectionUI();
   setupTabNavigation();
-  // ★修正：playerオブジェクトに関数を入れず、第2引数として渡す
   initRockPush(player, updateTrainingUI); 
-
+  initDaruma(player, updateTrainingUI);
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -386,6 +386,9 @@ function setupTabNavigation() {
 document.getElementById('btn-play-rockpush').addEventListener('click', () => {
   openRockPushModal();
 });
+document.getElementById('btn-play-daruma').addEventListener('click', () => {
+  openDarumaModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -416,7 +419,7 @@ function updateTrainingUI() {
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['daruma', 'chicken', 'guard', '1to20', 'command', 'clover', 'slot'];
+const dummyGames =['chicken', 'guard', '1to20', 'command', 'clover', 'slot'];
 dummyGames.forEach(id => {
   const btn = document.getElementById(`btn-play-${id}`);
   if(btn) {

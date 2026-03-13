@@ -205,7 +205,9 @@ async function finishGame() {
 
   // ステータス反映 (大岩プッシュと同じ minigameCore を使用)
   const result = applyMinigameResult(playerRef, 'str', rank.exp, rank.strBase);
-  
+  if (playerRef.updateStatusUI) {
+    playerRef.updateStatusUI();
+  }
   if (onUpdateCallback) onUpdateCallback();
   await savePlayerData(playerRef);
 

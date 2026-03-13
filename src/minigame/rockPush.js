@@ -153,9 +153,10 @@ async function finishGame() {
 
   // ステータス反映
   const result = applyMinigameResult(playerRef, 'str', rank.exp, rank.strBase);
-  document.getElementById('val-str').textContent = playerRef.str;
-   if (playerRef.updateTrainingUI) {
-    playerRef.updateTrainingUI();
+  
+  // ★追加：ヘッダー（StatusUI）も更新するように依頼する
+  if (playerRef.updateStatusUI) {
+    playerRef.updateStatusUI();
   }
   if (onUpdateCallback) onUpdateCallback();
   // ★ここでFirebaseにセーブ

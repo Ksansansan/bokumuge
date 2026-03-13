@@ -501,21 +501,28 @@ async function renderRanking() {
       const isMe = item.name === player.name;
       if (isMe) iAmInTop10 = true;
 
-      const color = index < 3 ? colors[index] : colors[3];
-      // 自分の場合は背景を光らせる
-      const bg = isMe ? 'rgba(92, 230, 230, 0.2)' : (index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.1)` : 'rgba(0,0,0,0.3)');
-      const borderLeft = isMe ? '3px solid #5ce6e6' : `3px solid ${color}`;
+      // --- 1. 順位に基づく色 (1位:金, 2位:銀, 3位:銅, 他:グレー) ---
+      const rankColors = ["#ffd700", "#c0c0c0", "#cd7f32", "#aaa"];
+      const color = index < 3 ? rankColors[index] : rankColors[3];
+      const bg = index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.1)` : 'rgba(0,0,0,0.3)';
       
+      // --- 2. スコアのフォーマット ---
       let displayScore = item.score;
       if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
       else if(["rockPush", "daruma"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
       
+      // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
+      const selfClass = isMe ? 'rank-row-self' : '';
+      
       html += `
-        <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:${borderLeft};">
-          <span style="font-weight:bold; color:${isMe ? '#5ce6e6' : color};">${index + 1}位. ${item.name} ${isMe ? '(あなた)' : ''}</span>
-          <span style="font-weight:bold; color:#fff;">${displayScore}</span>
+        <div class="${selfClass}" style="display:flex; justify-content:space-between; padding:10px; margin-bottom:8px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:4px solid ${color};">
+          <div style="display:flex; align-items:center;">
+            <span style="font-weight:bold; color:${color}; font-size:16px; margin-right:8px;">${index + 1}位.</span>
+            <span style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(YOU)</span>' : ''}</span>
+          </div>
+          <span style="font-weight:bold; color:#fff; font-family:monospace;">${displayScore}</span>
         </div>
       `;
     });

@@ -85,6 +85,19 @@
     top: 45%; /* ★名前やHPバーに被らないよう下にずらす */
   }
   @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 50% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-40px) scale(1); opacity: 0; } }
+
+  @keyframes rank-self-pulse {
+  0% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3), inset 0 0 5px rgba(92, 230, 230, 0.2); border-color: rgba(92, 230, 230, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(92, 230, 230, 0.6), inset 0 0 10px rgba(92, 230, 230, 0.4); border-color: rgba(92, 230, 230, 1); }
+  100% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3), inset 0 0 5px rgba(92, 230, 230, 0.2); border-color: rgba(92, 230, 230, 0.5); }
+  }
+
+  .rank-row-self {
+    animation: rank-self-pulse 2s infinite;
+    z-index: 1;
+    position: relative;
+    border: 1px solid #5ce6e6 !important; /* 全体を囲う細い水色の線 */
+  }
 </style>
 </head>
 <body>

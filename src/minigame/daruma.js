@@ -111,10 +111,14 @@ export function initDaruma(playerObj, updateUIFn) {
   tapRight.addEventListener('mousedown', onTouchZone);
 
   // PCのキーボード対応 (A:左/赤, D:右/青, または矢印キー)
-  window.addEventListener('keydown', (e) => {
-    if (dom.overlay.style.display !== 'flex' || dom.viewPlay.style.display !== 'flex') return;
-    if (e.repeat) return;
-    if (e.key.toLowerCase() === 'r') {
+   window.addEventListener('keydown', (e) => {
+    // モーダル自体が開いていない、または通信中なら無視
+    if (dom.overlay.style.display !== 'flex' || isProcessing) return;
+
+    const key = e.key.toLowerCase();
+
+    // --- Rキーでのリトライ処理 (プレイ中 または リザルト表示中) ---
+    if (key === 'r') {
       if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
         clearInterval(timerInterval);
         isTimerRunning = false;
@@ -122,8 +126,13 @@ export function initDaruma(playerObj, updateUIFn) {
         return;
       }
     }
-    if (e.key === 'a' || e.key === 'ArrowLeft') handleInput('red');
-    if (e.key === 'd' || e.key === 'ArrowRight') handleInput('blue');
+
+    // --- プレイ中の操作判定 (プレイ中のみ) ---
+    if (dom.viewPlay.style.display === 'flex') {
+      if (e.repeat) return;
+      if (key === 'a' || e.key === 'ArrowLeft') handleInput('red');
+      if (key === 'd' || e.key === 'ArrowRight') handleInput('blue');
+    }
   });
 }
 

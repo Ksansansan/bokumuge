@@ -15,6 +15,7 @@ const TOTAL_TAPS = 51;
 let remainingTaps = 0;
 let startTime = 0;
 let timerInterval = null;
+let isProcessing = false;
 let lastTapTime = 0;
 let isTimerRunning = false; // ★タイマー稼働フラグ
 let dom = {};

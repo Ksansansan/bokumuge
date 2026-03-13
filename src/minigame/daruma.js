@@ -8,15 +8,16 @@ const RANKS =[
   { name: "A", timeLimit: 12.0, strBase: 10, exp: 35, color: "#ff6b6b" },
   { name: "B", timeLimit: 15.0, strBase: 8, exp: 30, color: "#5ce6e6" },
   { name: "C", timeLimit: 20.0, strBase: 6, exp: 25, color: "#94ff6b" },
-  { name: "D", timeLimit: Infinity, strBase: 5, exp: 20, color: "#aaa" }
+  { name: "D", timeLimit: Infinity, strBase: 5, exp: 25, color: "#aaa" }
 ];
 
 let playerRef = null, onUpdateCallback = null;
-const TOTAL_BLOCKS = 50;
+const TOTAL_BLOCKS = 51;
 let blocks =[]; // 'red' or 'blue'
 let currentIndex = 0; // 現在の一番下のブロックのインデックス
 let startTime = 0, timerInterval = null, isTimerRunning = false;
 let isStunned = false; // ペナルティ中の硬直フラグ
+let lastInputTime = 0;
 let dom = {};
 
 export function initDaruma(playerObj, updateUIFn) {
@@ -48,7 +49,11 @@ export function initDaruma(playerObj, updateUIFn) {
   const handleInput = (color) => {
     if (isStunned || currentIndex >= TOTAL_BLOCKS) return;
     
-    // 最初の入力でタイマースタート
+    // 20ms以内の高速入力（ツールやバグ）を無視
+    const now = Date.now();
+    if (now - lastInputTime < 20) return;
+    lastInputTime = now;
+
     if (!isTimerRunning) {
       isTimerRunning = true;
       startTime = Date.now();
@@ -78,19 +83,33 @@ export function initDaruma(playerObj, updateUIFn) {
   };
 
   // イベント登録
-  const preventDbl = (e) => { e.preventDefault(); handleInput(e.currentTarget.dataset.color); };
+  const onTouchZone = (e) => {
+    // 2本以上の指が触れていたら完全に無視
+    if (e.touches && e.touches.length > 1) {
+        e.preventDefault(); // ブラウザのデフォルト挙動を止める
+        return;
+    }
+    
+    if (e.type === 'touchstart') e.preventDefault(); // クリックの二重発火防止
+    
+    const color = e.currentTarget.dataset.color;
+    handleInput(color);
+  };
   tapLeft.dataset.color = 'red';
   tapRight.dataset.color = 'blue';
   
   // mousedownとtouchstartで即座に反応させる
-  tapLeft.addEventListener('mousedown', preventDbl);
-  tapLeft.addEventListener('touchstart', preventDbl, { passive: false });
-  tapRight.addEventListener('mousedown', preventDbl);
-  tapRight.addEventListener('touchstart', preventDbl, { passive: false });
+  // スマホ用
+  tapLeft.addEventListener('touchstart', onTouchZone, { passive: false });
+  tapRight.addEventListener('touchstart', onTouchZone, { passive: false });
+  // PC用
+  tapLeft.addEventListener('mousedown', onTouchZone);
+  tapRight.addEventListener('mousedown', onTouchZone);
 
   // PCのキーボード対応 (A:左/赤, D:右/青, または矢印キー)
   window.addEventListener('keydown', (e) => {
     if (dom.overlay.style.display !== 'flex' || dom.viewPlay.style.display !== 'flex') return;
+    if (e.repeat) return;
     if (e.key === 'a' || e.key === 'ArrowLeft') handleInput('red');
     if (e.key === 'd' || e.key === 'ArrowRight') handleInput('blue');
   });

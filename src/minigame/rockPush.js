@@ -11,7 +11,7 @@ const RANKS = [
 ];
 
 let playerRef = null;
-const TOTAL_TAPS = 50;
+const TOTAL_TAPS = 51;
 let remainingTaps = 0;
 let startTime = 0;
 let timerInterval = null;

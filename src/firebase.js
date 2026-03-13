@@ -50,10 +50,27 @@ export async function loginOrRegister(username, pin) {
 // プレイヤーデータの自動セーブ
 // ==========================================
 export async function savePlayerData(player) {
-  // 総レベルを計算して保存（ランキング用）
   player.totalLv = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
+  player.winCount = player.winCount || 0;
+  player.collectionCount = player.collectionCount || 0;
+  
+  // 保存するデータをコピー
+  const dataToSave = { ...player };
+  
+  // ★ランキング用のフィールドにバフ込みの値をセット
+  if (player.battleStats) {
+    dataToSave.rankStr = player.battleStats.str;
+    dataToSave.rankVit = player.battleStats.vit;
+    dataToSave.rankAgi = player.battleStats.agi;
+    dataToSave.rankLck = player.battleStats.lck;
+  }
+
+  // 内部の一時データ（関数や余分なオブジェクト）は除外して保存
+  delete dataToSave.updateTrainingUI; 
+  delete dataToSave.battleStats;
+
   const userRef = doc(db, "users", player.name);
-  await setDoc(userRef, player, { merge: true }); // マージで上書き保存
+  await setDoc(userRef, dataToSave, { merge: true });
 }
 
 // ==========================================
@@ -79,28 +96,41 @@ export async function getPersonalBest(userId, gameId) {
 // ==========================================
 // あらゆるランキングデータを取得する汎用関数
 // ==========================================
+// --- ランキングデータの取得（参照先フィールドの変更） ---
 export async function getRankingData(rankId) {
   const rankings =[];
   let q;
 
-  // ステータス・階層・レベル系のランキング
-  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount"].includes(rankId)) {
-    // usersコレクションから、指定された値が高い順(desc)に10人取得
+  // DBのフィールド名マッピング
+  const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
+
+  if (["str", "vit", "agi", "lck"].includes(rankId)) {
+    // ★ステータスランキングはバフ込みの rankStr 等を見る
+    const dbField = statMap[rankId];
+    q = query(collection(db, "users"), orderBy(dbField, "desc"), limit(10));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      // 過去データ互換性のため、rankStrが無ければ基礎値(str)を使う
+      let score = doc.data()[dbField] || doc.data()[rankId] || 0;
+      rankings.push({ name: doc.data().name, score: score });
+    });
+  } 
+  else if (["floor", "totalLv", "winCount", "collectionCount"].includes(rankId)) {
     q = query(collection(db, "users"), orderBy(rankId, "desc"), limit(10));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
-      rankings.push({ name: doc.data().name, score: doc.data()[rankId] });
+      let score = doc.data()[rankId] || 0;
+      rankings.push({ name: doc.data().name, score: score });
     });
   } 
-  // ミニゲーム(タイムアタック)系のランキング
   else {
-    // minigames/{gameId}/scores コレクションから、タイムが短い順(asc)に10人取得
     q = query(collection(db, "minigames", rankId, "scores"), orderBy("time", "asc"), limit(10));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
       rankings.push({ name: doc.data().userId, score: doc.data().time.toFixed(2) + " 秒" });
     });
   }
+  
   return rankings;
 }
 
@@ -132,13 +162,14 @@ export async function checkAndSaveFirstClear(player, floor, time) {
   const snap = await getDoc(docRef);
 
   if (!snap.exists()) {
+    // ★ player.battleStats（バフ込み値）を保存する
     const data = {
       name: player.name,
       time: time,
-      str: player.str,
-      vit: player.vit,
-      agi: player.agi,
-      lck: player.lck, // ← ログイン中の player オブジェクトから取得
+      str: player.battleStats ? player.battleStats.str : player.str,
+      vit: player.battleStats ? player.battleStats.vit : player.vit,
+      agi: player.battleStats ? player.battleStats.agi : player.agi,
+      lck: player.battleStats ? player.battleStats.lck : player.lck,
       timestamp: Date.now()
     };
     await setDoc(docRef, data);

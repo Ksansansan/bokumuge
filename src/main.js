@@ -194,6 +194,8 @@ function init() {
 
 function updateStatusUI() {
   const battleStats = getBattleStats(player);
+  player.battleStats = battleStats; // ★バフ込みの数値を保持（保存・ランキング用）
+
   document.getElementById('val-str').textContent = formatNumber(battleStats.str);
   document.getElementById('val-vit').textContent = formatNumber(battleStats.vit);
   document.getElementById('val-agi').textContent = formatNumber(battleStats.agi);
@@ -241,7 +243,7 @@ async function updateFloorUI(floorNum) {
           <span style="color:#ff6b6b;">STR ${formatNumber(record.str)}</span> / 
           <span style="color:#6be6ff;">VIT ${formatNumber(record.vit)}</span> / 
           <span style="color:#94ff6b;">AGI ${formatNumber(record.agi)}</span> / 
-          <span style="color:#ffd166;">LCK ${formatNumber(record.lck)}</span>
+          <span style="color:#ffd166;">LCK ${formatNumber(record.lck || 0)}</span>
         </div>
       `;
     } else {
@@ -456,14 +458,19 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
     let html = '';
     const colors =["#ffd700", "#c0c0c0", "#cd7f32", "#aaa"]; // 1位金, 2位銀, 3位銅, 4位以降グレー
     
-    data.forEach((item, index) => {
+     data.forEach((item, index) => {
       const color = index < 3 ? colors[index] : colors[3];
       const bg = index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.15)` : 'rgba(0,0,0,0.3)';
       
-      // 値のフォーマット（階層なら「〇層」、レベルなら「Lv.〇」など）
       let displayScore = item.score;
-      if(rankId === 'floor') displayScore += ' 層';
+      // ★ステータスランキングならフォーマットする
+      if(["str", "vit", "agi", "lck"].includes(rankId)) {
+        displayScore = formatNumber(item.score);
+      }
+      else if(rankId === 'floor') displayScore += ' 層';
       else if(rankId === 'totalLv') displayScore = 'Lv.' + displayScore;
+      else if(rankId === 'winCount') displayScore += ' 勝';
+      else if(rankId === 'collectionCount') displayScore += ' 個';
       
       html += `
         <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:3px solid ${color};">

@@ -17,6 +17,7 @@ let blocks =[]; // 'red' or 'blue'
 let currentIndex = 0; // 現在の一番下のブロックのインデックス
 let startTime = 0, timerInterval = null, isTimerRunning = false;
 let isStunned = false; // ペナルティ中の硬直フラグ
+let isProcessing = false;
 let lastInputTime = 0;
 let dom = {};
 
@@ -36,12 +37,15 @@ export function initDaruma(playerObj, updateUIFn) {
   };
 
   // ボタン設定
-  document.getElementById('dm-btn-start').addEventListener('click', startGame);
-  document.getElementById('dm-btn-retry').addEventListener('click', startGame);
-  document.getElementById('dm-btn-reset').addEventListener('click', () => { clearInterval(timerInterval); startGame(); });
+   document.getElementById('dm-btn-start').addEventListener('click', () => { if(!isProcessing) startGame(); });
+  document.getElementById('dm-btn-retry').addEventListener('click', () => { if(!isProcessing) startGame(); });
+  document.getElementById('dm-btn-reset').addEventListener('click', () => { 
+    if(!isProcessing) { clearInterval(timerInterval); startGame(); } 
+  });
   document.getElementById('dm-btn-quit').addEventListener('click', () => { clearInterval(timerInterval); showView('info'); });
   document.getElementById('dm-btn-close').addEventListener('click', () => { dom.overlay.style.display = 'none'; });
 
+  
   // 左右のタップ領域設定（PCマウスクリック＆スマホタップ対応）
   const tapLeft = document.getElementById('dm-tap-left');
   const tapRight = document.getElementById('dm-tap-right');
@@ -110,6 +114,14 @@ export function initDaruma(playerObj, updateUIFn) {
   window.addEventListener('keydown', (e) => {
     if (dom.overlay.style.display !== 'flex' || dom.viewPlay.style.display !== 'flex') return;
     if (e.repeat) return;
+    if (e.key.toLowerCase() === 'r') {
+      if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        startGame();
+        return;
+      }
+    }
     if (e.key === 'a' || e.key === 'ArrowLeft') handleInput('red');
     if (e.key === 'd' || e.key === 'ArrowRight') handleInput('blue');
   });
@@ -129,6 +141,7 @@ function showView(view) {
 }
 
 function startGame() {
+  isProcessing = false;
   showView('play');
   isTimerRunning = false;
   isStunned = false;
@@ -166,6 +179,7 @@ function renderBlocks() {
 }
 
 async function finishGame() {
+  isProcessing = true;
   clearInterval(timerInterval);
   isTimerRunning = false;
   const time = (Date.now() - startTime) / 1000;
@@ -208,4 +222,5 @@ async function finishGame() {
   document.getElementById('dm-res-newrecord').style.display = isNewRecord ? 'block' : 'none';
 
   showView('result');
+  isProcessing = false;
 }

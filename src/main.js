@@ -449,10 +449,10 @@ btnRankBase.addEventListener('click', () => { isTotalMode = false; renderRanking
 btnRankTotal.addEventListener('click', () => { isTotalMode = true; renderRanking(); });
 
 document.querySelectorAll('.btn-show-ranking').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    const rankId = e.currentTarget.getAttribute('data-rank-id');
-    const title = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖]/g, '').trim(); 
-     isTotalMode = false; // デフォルトは基礎値
+  btn.addEventListener('click', (e) => {
+    currentRankId = e.currentTarget.getAttribute('data-rank-id');
+    currentRankTitle = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖]/g, '').trim(); 
+    isTotalMode = false; // デフォルトは基礎値
     
     // ステータス系ならタブを表示
     if (["str", "vit", "agi", "lck"].includes(currentRankId)) {
@@ -463,45 +463,6 @@ document.querySelectorAll('.btn-show-ranking').forEach(btn => {
 
     modalRanking.style.display = 'flex';
     renderRanking();
-
-    rankingTitle.textContent = title;
-    rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">データ取得中...</p>';
-    modalRanking.style.display = 'flex';
-
-    // ▼ Firebaseから本物のランキングデータを取得！
-    const data = await getRankingData(rankId);
-    
-    if (data.length === 0) {
-      rankingList.innerHTML = '<p style="text-align:center; color:#aaa; font-size:12px;">まだ記録がありません</p>';
-      return;
-    }
-
-    let html = '';
-    const colors =["#ffd700", "#c0c0c0", "#cd7f32", "#aaa"]; // 1位金, 2位銀, 3位銅, 4位以降グレー
-    
-     data.forEach((item, index) => {
-      const color = index < 3 ? colors[index] : colors[3];
-      const bg = index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.15)` : 'rgba(0,0,0,0.3)';
-      
-      let displayScore = item.score;
-      // ★ステータスランキングならフォーマットする
-      if(["str", "vit", "agi", "lck"].includes(rankId)) {
-        displayScore = formatNumber(item.score);
-      }
-      else if(rankId === 'floor') displayScore += ' 層';
-      else if(rankId === 'totalLv') displayScore = 'Lv.' + displayScore;
-      else if(rankId === 'winCount') displayScore += ' 勝';
-      else if(rankId === 'collectionCount') displayScore += ' 個';
-      
-      html += `
-        <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:3px solid ${color};">
-          <span style="font-weight:bold; color:${color};">${index + 1}位. ${item.name}</span>
-          <span style="font-weight:bold; color:#fff;">${displayScore}</span>
-        </div>
-      `;
-    });
-    
-    rankingList.innerHTML = html;
   });
 });
 

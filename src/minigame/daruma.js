@@ -115,7 +115,7 @@ function startGame() {
   isStunned = false;
   currentIndex = 0;
   dom.countText.textContent = TOTAL_BLOCKS;
-  dom.timerText.textContent = "READY";
+  dom.timerText.textContent = "0.00";
   dom.timerText.style.color = "#ffeb85";
   dom.blocksContainer.style.filter = 'none';
   clearInterval(timerInterval);

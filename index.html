@@ -93,11 +93,13 @@
   }
 
   .rank-row-self {
-    animation: rank-self-pulse 2s infinite;
-    z-index: 1;
-    position: relative;
-    border: 1px solid #5ce6e6 !important; /* 全体を囲う細い水色の線 */
-  }
+  animation: rank-self-pulse 2s infinite;
+  z-index: 1;
+  position: relative;
+  /* border ではなく outline を使うことで、JSで指定する border-left を生かす */
+  outline: 1px solid rgba(92, 230, 230, 0.8);
+  outline-offset: -1px; 
+}
 </style>
 </head>
 <body>

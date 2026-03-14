@@ -4,14 +4,14 @@ import { applyMinigameResult } from './minigameCore.js';
 
 // --- ランク定義（評価基準は「崖までの残り距離」）---
 const RANKS =[
-  { name: "S", distLimit: 3.5, vitBase: 12, exp: 45, color: "#ffeb85" },
-  { name: "A", distLimit: 7.5, vitBase: 9, exp: 35, color: "#ff6b6b" },
-  { name: "B", distLimit: 15.0, vitBase: 6, exp: 25, color: "#5ce6e6" },
-  { name: "C", distLimit: 30.0, vitBase: 4, exp: 15, color: "#94ff6b" },
-  { name: "D", distLimit: Infinity, vitBase: 3, exp: 15, color: "#aaa" }
+  { name: "S", distLimit: 3.5, vitBase: 15, exp: 60, color: "#ffeb85" },
+  { name: "A", distLimit: 7.5, vitBase: 11, exp: 40, color: "#ff6b6b" },
+  { name: "B", distLimit: 15.0, vitBase: 8, exp: 30, color: "#5ce6e6" },
+  { name: "C", distLimit: 30.0, vitBase: 5, exp: 25, color: "#94ff6b" },
+  { name: "D", distLimit: 100.0, vitBase: 4, exp: 20, color: "#aaa" },
+  { name: "チキン", distLimit: Infinity, vitBase: 1, exp: 5, color: "#555" }
 ];
-const FALL_RANK = { name: "落下", distLimit: -1, vitBase: 2, exp: 10, color: "#ff0000" };
-
+const FALL_RANK = { name: "落下", distLimit: -1, vitBase: 3, exp: 15, color: "#ff0000" };
 let playerRef = null, onUpdateCallback = null;
 let dom = {};
 
@@ -53,8 +53,9 @@ export function initChicken(playerObj, updateUIFn) {
   };
 
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
-  dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
-  dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
+   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
+  // ★リザルト画面の「特訓場へ戻る」ボタン
+  dom.btnClose.addEventListener('click', () => { if(!isProcessing) dom.overlay.style.display = 'none'; });
 
   // ★追加：「やめる」ボタン
   dom.btnQuit.addEventListener('click', () => {
@@ -63,7 +64,7 @@ export function initChicken(playerObj, updateUIFn) {
     showView('info');
   });
 
-  // ★追加：「リトライ」ボタン
+  // プレイ中の「リトライ」ボタン
   dom.btnReset.addEventListener('click', () => {
     if(!isProcessing) {
       isPlaying = false;
@@ -71,6 +72,7 @@ export function initChicken(playerObj, updateUIFn) {
       startGame();
     }
   });
+  
   // Rキー対応
    window.addEventListener('keydown', (e) => {
     if (dom.overlay.style.display !== 'flex' || isProcessing) return;

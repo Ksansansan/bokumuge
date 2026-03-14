@@ -6,7 +6,7 @@ import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 import { initChicken, openChickenModal } from './minigame/chicken.js';
-
+import { initGuard, openGuardModal } from './minigame/guard.js';
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -179,6 +179,7 @@ function init() {
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
   initChicken(player, updateTrainingUI);
+  initGuard(player, updateTrainingUI); 
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -398,6 +399,9 @@ document.getElementById('btn-play-daruma').addEventListener('click', () => {
 document.getElementById('btn-play-chicken').addEventListener('click', () => {
   openChickenModal();
 });
+document.getElementById('btn-play-guard').addEventListener('click', () => {
+  openGuardModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -428,7 +432,7 @@ function updateTrainingUI() {
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['guard', '1to20', 'command', 'clover', 'slot'];
+const dummyGames =['1to20', 'command', 'clover', 'slot'];
 dummyGames.forEach(id => {
   const btn = document.getElementById(`btn-play-${id}`);
   if(btn) {
@@ -525,6 +529,7 @@ async function renderRanking() {
       else if(currentRankId === 'chicken') {
         displayScore = item.score.toFixed(2) + ' m'; // ★mを表示
       }
+      else if(currentRankId === "guard") displayScore = Math.floor(item.score) + ' pt';
       const borderLeftStyle = `4px solid ${color}`; 
       // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
       const selfClass = isMe ? 'rank-row-self' : '';
@@ -554,6 +559,7 @@ async function renderRanking() {
     else if(currentRankId === 'chicken') {
       displayMyScore = myScore.toFixed(2) + ' m'; // ★mを表示
     }
+    else if(currentRankId === "guard") displayScore = Math.floor(item.score) + ' pt';
 
     myRankingContainer.innerHTML = `
       <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">

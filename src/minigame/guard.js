@@ -14,13 +14,13 @@ let currentScore = 0;
 let currentMultiplier = 1.0;
 let hp = 3;
 
-// プレイヤー＆障害物
-let playerLane = 2; // 0, 1, 2(中央), 3, 4
+// ★修正：レーン制ではなく、自由なパーセンテージ位置(0〜80)で管理
+let playerPos = 40; 
 let isInvincible = false;
 let invincibleTimer = 0;
 let obstacles =[];
 let spawnTimer = 0;
-let spawnInterval = 1.0; // 秒
+let spawnInterval = 1.0;
 
 export function initGuard(playerObj, updateUIFn) {
   playerRef = playerObj;
@@ -60,20 +60,23 @@ export function initGuard(playerObj, updateUIFn) {
     }
   });
 
-  // --- ドラッグ（スワイプ/マウス移動）操作 ---
+  // --- ★修正：ドラッグでの自由移動 ---
   const handleMove = (clientX) => {
     if (!isPlaying) return;
     const rect = dom.playArea.getBoundingClientRect();
     let x = clientX - rect.left;
-    let lane = Math.floor(x / (rect.width / 5));
-    playerLane = Math.max(0, Math.min(4, lane));
-    dom.player.style.left = `${playerLane * 20}%`;
+    let percentage = (x / rect.width) * 100;
+    
+    // プレイヤーの幅(20%)の半分を引いて中心を合わせる
+    let leftPos = percentage - 10;
+    // 画面外に出ないように 0% 〜 80% に制限
+    playerPos = Math.max(0, Math.min(80, leftPos));
+    
+    dom.player.style.left = `${playerPos}%`;
   };
 
   const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
-  const onMouseMove = (e) => {
-    if (e.buttons > 0) handleMove(e.clientX); // ドラッグ中のみ
-  };
+  const onMouseMove = (e) => { if (e.buttons > 0) handleMove(e.clientX); };
   const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
   const onMouseDown = (e) => { handleMove(e.clientX); };
 
@@ -87,7 +90,7 @@ export async function openGuardModal() {
   dom.overlay.style.display = 'flex';
   showView('info');
   const best = await getPersonalBest(playerRef.name, "guard");
-  dom.bestText.textContent = best ? Math.floor(best).toString() : "記録なし";
+  dom.bestText.textContent = best ? Math.floor(best).toString() + " pt" : "記録なし";
 }
 
 function showView(view) {
@@ -106,7 +109,7 @@ function startGame() {
   currentScore = 0;
   currentMultiplier = 1.0;
   hp = 3;
-  playerLane = 2;
+  playerPos = 40;
   isInvincible = false;
   invincibleTimer = 0;
   obstacles =[];
@@ -116,6 +119,7 @@ function startGame() {
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
   dom.player.style.left = '40%';
+  dom.player.style.transition = 'none'; // 滑らかに動かすためCSSアニメーションは切る
   
   lastFrameTime = performance.now();
   animationId = requestAnimationFrame(gameLoop);
@@ -125,10 +129,8 @@ function updateHpUI() {
   dom.hp.textContent = "❤️".repeat(hp) + "🖤".repeat(3 - hp);
 }
 
-// 障害物生成ロジック
 function spawnObstacle() {
-  // 時間経過で難易度上昇
-  const speedBase = 30 + elapsedTime * 1.5; // だんだん速くなる(%/sec)
+  const speedBase = 30 + elapsedTime * 1.5; 
   const types = ['normal'];
   
   if (elapsedTime > 10) types.push('spread');
@@ -151,25 +153,32 @@ function spawnObstacle() {
   ball.style.borderRadius = '50%';
   el.appendChild(ball);
 
-  dom.obstaclesContainer.appendChild(el);
-
   if (type === 'spread') {
-    // 3個同時に落とす
-    const emptyLane = Math.floor(Math.random() * 5); // 安置
-    const emptyLane2 = (emptyLane + 2) % 5;
+    // ★修正：5レーン中、ランダムな2レーンを安置（穴）にする
+    const lanes =[0, 1, 2, 3, 4];
+    for (let i = lanes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+    }
+    const emptyLanes = [lanes[0], lanes[1]];
+    
     for(let i=0; i<5; i++){
-      if(i === emptyLane || i === emptyLane2) continue;
+      if(emptyLanes.includes(i)) continue;
       const clone = el.cloneNode(true);
       dom.obstaclesContainer.appendChild(clone);
       obstacles.push({ el: clone, type: 'normal', lane: i, y: -5, speed: speedBase * 0.8 });
     }
-    el.remove(); // 元のやつは捨てる
+    el.remove();
+    
+    // ★修正：詰み防止。複数落ちの直後はしばらく次が出ないようにディレイをかける
+    spawnTimer = -1.0; 
   } else {
+    dom.obstaclesContainer.appendChild(el);
     let lane = Math.floor(Math.random() * 5);
-    obstacles.push({
-      el, type, lane, y: -5, speed: speedBase,
-      state: 0, timer: 0, dir: Math.random() < 0.5 ? 1 : -1 // ジグザグ・斜め用
-    });
+    obstacles.push({ el, type, lane, y: -5, speed: speedBase, state: 0, timer: 0, dir: Math.random() < 0.5 ? 1 : -1 });
+    
+    // フェイント系も少しだけディレイ
+    if (type === 'stopgo' || type === 'zigzag') spawnTimer = -0.3;
   }
 }
 
@@ -179,7 +188,6 @@ function gameLoop(now) {
   lastFrameTime = now;
   elapsedTime += dt;
 
-  // --- 倍率とスコアの計算 ---
   let phase = 1, requiredTime = 5;
   let passedTime = 0;
   while (true) {
@@ -189,55 +197,48 @@ function gameLoop(now) {
     }
     passedTime += requiredTime;
     phase++;
-    requiredTime += 5; // 区間が5, 10, 15...と伸びる
+    requiredTime += 5;
   }
 
-  // 1秒あたり基本10スコア × 倍率
   currentScore += 10 * currentMultiplier * dt;
-  
   dom.score.textContent = Math.floor(currentScore);
   dom.multiplier.textContent = `x${currentMultiplier.toFixed(1)}`;
   dom.timer.textContent = elapsedTime.toFixed(1);
 
-  // --- 障害物スポーン ---
-  // 時間が経つほどスポーン間隔が短くなる
-  spawnInterval = Math.max(0.3, 1.2 - (elapsedTime * 0.015));
+  spawnInterval = Math.max(0.35, 1.2 - (elapsedTime * 0.015));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
     spawnObstacle();
   }
 
-  // --- 無敵時間処理 ---
   if (isInvincible) {
     invincibleTimer -= dt;
     dom.player.style.opacity = (Math.floor(invincibleTimer * 10) % 2 === 0) ? 0.5 : 1;
-    if (invincibleTimer <= 0) {
-      isInvincible = false;
-      dom.player.style.opacity = 1;
-    }
+    if (invincibleTimer <= 0) { isInvincible = false; dom.player.style.opacity = 1; }
   }
 
-  // --- 障害物移動 ＆ 当たり判定 ---
+  // プレイヤーの中心X座標 (%)
+  const playerCenterX = playerPos + 10;
+
   for (let i = obstacles.length - 1; i >= 0; i--) {
     let obs = obstacles[i];
     
-    // 動きの制御
     if (obs.type === 'normal' || obs.type === 'spread') {
       obs.y += obs.speed * dt;
     } 
     else if (obs.type === 'diagonal') {
       obs.y += obs.speed * dt;
-      obs.lane += obs.dir * 2 * dt; // 横滑り
+      obs.lane += obs.dir * 2 * dt; 
       if (obs.lane < 0) { obs.lane = 0; obs.dir = 1; }
       if (obs.lane > 4) { obs.lane = 4; obs.dir = -1; }
     }
     else if (obs.type === 'stopgo') {
       if (obs.state === 0 && obs.y > 30) {
-        obs.state = 1; obs.timer = 1.0; // 停止
+        obs.state = 1; obs.timer = 1.0; 
       } else if (obs.state === 1) {
         obs.timer -= dt;
-        if (obs.timer <= 0) { obs.state = 2; obs.speed *= 2.5; } // 急加速
+        if (obs.timer <= 0) { obs.state = 2; obs.speed *= 2.5; }
       } else {
         obs.y += obs.speed * dt;
       }
@@ -245,24 +246,22 @@ function gameLoop(now) {
     else if (obs.type === 'zigzag') {
       obs.y += obs.speed * dt;
       obs.timer += dt * 5;
-      obs.lane += Math.sin(obs.timer) * 0.1; // ふらふら
+      obs.lane += Math.sin(obs.timer) * 0.1;
       obs.lane = Math.max(0, Math.min(4, obs.lane));
     }
 
     obs.el.style.top = `${obs.y}%`;
     obs.el.style.left = `${obs.lane * 20}%`;
 
-    // プレイヤーのY座標はおよそ 80% 〜 90%
-    // 当たり判定 (レーンが近く、Yが被っているか)
+    // ★修正：当たり判定（中心座標の距離で判定。13%未満ならヒット＝少し優しめ）
+    const obsCenterX = obs.lane * 20 + 10;
     if (!isInvincible && obs.y > 80 && obs.y < 90) {
-      if (Math.abs(obs.lane - playerLane) < 0.6) {
-        // ヒット！
+      if (Math.abs(playerCenterX - obsCenterX) < 13) {
         hp--;
         updateHpUI();
         isInvincible = true;
         invincibleTimer = 1.0;
         
-        // フラッシュ演出
         dom.damageFlash.style.opacity = 1;
         setTimeout(() => dom.damageFlash.style.opacity = 0, 100);
         
@@ -273,7 +272,6 @@ function gameLoop(now) {
       }
     }
 
-    // 画面外処理
     if (obs.y > 100) {
       obs.el.remove();
       obstacles.splice(i, 1);
@@ -284,17 +282,16 @@ function gameLoop(now) {
 }
 
 async function finishGame() {
+  if (isProcessing) return;
   isPlaying = false;
   isProcessing = true;
   if(animationId) cancelAnimationFrame(animationId);
   
   const finalScore = Math.floor(currentScore);
   
-  // 報酬計算 (スコア基準)
-  // VIT = (Score / 15) + 2
-  // EXP = (Score / 3) + 15
-  const earnedVit = Math.floor(finalScore / 15) + 2;
-  const earnedExp = Math.floor(finalScore / 3) + 15;
+  // ★修正：報酬のナーフ
+  const earnedVit = Math.floor(finalScore / 28);
+  const earnedExp = Math.floor(finalScore / 7);
 
   const result = applyMinigameResult(playerRef, 'vit', earnedExp, earnedVit);
   
@@ -305,7 +302,6 @@ async function finishGame() {
 
   const isNewRecord = await savePersonalBest(playerRef.name, "guard", finalScore);
 
-  // リザルト構築
   dom.viewResult.querySelector('#gd-res-score').textContent = finalScore;
   dom.viewResult.querySelector('#gd-res-time').textContent = `${elapsedTime.toFixed(2)} s`;
   

@@ -120,12 +120,22 @@ export async function savePlayerData(player) {
 // ==========================================
 // ミニゲームの自己ベスト保存・取得
 // ==========================================
-export async function savePersonalBest(userId, gameId, time) {
+export async function savePersonalBest(userId, gameId, score) {
   const docRef = doc(db, "minigames", gameId, "scores", userId);
   const docSnap = await getDoc(docRef);
-  if (!docSnap.exists() || time < docSnap.data().time) {
-    await setDoc(docRef, { userId: userId, time: time, timestamp: Date.now() });
+  
+  if (!docSnap.exists()) {
+    await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
     return true; 
+  } else {
+    const currentBest = docSnap.data().time; // フィールド名はtimeのまま（過去データ互換のため）
+    // ★ guard はスコアなので「大きい方が更新」。他はTAなので「小さい方が更新」
+    const isBetter = (gameId === "guard") ? (score > currentBest) : (score < currentBest);
+    
+    if (isBetter) {
+      await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
+      return true;
+    }
   }
   return false;
 }
@@ -163,7 +173,7 @@ export async function getRankingData(rankId, isTotal = false) {
     });
 
   } 
-  else {
+   else {
     // ミニゲーム系
     const querySnapshot = await getDocs(collection(db, "minigames", rankId, "scores"));
     querySnapshot.forEach((doc) => {
@@ -171,12 +181,15 @@ export async function getRankingData(rankId, isTotal = false) {
       rankings.push({ name: d.userId, score: d.time, timestamp: d.timestamp || Date.now() });
     });
 
-    // ミニゲームはタイムが短い方が上。同値なら先着順。
+    // ★ ミニゲームの種類によってソート方向を変える
     rankings.sort((a, b) => {
-      if (a.score !== b.score) return a.score - b.score; // 昇順
-      return a.timestamp - b.timestamp; // 昇順
+      if (a.score !== b.score) {
+        // guard は降順（スコアが高い方が上）、その他は昇順（タイムが短い方が上）
+        return rankId === 'guard' ? b.score - a.score : a.score - b.score;
+      }
+      return a.timestamp - b.timestamp; // 同値なら先着順
     });
   }
   
-  return rankings.slice(0, 10); // 上位10人のみ返す
+  return rankings.slice(0, 10);
 }

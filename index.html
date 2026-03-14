@@ -635,74 +635,75 @@
 
   <!-- 🛡️ 飛来物ガード専用モーダル -->
   <div id="modal-guard" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
-    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #1a2a2a, #0a1111); border: 2px solid #207a7a; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
+    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #1a3a3a, #0a1a1a); border: 2px solid #207a7a; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
       
       <!-- 1. 説明ビュー -->
-      <div id="gu-view-info" style="display: flex; flex-direction: column;">
+      <div id="gd-view-info" style="display: flex; flex-direction: column;">
         <h3 style="margin-top:0; color:#5ce6e6; text-align:center;">飛来物ガード (エンドレス)</h3>
         <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.5;">
-          【ルール】ドラッグ(スワイプ)で自キャラを操作し、降ってくる鉄球を避けろ！<br>
-          <span style="color:#ff6b6b;">HPが3つなくなると終了。</span>長く生き残るほどスコア倍率アップ！
+          【ルール】ドラッグ（スワイプ）でシールドを動かし、落ちてくる障害物を避けろ！<br>
+          <span style="color:#ff6b6b;">HPは3。3回当たるとゲームオーバー！</span>
         </p>
         
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid #207a7a; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
-          <strong style="color:#ffd166;">【報酬の仕組み (青天井)】</strong>
-          <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
-            <li>獲得VIT: <span style="color:#6be6ff; font-weight:bold;">スコア ÷ 160 ＋ 2</span></li>
-            <li>獲得EXP: <span style="color:#5ce6e6; font-weight:bold;">スコア ÷ 35 ＋ 10</span></li>
-            <hr style="border-color:#333; margin:5px 0;">
-            <li style="color:#aaa;">目安: 15秒生存(2500pt) = VIT+17</li>
-            <li style="color:#aaa;">目安: 30秒生存(7000pt) = VIT+45</li>
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color:#ffd166;">【スコアとインフレ報酬】</strong><br>
+          生存時間が長くなるほど、<span style="color:#ffeb85;">スコアの増加倍率が加速</span>していく青天井システム！<br>
+          <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6; color:#aaa;">
+            <li>〜5秒: 倍率 x1</li>
+            <li>〜15秒: 倍率 x2</li>
+            <li>〜30秒: 倍率 x3 (この辺でVIT+6/EXP30)</li>
+            <li>〜50秒: 倍率 x4 (VIT+11/EXP55相当)</li>
+            <li>50秒〜: 倍率 x5以上 (未知の領域)</li>
           </ul>
         </div>
         <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
-          自己ベスト: <span id="gu-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
-          <div class="btn-show-ranking" data-rank-id="guard" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(32, 122, 122, 0.2); border: 1px solid #207a7a; border-radius: 20px; color: #5ce6e6; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
+          自己ベスト(最高スコア): <span id="gd-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
+          <div class="btn-show-ranking" data-rank-id="guard" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(92, 230, 230, 0.1); border: 1px solid #5ce6e6; border-radius: 20px; color: #5ce6e6; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
         </div>
-        <button id="gu-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#5ce6e6; background:linear-gradient(to bottom, #207a7a, #0d4a4a);">ゲームスタート！</button>
+        <button id="gd-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#207a7a; background:linear-gradient(to bottom, #207a7a, #0d4a4a);">ゲームスタート！</button>
         <button onclick="document.getElementById('modal-guard').style.display='none';" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">閉じる</button>
       </div>
 
       <!-- 2. プレイビュー -->
-      <div id="gu-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 450px; padding: 5px 0;">
-        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; padding: 0 10px;">
-          <div style="font-size: 24px; color: #ff6b6b;" id="gu-hp-display">❤️❤️❤️</div>
-          <div style="text-align: right;">
-            <div style="font-size: 12px; color: #aaa;">スコア (x<span id="gu-multiplier">1</span>)</div>
-            <div style="font-size: 24px; font-weight: bold; color: #ffeb85; font-family: monospace;" id="gu-score">0</div>
+      <div id="gd-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 460px; padding: 10px 0; position:relative;">
+        <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 10px; align-items:flex-end;">
+          <div style="font-size: 16px; font-weight: bold; color: #ff6b6b;">HP: <span id="gd-hp-text">♥♥♥</span></div>
+          <div style="text-align:right;">
+            <div style="font-size: 12px; color:#aaa;">TIME: <span id="gd-timer" style="color:#fff;">0.00</span>s (倍率 x<span id="gd-multiplier">1</span>)</div>
+            <div style="font-size: 24px; font-weight: bold; color: #5ce6e6; font-family: monospace;" id="gd-score">0</div>
           </div>
         </div>
         
-        <!-- プレイエリア -->
-        <div id="gu-play-area" style="position: relative; width: 100%; flex-grow: 1; margin: 10px 0; background: rgba(0,0,0,0.6); border: 2px solid #4a3b26; border-radius: 4px; overflow: hidden; cursor: crosshair;">
-          <!-- 5レーンのガイドライン -->
-          <div style="position:absolute; left:20%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.1);"></div>
-          <div style="position:absolute; left:40%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.1);"></div>
-          <div style="position:absolute; left:60%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.1);"></div>
-          <div style="position:absolute; left:80%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.1);"></div>
+        <!-- プレイエリア (ここで敵が降る＆指で操作する) -->
+        <div id="gd-play-area" style="position: relative; width: 100%; flex-grow: 1; margin: 10px 0; background: rgba(0,0,0,0.6); border: 2px solid #333; border-radius: 8px; overflow: hidden; touch-action: none; cursor: grab;">
+          <!-- 5レーンの目安線（薄く） -->
+          <div style="position:absolute; left:20%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.05);"></div>
+          <div style="position:absolute; left:40%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.05);"></div>
+          <div style="position:absolute; left:60%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.05);"></div>
+          <div style="position:absolute; left:80%; top:0; width:1px; height:100%; background:rgba(255,255,255,0.05);"></div>
           
-          <!-- プレイヤー -->
-          <div id="gu-player" style="position: absolute; left: 50%; bottom: 10px; width: 16%; padding-top: 16%; background: #5ce6e6; border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 10px #5ce6e6;"></div>
+          <!-- 自キャラ (ドラッグで動く) -->
+          <div id="gd-player" style="position: absolute; left: 50%; bottom: 10px; width: 36px; height: 12px; background: #6be6ff; border-radius: 6px; box-shadow: 0 0 10px #6be6ff; transform: translateX(-50%); transition: opacity 0.1s;"></div>
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%;">
-          <button id="gu-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
-          <button id="gu-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
+          <button id="gd-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
+          <button id="gd-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
         </div>
       </div>
 
       <!-- 3. リザルトビュー -->
-      <div id="gu-view-result" style="display: none; flex-direction: column; align-items: center;">
-        <h2 style="color:#5ce6e6; margin-top:0;">RESULT</h2>
-        <div id="gu-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
+      <div id="gd-view-result" style="display: none; flex-direction: column; align-items: center;">
+        <h2 style="color:#5ce6e6; margin-top:0;">GAME OVER</h2>
+        <div id="gd-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW SCORE! 🎉</div>
         <div style="font-size: 14px; color:#aaa;">最終スコア</div>
-        <div style="font-size: 40px; font-weight: bold; color: #ffeb85; margin-bottom: 5px;" id="gu-res-score">0</div>
-        <div style="font-size: 14px; color:#aaa; margin-bottom: 15px;">生存時間: <span id="gu-res-time">0.00</span> 秒</div>
+        <div style="font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="gd-res-score">0</div>
+        <div style="font-size: 14px; color:#aaa; margin-bottom: 15px;">生存時間: <span id="gd-res-time">0.00 s</span></div>
         
-        <div id="gu-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
+        <div id="gd-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
 
-        <button id="gu-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#5ce6e6; background:linear-gradient(to bottom, #207a7a, #0d4a4a);">もう一度プレイ (R)</button>
-        <button id="gu-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
+        <button id="gd-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#207a7a; background:linear-gradient(to bottom, #207a7a, #0d4a4a);">もう一度プレイ (R)</button>
+        <button id="gd-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
       </div>
     </div>
   </div>

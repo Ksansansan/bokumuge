@@ -4,13 +4,13 @@ import { applyMinigameResult } from './minigameCore.js';
 
 // --- ランク定義（評価基準は「崖までの残り距離」）---
 const RANKS =[
-  { name: "S", distLimit: 2.5, vitBase: 8, exp: 35, color: "#ffeb85" },
-  { name: "A", distLimit: 7.5, vitBase: 6, exp: 25, color: "#ff6b6b" },
-  { name: "B", distLimit: 15.0, vitBase: 5, exp: 20, color: "#5ce6e6" },
+  { name: "S", distLimit: 2.5, vitBase: 12, exp: 45, color: "#ffeb85" },
+  { name: "A", distLimit: 7.5, vitBase: 9, exp: 35, color: "#ff6b6b" },
+  { name: "B", distLimit: 15.0, vitBase: 6, exp: 25, color: "#5ce6e6" },
   { name: "C", distLimit: 30.0, vitBase: 4, exp: 15, color: "#94ff6b" },
   { name: "D", distLimit: Infinity, vitBase: 3, exp: 15, color: "#aaa" }
 ];
-const FALL_RANK = { name: "落下", distLimit: -1, vitBase: 1, exp: 5, color: "#ff0000" };
+const FALL_RANK = { name: "落下", distLimit: -1, vitBase: 2, exp: 10, color: "#ff0000" };
 
 let playerRef = null, onUpdateCallback = null;
 let dom = {};
@@ -163,7 +163,7 @@ function gameLoop(now) {
     // 落下（失敗）
     dom.currentDistText.textContent = "0.0 m";
     dom.currentDistText.style.color = "#ff0000";
-    dom.playerBall.style.left = '92%'; 
+    dom.playerBall.style.left = '90%'; 
     dom.playerBall.style.animation = 'fall-down 0.5s forwards';
     finishGame(true, 0); // 落下フラグ
     return;

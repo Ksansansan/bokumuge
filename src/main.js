@@ -519,7 +519,12 @@ async function renderRanking() {
       if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
-      else if(["rockPush", "daruma", "chicken"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
+      else if(["rockPush", "daruma"].includes(currentRankId)) {
+        displayScore = item.score.toFixed(2) + ' 秒';
+      }
+      else if(currentRankId === 'chicken') {
+        displayScore = item.score.toFixed(2) + ' m'; // ★mを表示
+      }
       const borderLeftStyle = `4px solid ${color}`; 
       // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
       const selfClass = isMe ? 'rank-row-self' : '';
@@ -543,7 +548,12 @@ async function renderRanking() {
     if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayMyScore = formatNumber(myScore);
     else if(currentRankId === 'floor') displayMyScore += ' 層';
     else if(currentRankId === 'totalLv') displayMyScore = 'Lv.' + displayMyScore;
-    else if(["rockPush", "daruma", "chicken"].includes(currentRankId)) displayMyScore = myScore.toFixed(2) + ' 秒';
+    else if(["rockPush", "daruma"].includes(currentRankId)) {
+      displayMyScore = myScore.toFixed(2) + ' 秒';
+    }
+    else if(currentRankId === 'chicken') {
+      displayMyScore = myScore.toFixed(2) + ' m'; // ★mを表示
+    }
 
     myRankingContainer.innerHTML = `
       <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">

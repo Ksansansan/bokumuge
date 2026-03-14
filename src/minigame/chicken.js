@@ -4,7 +4,7 @@ import { applyMinigameResult } from './minigameCore.js';
 
 // --- ランク定義（評価基準は「崖までの残り距離」）---
 const RANKS =[
-  { name: "S", distLimit: 2.5, vitBase: 12, exp: 45, color: "#ffeb85" },
+  { name: "S", distLimit: 3.5, vitBase: 12, exp: 45, color: "#ffeb85" },
   { name: "A", distLimit: 7.5, vitBase: 9, exp: 35, color: "#ff6b6b" },
   { name: "B", distLimit: 15.0, vitBase: 6, exp: 25, color: "#5ce6e6" },
   { name: "C", distLimit: 30.0, vitBase: 4, exp: 15, color: "#94ff6b" },
@@ -53,12 +53,32 @@ export function initChicken(playerObj, updateUIFn) {
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
+  
+  // ★追加：「やめる」ボタン
+  dom.btnQuit.addEventListener('click', () => {
+    isPlaying = false;
+    if(animationId) cancelAnimationFrame(animationId);
+    showView('info');
+  });
 
-  // Rキー対応
-  window.addEventListener('keydown', (e) => {
-    if (dom.overlay.style.display !== 'flex' || isProcessing) return;
-    if (e.key.toLowerCase() === 'r' && (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex')) {
+  // ★追加：「リトライ」ボタン
+  dom.btnReset.addEventListener('click', () => {
+    if(!isProcessing) {
+      isPlaying = false;
+      if(animationId) cancelAnimationFrame(animationId);
       startGame();
+    }
+  });
+  // Rキー対応
+   window.addEventListener('keydown', (e) => {
+    if (dom.overlay.style.display !== 'flex' || isProcessing) return;
+    if (e.key.toLowerCase() === 'r') {
+      // プレイ中、またはリザルト画面にいる時だけ Rキー でリトライ
+      if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
+        isPlaying = false;
+        if(animationId) cancelAnimationFrame(animationId);
+        startGame();
+      }
     }
   });
 

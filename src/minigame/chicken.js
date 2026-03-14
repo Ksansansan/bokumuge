@@ -42,6 +42,8 @@ export function initChicken(playerObj, updateUIFn) {
     btnStart: document.getElementById('ch-btn-start'),
     btnRetry: document.getElementById('ch-btn-retry'),
     btnClose: document.getElementById('ch-btn-close'),
+    btnQuit: document.getElementById('ch-btn-quit'),
+    btnReset: document.getElementById('ch-btn-reset'),
     actionBtn: document.getElementById('ch-action-btn'),
     targetDistText: document.getElementById('ch-target-dist'),
     currentDistText: document.getElementById('ch-current-dist'),
@@ -53,7 +55,7 @@ export function initChicken(playerObj, updateUIFn) {
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
-  
+
   // ★追加：「やめる」ボタン
   dom.btnQuit.addEventListener('click', () => {
     isPlaying = false;

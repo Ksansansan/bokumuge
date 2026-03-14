@@ -206,20 +206,36 @@ function gameLoop(now) {
 }
 
 async function finishGame(isFall, remainingDist) {
+  if (isProcessing) return;
   isPlaying = false;
   isProcessing = true;
+  if (animationId) cancelAnimationFrame(animationId);
   
   let rank;
+  let nextRankStr = "";
+
   if (isFall) {
     rank = FALL_RANK;
+    // 落下時は、最低ランクDへの復帰を促す
+    nextRankStr = `崖の手前で止まろう！`;
   } else {
-    // 距離が短い（=0に近い）ほど高ランク
+    // 現在のランクを特定
     let rankIndex = RANKS.findIndex(r => remainingDist <= r.distLimit);
-    if(rankIndex === -1) rankIndex = RANKS.length - 1;
+    if (rankIndex === -1) rankIndex = RANKS.length - 1;
     rank = RANKS[rankIndex];
+
+    // ★追加：次のランクまでの計算
+    if (rankIndex > 0) {
+      // 0（Sランク）より大きい場合、一つ上のランクが存在する
+      const nextRank = RANKS[rankIndex - 1];
+      const diff = remainingDist - nextRank.distLimit;
+      nextRankStr = `次の[${nextRank.name}]まで あと ${diff.toFixed(2)} m`;
+    } else {
+      nextRankStr = "最高ランク！";
+    }
   }
 
-  // ステータス反映 (VITを上げる)
+  // ステータス反映
   const result = applyMinigameResult(playerRef, 'vit', rank.exp, rank.vitBase);
   
   if (onUpdateCallback) onUpdateCallback();
@@ -227,18 +243,22 @@ async function finishGame(isFall, remainingDist) {
 
   await savePlayerData(playerRef);
 
-  // 自己ベストは「距離が短い方が良い（落下は記録しない）」
+  // 自己ベスト記録（落下は除外）
   let isNewRecord = false;
   if (!isFall) {
     isNewRecord = await savePersonalBest(playerRef.name, "chicken", remainingDist);
   }
 
-  // リザルト表示構築
-  dom.viewResult.querySelector('#ch-res-time').textContent = isFall ? "落下" : `${remainingDist.toFixed(2)} m`;
-  dom.viewResult.querySelector('#ch-res-time').style.color = isFall ? "#ff0000" : "#fff";
+  // --- 表示の更新 ---
+  const resTimeEl = dom.viewResult.querySelector('#ch-res-time');
+  resTimeEl.textContent = isFall ? "落下" : `${remainingDist.toFixed(2)} m`;
+  resTimeEl.style.color = isFall ? "#ff4444" : "#fff";
   
   document.getElementById('ch-res-rank').textContent = rank.name;
   document.getElementById('ch-res-rank').style.color = rank.color;
+
+  // ★追加：計算した「次のランクまで」を表示
+  document.getElementById('ch-res-next').textContent = nextRankStr;
   
   let gainHtml = `
     <div style="font-size:16px; margin-bottom:10px;">Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span></div>

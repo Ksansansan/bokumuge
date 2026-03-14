@@ -543,12 +543,12 @@
         <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
           <strong style="color:#ffd166;">【ランク報酬表】</strong> (崖までの残り距離)
           <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
-            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (0.5m 以内): 基礎VIT+8 / EXP 35</li>
-            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (2.0m 以内): 基礎VIT+6 / EXP 25</li>
-            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (5.0m 以内): 基礎VIT+5 / EXP 20</li>
-            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (10.0m 以内): 基礎VIT+4 / EXP 15</li>
+            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (2.5m 以内): 基礎VIT+8 / EXP 35</li>
+            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (7.5m 以内): 基礎VIT+6 / EXP 25</li>
+            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (15.0m 以内): 基礎VIT+5 / EXP 20</li>
+            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (30.0m 以内): 基礎VIT+4 / EXP 15</li>
             <li><span style="color:#aaa; font-weight:bold;">D</span> (それ以上): 基礎VIT+3 / EXP 15</li>
-            <li><span style="color:#ff0000; font-weight:bold;">落下</span> (崖から落ちた): 基礎VIT+1 / EXP 5</li>
+            <li><span style="color:#ff4444; font-weight:bold;">落下</span>: 基礎VIT+2 / EXP 10</li>
           </ul>
         </div>
         <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
@@ -575,11 +575,18 @@
         </div>
         
         <!-- アニメーション表示エリア（横から見た図） -->
-        <div style="position:relative; width:100%; height:60px; border-bottom: 4px solid #8c7a65; margin-top:20px; overflow:visible;">
-          <!-- 崖の端っこ（右側） -->
-          <div style="position:absolute; right:0; top:0; width:30px; height:100%; border-right: 4px solid transparent; background: repeating-linear-gradient(45deg, #4a3b26, #4a3b26 10px, transparent 10px, transparent 20px);"></div>
+        <div style="position:relative; width:100%; height:80px; margin-top:10px; overflow:visible;">
+          <!-- 崖の床（90%の位置で途切れる） -->
+          <div style="position:absolute; left:0; bottom:0; width:90%; height:4px; background:#8c7a65; border-radius: 2px;"></div>
+          
+          <!-- 崖の下の闇演出（床がないことを強調） -->
+          <div style="position:absolute; right:0; bottom:-40px; width:10%; height:40px; background:linear-gradient(to bottom, rgba(255,0,0,0.2), transparent);"></div>
+
+          <!-- 崖の警告サイン（床の上に置く） -->
+          <div style="position:absolute; left:85%; bottom:4px; width:5%; height:20px; background: repeating-linear-gradient(45deg, #ffd166, #ffd166 5px, #000 5px, #000 10px); opacity:0.7;"></div>
+
           <!-- プレイヤーのボール -->
-          <div id="ch-player-ball" style="position:absolute; left:10px; bottom:0; width:20px; height:20px; background:radial-gradient(circle at 30% 30%, #6be6ff, #0d314a); border-radius:50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);"></div>
+          <div id="ch-player-ball"></div>
         </div>
 
         <!-- アクションボタン -->
@@ -608,6 +615,19 @@
   0% { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(150px) scale(0.2) rotate(180deg); opacity: 0; }
   }
+  #ch-player-ball {
+  position: absolute;
+  left: 10%;
+  bottom: 4px; /* 床の上に置く */
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle at 30% 30%, #6be6ff, #0d314a);
+  border-radius: 50%;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+  transform: translateX(-50%); /* ★中心を基準にする */
+  transition: transform 0.1s linear;
+  z-index: 10;
+}
   </style>
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>

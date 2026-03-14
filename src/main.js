@@ -1,10 +1,12 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
-import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, getPersonalBest } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
+import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
+import { initChicken, openChickenModal } from './minigame/chicken.js';
+
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
 const elAgi = document.getElementById('val-agi');
@@ -176,6 +178,7 @@ function init() {
   player.updateTrainingUI = updateTrainingUI; 
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
+  initChicken(player, updateTrainingUI);
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -392,6 +395,9 @@ document.getElementById('btn-play-rockpush').addEventListener('click', () => {
 document.getElementById('btn-play-daruma').addEventListener('click', () => {
   openDarumaModal();
 });
+document.getElementById('btn-play-chicken').addEventListener('click', () => {
+  openChickenModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -422,7 +428,7 @@ function updateTrainingUI() {
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['chicken', 'guard', '1to20', 'command', 'clover', 'slot'];
+const dummyGames =['guard', '1to20', 'command', 'clover', 'slot'];
 dummyGames.forEach(id => {
   const btn = document.getElementById(`btn-play-${id}`);
   if(btn) {
@@ -513,7 +519,7 @@ async function renderRanking() {
       if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
-      else if(["rockPush", "daruma"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
+      else if(["rockPush", "daruma", "chicken"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
       const borderLeftStyle = `4px solid ${color}`; 
       // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
       const selfClass = isMe ? 'rank-row-self' : '';
@@ -537,7 +543,7 @@ async function renderRanking() {
     if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayMyScore = formatNumber(myScore);
     else if(currentRankId === 'floor') displayMyScore += ' 層';
     else if(currentRankId === 'totalLv') displayMyScore = 'Lv.' + displayMyScore;
-    else if(["rockPush", "daruma"].includes(currentRankId)) displayMyScore = myScore.toFixed(2) + ' 秒';
+    else if(["rockPush", "daruma", "chicken"].includes(currentRankId)) displayMyScore = myScore.toFixed(2) + ' 秒';
 
     myRankingContainer.innerHTML = `
       <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">

@@ -14,13 +14,15 @@ let currentScore = 0;
 let currentMultiplier = 1.0;
 let hp = 3;
 
-// ★修正：レーン制ではなく、自由なパーセンテージ位置(0〜80)で管理
 let playerPos = 40; 
 let isInvincible = false;
 let invincibleTimer = 0;
 let obstacles =[];
 let spawnTimer = 0;
-let spawnInterval = 1.0;
+let spawnInterval = 0.6; // ★序盤の暇さを解消
+
+// 当たり判定用のエリア情報
+let playAreaRect = null;
 
 export function initGuard(playerObj, updateUIFn) {
   playerRef = playerObj;
@@ -60,18 +62,13 @@ export function initGuard(playerObj, updateUIFn) {
     }
   });
 
-  // --- ★修正：ドラッグでの自由移動 ---
   const handleMove = (clientX) => {
-    if (!isPlaying) return;
-    const rect = dom.playArea.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let percentage = (x / rect.width) * 100;
+    if (!isPlaying || !playAreaRect) return;
+    let x = clientX - playAreaRect.left;
+    let percentage = (x / playAreaRect.width) * 100;
     
-    // プレイヤーの幅(20%)の半分を引いて中心を合わせる
-    let leftPos = percentage - 10;
-    // 画面外に出ないように 0% 〜 80% に制限
+    let leftPos = percentage - 10; // 幅20%の半分を引く
     playerPos = Math.max(0, Math.min(80, leftPos));
-    
     dom.player.style.left = `${playerPos}%`;
   };
 
@@ -84,6 +81,11 @@ export function initGuard(playerObj, updateUIFn) {
   dom.playArea.addEventListener('mousemove', onMouseMove);
   dom.playArea.addEventListener('touchstart', onTouchStart, { passive: false });
   dom.playArea.addEventListener('mousedown', onMouseDown);
+  
+  // エリアサイズのリサイズ追従
+  window.addEventListener('resize', () => {
+    if (isPlaying) playAreaRect = dom.playArea.getBoundingClientRect();
+  });
 }
 
 export async function openGuardModal() {
@@ -103,6 +105,9 @@ function startGame() {
   if(animationId) cancelAnimationFrame(animationId);
   showView('play');
   
+  // 画面サイズの取得
+  playAreaRect = dom.playArea.getBoundingClientRect();
+  
   isPlaying = true;
   isProcessing = false;
   elapsedTime = 0;
@@ -114,12 +119,12 @@ function startGame() {
   invincibleTimer = 0;
   obstacles =[];
   spawnTimer = 0;
-  spawnInterval = 1.2;
+  spawnInterval = 0.6; // 最初からまあまあ降る
 
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
   dom.player.style.left = '40%';
-  dom.player.style.transition = 'none'; // 滑らかに動かすためCSSアニメーションは切る
+  dom.player.style.transition = 'none'; 
   
   lastFrameTime = performance.now();
   animationId = requestAnimationFrame(gameLoop);
@@ -129,65 +134,65 @@ function updateHpUI() {
   dom.hp.textContent = "❤️".repeat(hp) + "🖤".repeat(3 - hp);
 }
 
+// ★弾幕パターンの生成
 function spawnObstacle() {
-  const speedBase = 30 + elapsedTime * 1.5; 
+  // 速度は緩やかに上昇（速すぎると理不尽になるため密度で勝負）
+  const speedBase = 20 + elapsedTime * 0.3; 
   const types = ['normal'];
   
-  if (elapsedTime > 10) types.push('spread');
-  if (elapsedTime > 20) types.push('diagonal');
-  if (elapsedTime > 30) types.push('stopgo', 'zigzag');
+  if (elapsedTime > 5) types.push('diagonal', 'normal'); // 5秒から斜め
+  if (elapsedTime > 15) types.push('zigzag', 'diagonal'); // 15秒からジグザグ
+  if (elapsedTime > 25) types.push('stopgo'); // 25秒からフェイント
 
-  const type = types[Math.floor(Math.random() * types.length)];
-  const el = document.createElement('div');
-  el.style.position = 'absolute';
-  el.style.width = '20%';
-  el.style.height = '20px';
-  el.style.display = 'flex';
-  el.style.justifyContent = 'center';
-  el.style.alignItems = 'center';
-  
-  const ball = document.createElement('div');
-  ball.style.width = '20px';
-  ball.style.height = '20px';
-  ball.style.background = 'radial-gradient(circle at 30% 30%, #aaa, #333)';
-  ball.style.borderRadius = '50%';
-  el.appendChild(ball);
+  const createBall = (type, lane) => {
+    const el = document.createElement('div');
+    el.style.position = 'absolute';
+    el.style.width = '20%';
+    el.style.height = '20px';
+    el.style.display = 'flex';
+    el.style.justifyContent = 'center';
+    el.style.alignItems = 'center';
+    
+    const ball = document.createElement('div');
+    ball.style.width = '20px';
+    ball.style.height = '20px';
+    ball.style.background = 'radial-gradient(circle at 30% 30%, #aaa, #333)';
+    ball.style.borderRadius = '50%';
+    ball.style.boxShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+    el.appendChild(ball);
 
-  if (type === 'spread') {
-    // ★修正：5レーン中、ランダムな2レーンを安置（穴）にする
-    const lanes =[0, 1, 2, 3, 4];
-    for (let i = lanes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
-    }
-    const emptyLanes = [lanes[0], lanes[1]];
-    
-    for(let i=0; i<5; i++){
-      if(emptyLanes.includes(i)) continue;
-      const clone = el.cloneNode(true);
-      dom.obstaclesContainer.appendChild(clone);
-      obstacles.push({ el: clone, type: 'normal', lane: i, y: -5, speed: speedBase * 0.8 });
-    }
-    el.remove();
-    
-    // ★修正：詰み防止。複数落ちの直後はしばらく次が出ないようにディレイをかける
-    spawnTimer = -1.0; 
-  } else {
     dom.obstaclesContainer.appendChild(el);
-    let lane = Math.floor(Math.random() * 5);
-    obstacles.push({ el, type, lane, y: -5, speed: speedBase, state: 0, timer: 0, dir: Math.random() < 0.5 ? 1 : -1 });
-    
-    // フェイント系も少しだけディレイ
-    if (type === 'stopgo' || type === 'zigzag') spawnTimer = -0.3;
+    obstacles.push({ 
+      el, type, lane, y: -5, speed: speedBase, 
+      state: 0, timer: 0, dir: Math.random() < 0.5 ? 1 : -1,
+      baseLane: lane // ジグザグの基準位置
+    });
+  };
+
+  const type1 = types[Math.floor(Math.random() * types.length)];
+  const lane1 = Math.floor(Math.random() * 5);
+  createBall(type1, lane1);
+
+  // ★ STGの密度：15秒以降、30%の確率で別のレーンにもう1個同時に落とす
+  if (elapsedTime > 15 && Math.random() < 0.3) {
+    const type2 = types[Math.floor(Math.random() * types.length)];
+    let lane2 = Math.floor(Math.random() * 5);
+    if (lane2 === lane1) lane2 = (lane2 + 1) % 5; // 同じレーンに重ならないように
+    createBall(type2, lane2);
   }
 }
 
 function gameLoop(now) {
   if (!isPlaying) return;
-  const dt = (now - lastFrameTime) / 1000;
+  let dt = (now - lastFrameTime) / 1000;
   lastFrameTime = now;
+  
+  // ★ チート対策: タブ切り替え等で時間が飛んだ場合は1フレーム分(16ms)に抑える
+  if (dt > 0.1) dt = 0.016; 
+
   elapsedTime += dt;
 
+  // --- 倍率とスコアの計算 ---
   let phase = 1, requiredTime = 5;
   let passedTime = 0;
   while (true) {
@@ -197,15 +202,18 @@ function gameLoop(now) {
     }
     passedTime += requiredTime;
     phase++;
-    requiredTime += 5;
+    requiredTime += 5; 
   }
 
   currentScore += 10 * currentMultiplier * dt;
+  
   dom.score.textContent = Math.floor(currentScore);
   dom.multiplier.textContent = `x${currentMultiplier.toFixed(1)}`;
   dom.timer.textContent = elapsedTime.toFixed(1);
 
-  spawnInterval = Math.max(0.35, 1.2 - (elapsedTime * 0.015));
+  // --- 障害物スポーン（密度上昇） ---
+  // 時間が経つほど間隔が短くなる（0.6秒から0.18秒まで縮まる）
+  spawnInterval = Math.max(0.18, 0.6 - (elapsedTime * 0.007));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
@@ -218,45 +226,74 @@ function gameLoop(now) {
     if (invincibleTimer <= 0) { isInvincible = false; dom.player.style.opacity = 1; }
   }
 
-  // プレイヤーの中心X座標 (%)
-  const playerCenterX = playerPos + 10;
+  // ★ 精密当たり判定のための事前計算
+  const rectW = playAreaRect.width;
+  const rectH = playAreaRect.height;
+  
+  // 盾（カプセル型）のパラメータ
+  const pCx = rectW * (playerPos / 100 + 0.1); // 中心のX座標
+  const pCy = rectH * 0.9 - 10;                // 中心のY座標（bottom:10%, 高さ20px）
+  const pHalfW = (rectW * 0.16) / 2;           // 幅の半分
+  const pHalfH = 10;                           // 高さの半分
+  const pCapW = Math.max(0, pHalfW - 10);      // 両端の半円を除いた直線部分の半幅
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     let obs = obstacles[i];
     
-    if (obs.type === 'normal' || obs.type === 'spread') {
+    // 動きの制御
+    if (obs.type === 'normal') {
       obs.y += obs.speed * dt;
     } 
     else if (obs.type === 'diagonal') {
       obs.y += obs.speed * dt;
       obs.lane += obs.dir * 2 * dt; 
-      if (obs.lane < 0) { obs.lane = 0; obs.dir = 1; }
-      if (obs.lane > 4) { obs.lane = 4; obs.dir = -1; }
+      if (obs.lane <= 0) { obs.lane = 0; obs.dir = 1; }
+      if (obs.lane >= 4) { obs.lane = 4; obs.dir = -1; }
     }
     else if (obs.type === 'stopgo') {
-      if (obs.state === 0 && obs.y > 30) {
-        obs.state = 1; obs.timer = 1.0; 
+      if (obs.state === 0 && obs.y > 25) { // 少し上で止まる
+        obs.state = 1; obs.timer = 0.8; 
       } else if (obs.state === 1) {
         obs.timer -= dt;
-        if (obs.timer <= 0) { obs.state = 2; obs.speed *= 2.5; }
+        if (obs.timer <= 0) { obs.state = 2; obs.speed *= 1.8; } // 1.8倍速で再開
       } else {
         obs.y += obs.speed * dt;
       }
     }
     else if (obs.type === 'zigzag') {
       obs.y += obs.speed * dt;
-      obs.timer += dt * 5;
-      obs.lane += Math.sin(obs.timer) * 0.1;
-      obs.lane = Math.max(0, Math.min(4, obs.lane));
+      obs.timer += dt * 4;
+      obs.lane = obs.baseLane + Math.sin(obs.timer) * 0.6; // 基準レーンを中心に揺れる
     }
 
     obs.el.style.top = `${obs.y}%`;
     obs.el.style.left = `${obs.lane * 20}%`;
 
-    // ★修正：当たり判定（中心座標の距離で判定。13%未満ならヒット＝少し優しめ）
-    const obsCenterX = obs.lane * 20 + 10;
-    if (!isInvincible && obs.y > 80 && obs.y < 90) {
-      if (Math.abs(playerCenterX - obsCenterX) < 13) {
+    // --- ★ 見た目通りのカプセル型当たり判定 ---
+    if (!isInvincible && obs.y > 75 && obs.y < 95) {
+      // 鉄球のパラメータ
+      const oCx = rectW * (obs.lane * 0.2 + 0.1);
+      const oCy = rectH * (obs.y / 100) + 10;
+      const oR = 10; // 半径
+      
+      const dx = Math.abs(pCx - oCx);
+      const dy = Math.abs(pCy - oCy);
+      let hit = false;
+      
+      // STGの鉄則として、自機の判定を2pxだけ甘くする
+      const hitboxTolerance = 2; 
+
+      if (dx <= pCapW) {
+        // 盾の直線部分にいる場合
+        if (dy <= pHalfH + oR - hitboxTolerance) hit = true;
+      } else {
+        // 盾の端の半円部分にいる場合（ピタゴラスの定理）
+        const distSq = (dx - pCapW) * (dx - pCapW) + dy * dy;
+        const hitRadius = 10 + oR - hitboxTolerance;
+        if (distSq <= hitRadius * hitRadius) hit = true;
+      }
+
+      if (hit) {
         hp--;
         updateHpUI();
         isInvincible = true;
@@ -289,7 +326,6 @@ async function finishGame() {
   
   const finalScore = Math.floor(currentScore);
   
-  // ★修正：報酬のナーフ
   const earnedVit = Math.floor(finalScore / 28);
   const earnedExp = Math.floor(finalScore / 7);
 

@@ -527,66 +527,88 @@
     </div>
   </div>
 
-  <!-- 🏃 崖っぷちダッシュ専用モーダル -->
+  <!-- 🌊 崖っぷちダッシュ専用モーダル -->
   <div id="modal-chicken" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
     <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #1a2a3a, #0a111a); border: 2px solid #6be6ff; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
       
-      <div id="ck-view-info" style="display: flex; flex-direction: column;">
-        <h3 style="margin-top:0; color:#6be6ff; text-align:center;">崖っぷちダッシュ</h3>
+      <!-- 1. 説明ビュー -->
+      <div id="ch-view-info" style="display: flex; flex-direction: column;">
+        <h3 style="margin-top:0; color:#6be6ff; text-align:center;">崖っぷちダッシュ (チキンレース)</h3>
         <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.5;">
-          【ルール】目標の崖のギリギリを攻めろ！<br>
-          <span style="color:#ffeb85;">ボタン長押しで加速</span>し、離すと減速して止まる。<br>
-          <span style="color:#ff6b6b;">※一度指を離したら再加速不可！落ちたらDランク！</span>
+          【ルール】長押しで加速！離すとブレーキ！<br>
+          <span style="color:#ff6b6b;">※一度離したらもう加速できません。</span><br>
+          崖のギリギリで止まれば高評価！落ちたらスコア0！
         </p>
         
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid #205c7a; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
-          <strong style="color:#6be6ff;">【ランク報酬表】</strong>
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color:#ffd166;">【ランク報酬表】</strong> (崖までの残り距離)
           <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
-            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (残り5m未満): 基礎VIT+10 / EXP 40</li>
-            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (残り15m未満): 基礎VIT+8 / EXP 30</li>
-            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (残り30m未満): 基礎VIT+6 / EXP 25</li>
-            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (残り60m未満): 基礎VIT+4 / EXP 20</li>
-            <li><span style="color:#aaa; font-weight:bold;">D</span> (それ以上/落下): 基礎VIT+2 / EXP 10</li>
+            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (0.5m 以内): 基礎VIT+8 / EXP 35</li>
+            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (2.0m 以内): 基礎VIT+6 / EXP 25</li>
+            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (5.0m 以内): 基礎VIT+5 / EXP 20</li>
+            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (10.0m 以内): 基礎VIT+4 / EXP 15</li>
+            <li><span style="color:#aaa; font-weight:bold;">D</span> (それ以上): 基礎VIT+3 / EXP 15</li>
+            <li><span style="color:#ff0000; font-weight:bold;">落下</span> (崖から落ちた): 基礎VIT+1 / EXP 5</li>
           </ul>
         </div>
         <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
-          自己ベスト: <span id="ck-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
+          自己ベスト(最短距離): <span id="ch-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
           <div class="btn-show-ranking" data-rank-id="chicken" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(107, 230, 255, 0.1); border: 1px solid #6be6ff; border-radius: 20px; color: #6be6ff; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
         </div>
-        <button id="ck-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; background: linear-gradient(to bottom, #205c7a, #0d314a); border-color:#6be6ff;">ゲームスタート！</button>
+        <button id="ch-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#6be6ff; background:linear-gradient(to bottom, #205c7a, #0d314a);">ゲームスタート！</button>
         <button onclick="document.getElementById('modal-chicken').style.display='none';" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">閉じる</button>
       </div>
 
-      <div id="ck-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 350px; padding: 10px 0;">
-        <h3 style="margin:0; color:#6be6ff; font-size: 18px;">目標: <span id="ck-target-dist" style="font-size:24px; color:#ffeb85;">0m</span></h3>
+      <!-- 2. プレイビュー -->
+      <div id="ch-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 350px; padding: 10px 0;">
+        <h3 style="margin:0; color:#6be6ff; font-size: 18px;">崖っぷちダッシュ</h3>
         
-        <div id="ck-bg-layer" style="width:100%; height:100px; background: repeating-linear-gradient(90deg, #333, #333 40px, #111 40px, #111 80px); border: 2px solid #6be6ff; border-radius: 8px; margin: 15px 0; display:flex; justify-content:center; align-items:center; overflow:hidden;">
-           <span id="ck-speed" style="font-size:32px; font-weight:bold; color:#fff; text-shadow: 2px 2px 4px #000; font-style:italic;">0 km/h</span>
+        <!-- 状況表示 -->
+        <div style="width:100%; text-align:center;">
+          <div style="font-size: 14px; color:#aaa;">崖までの総距離</div>
+          <div style="font-size: 28px; font-weight: bold; color: #fff; font-family: monospace;" id="ch-target-dist">--- m</div>
+          
+          <div style="font-size: 12px; color:#aaa; margin-top:15px;">現在の残り距離</div>
+          <div style="font-size: 36px; font-weight: bold; color: #ff6b6b; font-family: monospace;" id="ch-current-dist">--- m</div>
+          
+          <div style="font-size: 14px; color:#5ce6e6; font-family: monospace; margin-top:10px;">速度: <span id="ch-speed-txt">0.0</span> m/s</div>
+        </div>
+        
+        <!-- アニメーション表示エリア（横から見た図） -->
+        <div style="position:relative; width:100%; height:60px; border-bottom: 4px solid #8c7a65; margin-top:20px; overflow:visible;">
+          <!-- 崖の端っこ（右側） -->
+          <div style="position:absolute; right:0; top:0; width:30px; height:100%; border-right: 4px solid transparent; background: repeating-linear-gradient(45deg, #4a3b26, #4a3b26 10px, transparent 10px, transparent 20px);"></div>
+          <!-- プレイヤーのボール -->
+          <div id="ch-player-ball" style="position:absolute; left:10px; bottom:0; width:20px; height:20px; background:radial-gradient(circle at 30% 30%, #6be6ff, #0d314a); border-radius:50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);"></div>
         </div>
 
-        <button id="ck-run-btn" style="width:100%; height:80px; font-size:20px; font-weight:bold; color:#fff; background:linear-gradient(to bottom, #ff6b6b, #cc0000); border:3px solid #ffeb85; border-radius:10px; cursor:pointer; user-select:none;">長押しで走る！</button>
-
-        <div style="display: flex; gap: 10px; width: 100%; margin-top:15px;">
-          <button id="ck-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
-          <button id="ck-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
-        </div>
+        <!-- アクションボタン -->
+        <button id="ch-action-btn" style="width:80%; padding:15px; font-size:20px; font-weight:bold; border-radius:30px; background:linear-gradient(to bottom, #ff6b6b, #cc0000); border:3px solid #ffaaaa; color:#fff; cursor:pointer; margin-top:20px; box-shadow:0 5px 15px rgba(255,0,0,0.4);">長押しで加速！</button>
       </div>
 
-      <div id="ck-view-result" style="display: none; flex-direction: column; align-items: center;">
+      <!-- 3. リザルトビュー -->
+      <div id="ch-view-result" style="display: none; flex-direction: column; align-items: center;">
         <h2 style="color:#6be6ff; margin-top:0;">RESULT</h2>
-        <div id="ck-res-newrecord" style="color: #ffeb85; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
-        <div style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="ck-res-time">0.0 m</div>
-        <div style="font-size: 20px; margin-bottom: 5px;">ランク: <span id="ck-res-rank" style="font-size: 36px; font-weight: bold;">--</span></div>
-        <div id="ck-res-next" style="font-size: 12px; color: #aaa; margin-bottom: 15px;">--</div>
+        <div id="ch-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
+        <div style="font-size: 14px; color:#aaa;">残り距離</div>
+        <div style="font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="ch-res-time">0.00 m</div>
+        <div style="font-size: 20px; margin-bottom: 10px;">ランク: <span id="ch-res-rank" style="font-size: 36px; font-weight: bold;">--</span></div>
         
-        <div id="ck-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #205c7a; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
+        <div id="ch-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
 
-        <button id="ck-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; background: linear-gradient(to bottom, #205c7a, #0d314a); border-color:#6be6ff;">もう一度プレイ (R)</button>
-        <button id="ck-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
+        <div style="display:flex; gap:10px; width:100%;">
+          <button id="ch-btn-retry" class="btn-fantasy" style="flex:1; margin-bottom: 10px; font-size:16px; border-color:#6be6ff; background:linear-gradient(to bottom, #205c7a, #0d314a);">もう一度 (R)</button>
+          <button id="ch-btn-close" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; font-size:16px;">戻る</button>
+        </div>
       </div>
     </div>
   </div>
-  
+<style>
+  @keyframes fall-down {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(150px) scale(0.2) rotate(180deg); opacity: 0; }
+  }
+  </style>
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>
 

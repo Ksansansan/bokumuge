@@ -148,7 +148,7 @@ function startGame() {
   invincibleTimer = 0;
   obstacles =[];
   spawnTimer = 0;
-  spawnInterval = 0.6; // 最初からまあまあ降る
+  spawnInterval = 0.65; // 最初からまあまあ降る
 
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
@@ -245,7 +245,7 @@ function gameLoop(now) {
 
   // --- 障害物スポーン（密度上昇） ---
   // 時間が経つほど間隔が短くなる（0.6秒から0.1秒まで縮まる）
-  spawnInterval = Math.max(0.1, 0.6 - (elapsedTime * (0.008 - elapsedTime / 40000)));
+  spawnInterval = Math.max(0.1, 0.65 - (elapsedTime * (0.008 - elapsedTime / 40000)));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
@@ -364,8 +364,8 @@ async function finishGame() {
   
   const finalScore = Math.floor(currentScore);
   
-  const earnedVit = Math.floor(finalScore / 25);
-  const earnedExp = Math.floor(finalScore / 6);
+  const earnedVit = Math.floor(finalScore / 22);
+  const earnedExp = Math.floor(finalScore / 5.5);
 
   const result = applyMinigameResult(playerRef, 'vit', earnedExp, earnedVit);
   

@@ -19,7 +19,7 @@ let isInvincible = false;
 let invincibleTimer = 0;
 let obstacles =[];
 let spawnTimer = 0;
-let spawnInterval = 0.6; // ★序盤の暇さを解消
+let spawnInterval = 0.8; // ★序盤の暇さを解消
 
 // 当たり判定用のエリア情報
 let playAreaRect = null;
@@ -119,7 +119,7 @@ function startGame() {
   invincibleTimer = 0;
   obstacles =[];
   spawnTimer = 0;
-  spawnInterval = 0.6; // 最初からまあまあ降る
+  spawnInterval = 0.8; // 最初からまあまあ降る
 
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
@@ -137,7 +137,7 @@ function updateHpUI() {
 // ★弾幕パターンの生成
 function spawnObstacle() {
   // 速度は緩やかに上昇（速すぎると理不尽になるため密度で勝負）
-  const speedBase = 20 + elapsedTime * 0.3; 
+  const speedBase = 30 + elapsedTime * 0.4; 
   const types = ['normal'];
   
   if (elapsedTime > 5) types.push('diagonal', 'normal'); // 5秒から斜め
@@ -213,7 +213,7 @@ function gameLoop(now) {
 
   // --- 障害物スポーン（密度上昇） ---
   // 時間が経つほど間隔が短くなる（0.6秒から0.18秒まで縮まる）
-  spawnInterval = Math.max(0.18, 0.6 - (elapsedTime * 0.007));
+  spawnInterval = Math.max(0.18, 0.8 - (elapsedTime * 0.007));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
@@ -246,7 +246,7 @@ function gameLoop(now) {
     } 
     else if (obs.type === 'diagonal') {
       obs.y += obs.speed * dt;
-      obs.lane += obs.dir * 2 * dt; 
+      obs.lane += obs.dir * 1 * dt; 
       if (obs.lane <= 0) { obs.lane = 0; obs.dir = 1; }
       if (obs.lane >= 4) { obs.lane = 4; obs.dir = -1; }
     }

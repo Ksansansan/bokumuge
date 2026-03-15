@@ -19,7 +19,7 @@ let isInvincible = false;
 let invincibleTimer = 0;
 let obstacles =[];
 let spawnTimer = 0;
-let spawnInterval = 0.8; // ★序盤の暇さを解消
+let spawnInterval = 0.7; 
 
 // 当たり判定用のエリア情報
 let playAreaRect = null;
@@ -63,14 +63,25 @@ export function initGuard(playerObj, updateUIFn) {
   });
 
   const handleMove = (clientX) => {
-    if (!isPlaying || !playAreaRect) return;
-    let x = clientX - playAreaRect.left;
-    let percentage = (x / playAreaRect.width) * 100;
+    if (!isPlaying || !playAreaRect || isInvincible) return;
+
+    let oldPos = playerPos; // 移動前の左端座標(%)
+    const rect = dom.playArea.getBoundingClientRect();
+    let x = clientX - rect.left;
+    let percentage = (x / rect.width) * 100;
     
-    let leftPos = percentage - 10; // 幅20%の半分を引く
-    playerPos = Math.max(0, Math.min(80, leftPos));
+    let leftPos = percentage - 10;
+    playerPos = Math.max(0, Math.min(80, leftPos)); // 新しい左端座標(%)
+    
+    // 表示の更新
     dom.player.style.left = `${playerPos}%`;
+
+    // ★瞬間移動対策: 移動経路チェック
+    // 自機が現在当たり判定のあるY域(75%〜95%)にいると仮定し、
+    // 移動前後の中心X座標の範囲内に、障害物が存在するかチェックする
+    checkSweepCollision(oldPos + 10, playerPos + 10);
   };
+
 
   const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
   const onMouseMove = (e) => { if (e.buttons > 0) handleMove(e.clientX); };
@@ -119,7 +130,7 @@ function startGame() {
   invincibleTimer = 0;
   obstacles =[];
   spawnTimer = 0;
-  spawnInterval = 0.8; // 最初からまあまあ降る
+  spawnInterval = 0.7; // 最初からまあまあ降る
 
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
@@ -182,6 +193,50 @@ function spawnObstacle() {
   }
 }
 
+/**
+ * ★移動経路上の衝突チェック（テレポート対策）
+ * @param {number} oldX100 移動前の中心X (%)
+ * @param {number} newX100 移動後の中心X (%)
+ */
+function checkSweepCollision(oldX100, newX100) {
+  if (isInvincible) return;
+
+  const minX = Math.min(oldX100, newX100);
+  const maxX = Math.max(oldX100, newX100);
+
+  for (let obs of obstacles) {
+    // 現在当たり判定が発生する高さにいる弾のみを対象にする
+    if (obs.y > 75 && obs.y < 95) {
+      const obsX = obs.lane * 20 + 10;
+      
+      // 弾の中心が、移動経路（自機の幅を考慮）に重なっているか
+      // 自機の判定幅を約16%とする
+      if (obsX >= minX - 8 && obsX <= maxX + 8) {
+        triggerHit();
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * ヒット時の共通処理
+ */
+function triggerHit() {
+  if (isInvincible) return;
+  hp--;
+  updateHpUI();
+  isInvincible = true;
+  invincibleTimer = 1.0;
+  
+  dom.damageFlash.style.opacity = 1;
+  setTimeout(() => dom.damageFlash.style.opacity = 0, 100);
+  
+  if (hp <= 0) {
+    finishGame();
+  }
+}
+
 function gameLoop(now) {
   if (!isPlaying) return;
   let dt = (now - lastFrameTime) / 1000;
@@ -197,7 +252,7 @@ function gameLoop(now) {
   let passedTime = 0;
   while (true) {
     if (elapsedTime < passedTime + requiredTime) {
-      currentMultiplier = 1.0 + (phase - 1) * 0.5;
+      currentMultiplier = 1.0 + (phase - 1) * 0.25;
       break;
     }
     passedTime += requiredTime;
@@ -212,8 +267,8 @@ function gameLoop(now) {
   dom.timer.textContent = elapsedTime.toFixed(1);
 
   // --- 障害物スポーン（密度上昇） ---
-  // 時間が経つほど間隔が短くなる（0.6秒から0.18秒まで縮まる）
-  spawnInterval = Math.max(0.18, 0.8 - (elapsedTime * 0.007));
+  // 時間が経つほど間隔が短くなる（0.7秒から0.1秒まで縮まる）
+  spawnInterval = Math.max(0.1, 0.7 - (elapsedTime * 0.007));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
@@ -294,14 +349,7 @@ function gameLoop(now) {
       }
 
       if (hit) {
-        hp--;
-        updateHpUI();
-        isInvincible = true;
-        invincibleTimer = 1.0;
-        
-        dom.damageFlash.style.opacity = 1;
-        setTimeout(() => dom.damageFlash.style.opacity = 0, 100);
-        
+        triggerHit();
         if (hp <= 0) {
           finishGame();
           return;
@@ -326,8 +374,8 @@ async function finishGame() {
   
   const finalScore = Math.floor(currentScore);
   
-  const earnedVit = Math.floor(finalScore / 28);
-  const earnedExp = Math.floor(finalScore / 7);
+  const earnedVit = Math.floor(finalScore / 20);
+  const earnedExp = Math.floor(finalScore / 5);
 
   const result = applyMinigameResult(playerRef, 'vit', earnedExp, earnedVit);
   

@@ -605,7 +605,7 @@
         <div style="font-size: 14px; color:#aaa;">残り距離</div>
         <div style="font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="ch-res-time">0.00 m</div>
         <div style="font-size: 20px; margin-bottom: 10px;">ランク: <span id="ch-res-rank" style="font-size: 36px; font-weight: bold;">--</span></div>
-        <div id="rp-res-next" style="font-size: 12px; color: #aaa; margin-bottom: 20px;">次のランクまで -- m</div>
+        <div id="ch-res-next" style="font-size: 12px; color: #aaa; margin-bottom: 20px;">次のランクまで -- m</div>
         <div id="ch-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
 
         <button id="ch-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#6be6ff; background:linear-gradient(to bottom, #205c7a, #0d314a);">もう一度プレイ (R)</button>
@@ -645,15 +645,28 @@
           <span style="color:#ff6b6b;">HPは3！</span>長く生き残るほどスコア倍率が跳ね上がるぞ！
         </p>
         
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
-          <strong style="color:#ffd166;">【スコア倍率の仕組み】</strong>
-          <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
-            <li>0〜5秒: <span style="color:#aaa; font-weight:bold;">x1.0</span></li>
-            <li>5〜15秒: <span style="color:#94ff6b; font-weight:bold;">x1.5</span></li>
-            <li>15〜30秒: <span style="color:#5ce6e6; font-weight:bold;">x2.0</span></li>
-            <li>30〜50秒: <span style="color:#ff6b6b; font-weight:bold;">x2.5</span></li>
-            <li>50秒〜: <span style="color:#ffeb85; font-weight:bold;">x3.0 〜 無限！</span></li>
-          </ul>
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 11px;">
+          <strong style="color:#ffd166;">【スコア倍率と報酬の目安】</strong>
+          <table style="width:100%; margin-top:5px; border-collapse:collapse; text-align:left;">
+            <tr style="color:#aaa; border-bottom:1px solid #333;">
+              <th>時間</th><th>倍率</th><th style="text-align:right;">目安(VIT/EXP)</th>
+            </tr>
+            <tr>
+              <td>0〜5s</td><td>x1.0</td><td style="text-align:right; color:#888;">---</td>
+            </tr>
+            <tr>
+              <td>5~15s</td><td style="color:#94ff6b;">x1.25</td><td style="text-align:right; color:#fff;">15sで 基礎VIT+? / EXP ?</td>
+            </tr>
+            <tr>
+              <td>15~30s</td><td style="color:#5ce6e6;">x1.5</td><td style="text-align:right; color:#fff;">30sで 基礎VIT+? / EXP ?</td>
+            </tr>
+            <tr>
+              <td>30~50s</td><td style="color:#ff6b6b;">x1.75</td><td style="text-align:right; color:#fff;">50sで 基礎VIT+? / EXP ?</td>
+            </tr>
+            <tr>
+              <td>50s~ ...</td><td style="color:#ffeb85;">x2.0 ...</td>
+            </tr>
+          </table>
         </div>
         <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
           自己ベスト: <span id="gd-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>

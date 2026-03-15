@@ -88,16 +88,17 @@ export function initChicken(playerObj, updateUIFn) {
 
   // --- アクションボタンの処理 ---
   const onPress = (e) => {
-    if(e) e.preventDefault();
     if (!isPlaying || hasReleased) return;
+    if (e && e.cancelable) e.preventDefault(); 
+    
     isAccelerating = true;
     dom.actionBtn.textContent = "加速中...!!";
     dom.actionBtn.style.background = "linear-gradient(to bottom, #ff3333, #990000)";
   };
 
   const onRelease = (e) => {
-    if(e) e.preventDefault();
     if (!isPlaying || !isAccelerating) return;
+    if (e && e.cancelable) e.preventDefault();
     isAccelerating = false;
     hasReleased = true; // 一度離したらもう押せない
     dom.actionBtn.textContent = "ブレーキ作動！";

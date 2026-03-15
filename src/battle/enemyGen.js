@@ -74,7 +74,7 @@ export function generateFloorData(targetFloor) {
   ];
 
  // --- 推奨ステータス逆算（二分探索で爆速化） ---
-  const TARGET_FRAMES = 45 * 60; // 30秒 (1800フレーム)
+  const TARGET_FRAMES = 25 * 60; // 25秒 (1500フレーム)
   const recommendedAgi = enemies[3].agi; // 推奨AGIは敵ボスと同じ
   const BASE_SPEED = 1000 / 60; // 1秒(60F)に1回攻撃する基準
 
@@ -83,7 +83,7 @@ export function generateFloorData(targetFloor) {
   // ------------------------------------------------
   let minStr = Math.floor(enemies[3].vit * 0.25) + 1; // 少なくともボスに1ダメージ与えられる値
   
-  // 指定のSTRで、30秒以内に全敵を倒せるか判定する関数
+  // 指定のSTRで、25秒以内に全敵を倒せるか判定する関数
   const checkStr = (strVal) => {
     let requiredFrames = 0;
     for (const enemy of enemies) {

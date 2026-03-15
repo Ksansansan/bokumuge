@@ -11,7 +11,7 @@ let animationId = null;
 let lastFrameTime = 0;
 let elapsedTime = 0;
 let currentScore = 0;
-let currentMultiplier = 1.0;
+let currentMultiplier = 0;
 let hp = 3;
 
 let playerPos = 40; 
@@ -140,7 +140,7 @@ function startGame() {
   isProcessing = false;
   elapsedTime = 0;
   currentScore = 0;
-  currentMultiplier = 1.0;
+  currentMultiplier = 0;
   hp = 3;
   playerPos = 40;
   prevPlayerPos = 40;
@@ -225,9 +225,11 @@ function gameLoop(now) {
   let phase = 1, requiredTime = 5;
   let passedTime = 0;
   while (true) {
-    if (elapsedTime - 5 < passedTime + requiredTime) {
+    if (elapsedTime - 5.0 < passedTime + requiredTime) {
       currentMultiplier = 1.0 + (phase - 1) * 0.25;
       break;
+    } else if(elapsedTime >= 5.0) {
+      currentMultiplier = 1.0;
     }
     passedTime += requiredTime;
     phase++;

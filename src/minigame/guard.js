@@ -62,26 +62,53 @@ export function initGuard(playerObj, updateUIFn) {
       startGame();
     }
   });
+ // --- 操作ロジックの修正 ---
+  let isDragging = false;
 
   const handleMove = (clientX) => {
     if (!isPlaying || !playAreaRect) return;
-    let x = clientX - playAreaRect.left;
-    let percentage = (x / playAreaRect.width) * 100;
     
-    let leftPos = percentage - 10; // 幅20%の半分を引く
+    // プレイエリアの座標基準で計算
+    const rect = playAreaRect; 
+    let x = clientX - rect.left;
+    let percentage = (x / rect.width) * 100;
+    
+    // プレイヤーの幅20%の中心を考慮 (0%〜80%の範囲に収める)
+    let leftPos = percentage - 10;
+    
+    // ★ 画面外に指があっても、0〜80の範囲にクランプ（固定）する
     playerPos = Math.max(0, Math.min(80, leftPos));
+    
     dom.player.style.left = `${playerPos}%`;
   };
 
-  const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
-  const onMouseMove = (e) => { if (e.buttons > 0) handleMove(e.clientX); };
-  const onTouchStart = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
-  const onMouseDown = (e) => { handleMove(e.clientX); };
+  // ★ 画面のどこで指を動かしても反応するように window に登録
+  const onMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    handleMove(clientX);
+  };
 
-  dom.playArea.addEventListener('touchmove', onTouchMove, { passive: false });
-  dom.playArea.addEventListener('mousemove', onMouseMove);
-  dom.playArea.addEventListener('touchstart', onTouchStart, { passive: false });
-  dom.playArea.addEventListener('mousedown', onMouseDown);
+  const onStart = (e) => {
+    if (!isPlaying) return;
+    isDragging = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    handleMove(clientX);
+  };
+
+  const onEnd = () => {
+    isDragging = false;
+  };
+
+  // 開始判定はプレイエリアから（他のUI操作を邪魔しないため）
+  dom.playArea.addEventListener('touchstart', onStart, { passive: false });
+  dom.playArea.addEventListener('mousedown', onStart);
+
+  // 移動と終了判定は window 全体で行う
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchend', onEnd);
+  window.addEventListener('mouseup', onEnd);
   
   // エリアサイズのリサイズ追従
   window.addEventListener('resize', () => {
@@ -121,7 +148,7 @@ function startGame() {
   invincibleTimer = 0;
   obstacles =[];
   spawnTimer = 0;
-  spawnInterval = 0.7; // 最初からまあまあ降る
+  spawnInterval = 0.65; // 最初からまあまあ降る
 
   updateHpUI();
   dom.obstaclesContainer.innerHTML = '';
@@ -139,7 +166,7 @@ function updateHpUI() {
 // ★弾幕パターンの生成
 function spawnObstacle() {
   // 速度は緩やかに上昇（速すぎると理不尽になるため密度で勝負）
-  const speedBase = 30 + elapsedTime * 0.75; 
+  const speedBase = 30 + elapsedTime * 0.8; 
   const types = ['normal'];
   
   if (elapsedTime > 5) types.push('diagonal', 'normal'); // 5秒から斜め

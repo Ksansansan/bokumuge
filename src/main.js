@@ -322,11 +322,19 @@ btnChallenge.addEventListener('click', () => {
       eventIndex++;
     }
 
-    pGaugeVal += battleStats.agi * speed;
-    eGaugeVal += currentEnemyAgi * speed;
-    if(pGaugeVal > 1000) pGaugeVal = 1000;
-    if(eGaugeVal > 1000) eGaugeVal = 1000;
+    // AGIの加算計算を「相手の10倍」までに制限する（battleCalc.jsと合わせる）
+    let visualPAgi = Math.min(battleStats.agi, currentEnemyAgi * 10);
+    let visualEAgi = Math.min(currentEnemyAgi, battleStats.agi * 10);
 
+    // 自分のゲージ上昇（1000でMAX）
+    pGaugeVal += visualPAgi * speed;
+    if (pGaugeVal > 1000) pGaugeVal = 1000;
+
+    // 敵のゲージ上昇
+    eGaugeVal += visualEAgi * speed;
+    if (eGaugeVal > 1000) eGaugeVal = 1000;
+
+    // --- DOM更新（バーの幅反映） ---
     document.getElementById('ui-p-hp').style.width = `${Math.max(0, (pHp / pMaxHp) * 100)}%`;
     document.getElementById('ui-p-hp-txt').textContent = `${formatNumber(Math.max(0, pHp))} / ${formatNumber(pMaxHp)}`;
     document.getElementById('ui-p-gauge').style.width = `${(pGaugeVal / 1000) * 100}%`;

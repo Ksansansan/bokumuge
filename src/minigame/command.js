@@ -5,8 +5,8 @@ import { playSound } from '../audio.js';
 
 // ★ Sランクを11.0sに緩和し、全体を調整
 const RANKS = [
-  { name: "S", timeLimit: 10.0, agiBase: 12, exp: 45, color: "#ffeb85" },
-  { name: "A", timeLimit: 14.0, agiBase: 10, exp: 35, color: "#ff6b6b" },
+  { name: "S", timeLimit: 10.0, agiBase: 14, exp: 55, color: "#ffeb85" },
+  { name: "A", timeLimit: 14.0, agiBase: 11, exp: 40, color: "#ff6b6b" },
   { name: "B", timeLimit: 19.0, agiBase: 8, exp: 30, color: "#5ce6e6" },
   { name: "C", timeLimit: 25.0, agiBase: 6, exp: 25, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, agiBase: 5, exp: 20, color: "#aaa" }

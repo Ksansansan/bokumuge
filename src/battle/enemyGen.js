@@ -74,7 +74,7 @@ export function generateFloorData(targetFloor) {
   ];
 
  // --- 推奨ステータス逆算（二分探索で爆速化） ---
-  const TARGET_FRAMES = 30 * 60; // 30秒 (1800フレーム)
+  const TARGET_FRAMES = 45 * 60; // 30秒 (1800フレーム)
   const recommendedAgi = enemies[3].agi; // 推奨AGIは敵ボスと同じ
   const BASE_SPEED = 1000 / 60; // 1秒(60F)に1回攻撃する基準
 

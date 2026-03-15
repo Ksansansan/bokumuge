@@ -328,25 +328,30 @@ btnChallenge.addEventListener('click', () => {
         setTimeout(() => dmgText.remove(), 800);
       }
       else if (ev.type === 'defeat') {
-        // ★ 撃破音 ＆ スライドアウト（退場）
         playSound('defeat');
-        uiE_char.classList.remove('enemy-slide-in');
-        uiE_char.classList.add('enemy-slide-out');
+        // ★修正1: 最後の敵(ボス)ならスライドアウトさせない
+        if (!ev.isLast) {
+          // ★修正2: HPが0になるのをしっかり見せるため、0.15秒待ってからスライドアウト
+          setTimeout(() => {
+            uiE_char.classList.remove('enemy-slide-in');
+            uiE_char.classList.add('enemy-slide-out');
+          }, 150);
+        }
       }
       else if (ev.type === 'stopper') { eGaugeVal = 1000; }
       eventIndex++;
     }
 
     // AGIの加算計算を「相手の10倍」までに制限する（battleCalc.jsと合わせる）
-    let visualPAgi = Math.min(battleStats.agi, currentEnemyAgi * 10);
-    let visualEAgi = Math.min(currentEnemyAgi, battleStats.agi * 10);
+    const BASE_SPEED = 1000 / 60;
+    let visualPAgi = Math.max(1, Math.min(battleStats.agi, currentEnemyAgi * 10));
+    let visualEAgi = Math.max(1, Math.min(currentEnemyAgi, battleStats.agi * 10));
+    const maxVisualAgi = Math.max(visualPAgi, visualEAgi);
 
-    // 自分のゲージ上昇（1000でMAX）
-    pGaugeVal += visualPAgi * speed;
+    pGaugeVal += (visualPAgi / maxVisualAgi) * BASE_SPEED * speed;
+    eGaugeVal += (visualEAgi / maxVisualAgi) * BASE_SPEED * speed;
+
     if (pGaugeVal > 1000) pGaugeVal = 1000;
-
-    // 敵のゲージ上昇
-    eGaugeVal += visualEAgi * speed;
     if (eGaugeVal > 1000) eGaugeVal = 1000;
 
     // --- DOM更新（バーの幅反映） ---

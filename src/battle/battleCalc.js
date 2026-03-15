@@ -15,22 +15,21 @@ export function simulateBattle(player, floorData) {
   let playerMaxHp = player.vit * 10;
   let playerHp = playerMaxHp; 
   let playerGauge = 0, enemyGauge = 0;
-  let playerConsecutiveTurns = 0;
-  let enemyConsecutiveTurns = 0; // 敵の連続行動もカウント
-  let forceEnemyTurn = false;    // 割り込みフラグ
-  let forcePlayerTurn = false;
+  let playerConsecutiveTurns = 0, enemyConsecutiveTurns = 0;
+  let forceEnemyTurn = false, forcePlayerTurn = false;
   let timeFrames = 0;
   let transitionTimer = 0;
+
+  // ★ベースとなる速度（60フレーム=1秒で1000溜まる）
+  const BASE_SPEED = 1000 / 60;
 
   events.push({ frame: 0, type: 'start', enemy: currentEnemy, playerMaxHp: playerMaxHp });
 
   while (currentEnemyIndex < enemies.length && playerHp > 0) {
     timeFrames++;
 
-     // ★追加：移動中（0.5秒間）はゲージを増やさず、時間だけ進める
     if (transitionTimer > 0) {
       transitionTimer--;
-      // 0になった瞬間に次の敵が現れる
       if (transitionTimer === 0) {
         currentEnemyIndex++;
         if (currentEnemyIndex < enemies.length) {
@@ -43,71 +42,59 @@ export function simulateBattle(player, floorData) {
       continue;
     }
 
-    // ★修正1：AGIの加算値を「相手の10倍」までにクリップする
-    let pAgi = Math.min(player.agi, currentEnemy.agi * 10);
-    let eAgi = Math.min(currentEnemy.agi, player.agi * 10);
+    // ★修正：AGIの相対速度計算（最大10倍キャップ）
+    let pAgi_clipped = Math.max(1, Math.min(player.agi, currentEnemy.agi * 10));
+    let eAgi_clipped = Math.max(1, Math.min(currentEnemy.agi, player.agi * 10));
+    const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
     
-    playerGauge += pAgi;
-    enemyGauge += eAgi;
+    playerGauge += (pAgi_clipped / maxAgi) * BASE_SPEED;
+    enemyGauge += (eAgi_clipped / maxAgi) * BASE_SPEED;
 
-    // ★修正2：行動権の判定（強制割り込みを最優先する）
-    let isPlayerAct = false;
-    let isEnemyAct = false;
+    let isPlayerAct = false, isEnemyAct = false;
+    if (forceEnemyTurn) isEnemyAct = true;
+    else if (forcePlayerTurn) isPlayerAct = true;
+    else if (playerGauge >= 1000 && enemyGauge >= 1000) isPlayerAct = true; 
+    else if (playerGauge >= 1000) isPlayerAct = true;
+    else if (enemyGauge >= 1000) isEnemyAct = true;
 
-    if (forceEnemyTurn) {
-      isEnemyAct = true;
-    } else if (forcePlayerTurn) {
-      isPlayerAct = true;
-    } else if (playerGauge >= 1000 && enemyGauge >= 1000) {
-      isPlayerAct = true; // 同値ならプレイヤー優先
-    } else if (playerGauge >= 1000) {
-      isPlayerAct = true;
-    } else if (enemyGauge >= 1000) {
-      isEnemyAct = true;
-    }
+    if (isPlayerAct) {
+      let damage = Math.max(1, player.str - Math.floor(currentEnemy.vit * 0.25));
+      currentEnemy.currentHp -= damage;
+      playerGauge -= 1000;
+      playerConsecutiveTurns++;
+      enemyConsecutiveTurns = 0;
+      forcePlayerTurn = false;
+      
+      events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
+      
+      if (currentEnemy.currentHp <= 0) {
+        // ★追加：これが最後の敵かどうかを判定
+        const isLastEnemy = (currentEnemyIndex === enemies.length - 1);
+        events.push({ frame: timeFrames, type: 'defeat', isLast: isLastEnemy });
 
-    // --- プレイヤーの攻撃 ---
-     if (isPlayerAct) {
-        let damage = Math.max(1, player.str - Math.floor(currentEnemy.vit * 0.25));
-        currentEnemy.currentHp -= damage;
-        playerGauge -= 1000;
-        playerConsecutiveTurns++;
-        enemyConsecutiveTurns = 0; 
-        forcePlayerTurn = false;   
-        
-        events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
-        
-        // ▼▼▼ ここから修正 ▼▼▼
-        // 倒した時の処理
-        if (currentEnemy.currentHp <= 0) {
-          // ★ 追加：アニメーションを再生するための「撃破イベント」を発行
-          events.push({ frame: timeFrames, type: 'defeat' });
-
-          // ドロップ処理
-          if (currentEnemyIndex < 3) {
-            if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
-          } else {
-            drops.push({ name: "装備ガチャチケット", type: 'gacha' });
-            if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
-          }
-          
-          // ★ ここでタイマーをセットするだけ！
-          // 次の敵のセットや next_enemy イベントの発行は、
-          // 30フレーム経過後にループの先頭（transitionTimer === 0 の時）で自動で行われます。
-          transitionTimer = 30;
-          continue;
+        if (currentEnemyIndex < 3) {
+          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+        } else {
+          drops.push({ name: "装備ガチャチケット", type: 'gacha' });
+          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
         }
-        // ▲▲▲ ここまで修正 ▲▲▲
         
-        // 10回攻撃したら次フレームは「強制的に敵のターン」にする
+        // 最後の敵でなければインターバルを挟む
+        if (!isLastEnemy) {
+          transitionTimer = 30;
+        } else {
+          currentEnemyIndex++; // 勝利判定のために進める
+        }
+        continue;
+      }
+      
       if (playerConsecutiveTurns >= 10 && currentEnemy.currentHp > 0) {
         forceEnemyTurn = true;
         playerConsecutiveTurns = 0;
-        enemyGauge = Math.max(1000, enemyGauge); // 敵のゲージを満タンに保証
+        enemyGauge = Math.max(1000, enemyGauge);
         events.push({ frame: timeFrames, type: 'stopper' });
       }
     } 
-    // --- 敵の攻撃 ---
     else if (isEnemyAct) {
       let damage = Math.max(0, currentEnemy.str - Math.floor(player.vit * 0.25));
       playerHp -= damage;
@@ -118,7 +105,6 @@ export function simulateBattle(player, floorData) {
 
       events.push({ frame: timeFrames, type: 'attack', actor: 'enemy', damage: damage, hpRemaining: playerHp });
 
-      // 敵が10回連続攻撃した場合はプレイヤーにターンを渡す（敵のAGIが高い場合）
       if (enemyConsecutiveTurns >= 10 && playerHp > 0) {
         forcePlayerTurn = true;
         enemyConsecutiveTurns = 0;

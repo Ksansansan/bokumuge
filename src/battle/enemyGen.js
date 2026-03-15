@@ -73,20 +73,31 @@ export function generateFloorData(targetFloor) {
     }
   ];
 
-  // 推奨ステータス逆算（前回のまま変更なし）
-  const TARGET_FRAMES = 30 * 60; 
-  const recommendedAgi = enemies[3].agi;
+ // --- 推奨ステータス逆算 ---
+  const TARGET_FRAMES = 30 * 60; // 30秒
+  const pAgi_rec = enemies[3].agi; // 推奨AGIは敵ボスと同じ
+  const BASE_SPEED = 1000 / 60; // 1秒(60F)に1回攻撃する基準
 
-  let recommendedStr = enemies[3].vit + 1;
+  let recommendedStr = Math.floor(enemies[3].vit * 0.25) + 1;
   while (true) {
     let requiredFrames = 0;
     for (const enemy of enemies) {
-      const dmg = Math.max(1, recommendedStr - enemy.vit * 0.25);
+      const dmg = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.25));
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmg);
-      requiredFrames += hitsNeeded * (1000 / recommendedAgi);
+      
+      // 相対速度の計算
+      const pAgi_clipped = Math.max(1, Math.min(pAgi_rec, enemy.agi * 10));
+      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, pAgi_rec * 10));
+      const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
+      
+      const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
+      const framesPerHit = 1000 / pSpeed;
+      
+      requiredFrames += hitsNeeded * framesPerHit;
     }
-    if (requiredFrames <= TARGET_FRAMES) break;
+    // インターバル3回分(90F)を足す
+    if (requiredFrames + 90 <= TARGET_FRAMES) break;
     recommendedStr++;
   }
 
@@ -98,8 +109,16 @@ export function generateFloorData(targetFloor) {
       const dmgToEnemy = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.25));
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmgToEnemy);
-      const framesAlive = hitsNeeded * (1000 / recommendedAgi);
-      const enemyAttacks = Math.floor(framesAlive * enemy.agi / 1000);
+      
+      const pAgi_clipped = Math.max(1, Math.min(pAgi_rec, enemy.agi * 10));
+      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, pAgi_rec * 10));
+      const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
+      
+      const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
+      const eSpeed = (eAgi_clipped / maxAgi) * BASE_SPEED;
+      const framesAlive = hitsNeeded * (1000 / pSpeed);
+      
+      const enemyAttacks = Math.floor((framesAlive * eSpeed) / 1000);
       const dmgFromEnemy = Math.max(0, enemy.str - Math.floor(recommendedVit * 0.25));
       
       playerHp -= (enemyAttacks * dmgFromEnemy);

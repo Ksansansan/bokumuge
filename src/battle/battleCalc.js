@@ -117,7 +117,7 @@ export function simulateBattle(player, floorData) {
   };
 
    const aggregatedDrops = [];
-  Drops.forEach(d => {
+  drops.forEach(d => {
     const existing = aggregatedDrops.find(x => x.name === d.name);
     if (existing) {
       existing.count++;

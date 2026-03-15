@@ -2,11 +2,12 @@
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js';
 import { applyMinigameResult } from './minigameCore.js';
 
+// ★ シャッフルによる探索ラグを考慮し、制限時間を少し緩和
 const RANKS =[
-  { name: "S", timeLimit: 5.0, agiBase: 8, exp: 35, color: "#ffeb85" },
-  { name: "A", timeLimit: 7.0, agiBase: 6, exp: 25, color: "#ff6b6b" },
-  { name: "B", timeLimit: 10.0, agiBase: 5, exp: 20, color: "#5ce6e6" },
-  { name: "C", timeLimit: 15.0, agiBase: 4, exp: 15, color: "#94ff6b" },
+  { name: "S", timeLimit: 6.0, agiBase: 8, exp: 35, color: "#ffeb85" },
+  { name: "A", timeLimit: 8.5, agiBase: 6, exp: 25, color: "#ff6b6b" },
+  { name: "B", timeLimit: 12.0, agiBase: 5, exp: 20, color: "#5ce6e6" },
+  { name: "C", timeLimit: 18.0, agiBase: 4, exp: 15, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, agiBase: 3, exp: 15, color: "#aaa" }
 ];
 
@@ -15,11 +16,16 @@ let dom = {};
 
 const MAX_NUMBER = 20;
 let currentNumber = 1;
-let startTime = 0;
+
+// ★ ストップウォッチ方式のタイマー管理用変数
+let accumulatedTime = 0;
+let lastStartTime = 0;
 let timerInterval = null;
 let isTimerRunning = false;
+
 let isProcessing = false;
 let isStunned = false;
+let isShuffling = false; // シャッフル中フラグ
 
 export function init1to20(playerObj, updateUIFn) {
   playerRef = playerObj;
@@ -44,10 +50,10 @@ export function init1to20(playerObj, updateUIFn) {
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnReset.addEventListener('click', () => { 
-    if(!isProcessing) { clearInterval(timerInterval); startGame(); } 
+    if(!isProcessing) { pauseTimer(); startGame(); } 
   });
   dom.btnQuit.addEventListener('click', () => { 
-    clearInterval(timerInterval); showView('info'); 
+    pauseTimer(); showView('info'); 
   });
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
 
@@ -55,7 +61,7 @@ export function init1to20(playerObj, updateUIFn) {
     if (dom.overlay.style.display !== 'flex' || isProcessing) return;
     if (e.key.toLowerCase() === 'r') {
       if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
-        clearInterval(timerInterval);
+        pauseTimer();
         startGame();
       }
     }
@@ -75,12 +81,75 @@ function showView(view) {
   dom.viewResult.style.display = view === 'result' ? 'flex' : 'none';
 }
 
+// --- タイマー管理 ---
+function startTimer() {
+  if (isTimerRunning) return;
+  isTimerRunning = true;
+  lastStartTime = performance.now();
+  timerInterval = setInterval(updateTimerUI, 10);
+  dom.timerText.style.color = "#5ce6e6";
+}
+
+function pauseTimer() {
+  if (!isTimerRunning) return;
+  isTimerRunning = false;
+  accumulatedTime += (performance.now() - lastStartTime) / 1000;
+  clearInterval(timerInterval);
+  updateTimerUI();
+  dom.timerText.style.color = "#fff";
+}
+
+function updateTimerUI() {
+  let elapsed = accumulatedTime;
+  if (isTimerRunning) elapsed += (performance.now() - lastStartTime) / 1000;
+  dom.timerText.textContent = elapsed.toFixed(2);
+}
+
+// --- 高速シャッフル演出 ---
+function triggerShuffle() {
+  isShuffling = true;
+  pauseTimer(); // タイマー一時停止
+  
+  // まだ押されていない（表示中の）ボタンを取得
+  const visibleBtns = Array.from(dom.gridContainer.querySelectorAll('.ot-num-btn'))
+    .filter(btn => btn.style.visibility !== 'hidden');
+  
+  // アニメーション: スケールを0にして一瞬消す
+  visibleBtns.forEach(btn => {
+    btn.style.transform = 'scale(0)';
+  });
+
+  setTimeout(() => {
+    // 中身の数字をシャッフル
+    let remainingNumbers = visibleBtns.map(btn => parseInt(btn.dataset.num, 10));
+    for (let i = remainingNumbers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [remainingNumbers[i], remainingNumbers[j]] =[remainingNumbers[j], remainingNumbers[i]];
+    }
+
+    // 再割り当てして表面に戻す
+    visibleBtns.forEach((btn, index) => {
+      btn.dataset.num = remainingNumbers[index];
+      btn.textContent = remainingNumbers[index];
+      btn.style.transform = 'scale(1)'; // 再び表示
+    });
+
+    setTimeout(() => {
+      isShuffling = false;
+      startTimer(); // タイマー再開
+    }, 150); // 現れるアニメーションを待つ
+  }, 150); // 消えるアニメーションを待つ
+}
+
+// --- ゲーム開始 ---
 function startGame() {
   showView('play');
   currentNumber = 1;
+  accumulatedTime = 0;
   isTimerRunning = false;
   isStunned = false;
   isProcessing = false;
+  isShuffling = false;
   
   dom.nextNumText.textContent = currentNumber;
   dom.timerText.textContent = "0.00";
@@ -94,16 +163,16 @@ function startGame() {
     [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
   }
 
-  // グリッドにボタンを生成
   dom.gridContainer.innerHTML = '';
   dom.gridContainer.style.filter = 'none';
   
+  // ボタンの生成（最初は全て「?」）
   numbers.forEach(num => {
     const btn = document.createElement('div');
-    btn.textContent = num;
+    btn.className = 'ot-num-btn';
     btn.dataset.num = num;
-    btn.style.visibility = (num <= 5) ? 'visible' : 'hidden';
-    // ボタンのデザイン
+    btn.textContent = '?'; // ★最初は隠す
+    
     btn.style.background = 'linear-gradient(to bottom, #4a7a2a, #2a4a1a)';
     btn.style.border = '2px solid #94ff6b';
     btn.style.borderRadius = '8px';
@@ -116,12 +185,12 @@ function startGame() {
     btn.style.cursor = 'pointer';
     btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.5)';
     btn.style.userSelect = 'none';
+    btn.style.transition = 'transform 0.15s ease-in-out'; // ★シャッフル用アニメーション
 
-    // タップイベント（マルチタッチ対策＆ペナルティ処理）
     const onTouch = (e) => {
       if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
       if (e.type === 'touchstart') e.preventDefault();
-      handleTap(num, btn);
+      handleTap(btn);
     };
 
     btn.addEventListener('mousedown', onTouch);
@@ -129,41 +198,67 @@ function startGame() {
 
     dom.gridContainer.appendChild(btn);
   });
+
+  // ★GOボタンのオーバーレイ生成
+  const goOverlay = document.createElement('div');
+  goOverlay.style.position = 'absolute';
+  goOverlay.style.top = '0';
+  goOverlay.style.left = '0';
+  goOverlay.style.width = '100%';
+  goOverlay.style.height = '100%';
+  goOverlay.style.display = 'flex';
+  goOverlay.style.justifyContent = 'center';
+  goOverlay.style.alignItems = 'center';
+  goOverlay.style.background = 'rgba(0,0,0,0.6)';
+  goOverlay.style.borderRadius = '8px';
+  goOverlay.style.zIndex = '10';
+
+  const goBtn = document.createElement('button');
+  goBtn.textContent = 'GO!';
+  goBtn.className = 'btn-fantasy';
+  goBtn.style.fontSize = '36px';
+  goBtn.style.padding = '15px 40px';
+  goBtn.style.borderRadius = '40px';
+  goBtn.style.background = 'linear-gradient(to bottom, #ff6b6b, #cc0000)';
+  goBtn.style.borderColor = '#ffaaaa';
+  goBtn.style.boxShadow = '0 0 20px rgba(255,107,107,0.8)';
+  
+  goBtn.addEventListener('click', () => {
+    goOverlay.style.display = 'none';
+    // 「?」を数字にしてゲーム開始
+    const btns = dom.gridContainer.querySelectorAll('.ot-num-btn');
+    btns.forEach(b => { b.textContent = b.dataset.num; });
+    startTimer();
+  });
+  
+  goOverlay.appendChild(goBtn);
+  dom.gridContainer.appendChild(goOverlay);
 }
 
-function handleTap(num, btnEl) {
-  if (isStunned || isProcessing || btnEl.style.visibility === 'hidden') return;
+function handleTap(btnEl) {
+  if (isStunned || isProcessing || isShuffling || btnEl.style.visibility === 'hidden') return;
+  if (btnEl.textContent === '?') return; // GOを押す前は無効
+
+  const num = parseInt(btnEl.dataset.num, 10);
 
   if (num === currentNumber) {
-    // --- 正解 ---
-    if (!isTimerRunning) {
-      isTimerRunning = true;
-      startTime = performance.now();
-      dom.timerText.style.color = "#5ce6e6";
-      timerInterval = setInterval(() => {
-        dom.timerText.textContent = ((performance.now() - startTime) / 1000).toFixed(2);
-      }, 10);
-    }
-
-    btnEl.style.visibility = 'hidden'; // 消す（レイアウトは維持）
-    const nextToShow = currentNumber + 5;
-    if (nextToShow <= MAX_NUMBER) {
-      const targetBtn = Array.from(dom.gridContainer.children).find(el => el.dataset.num == nextToShow);
-      if (targetBtn) targetBtn.style.visibility = 'visible';
-    }
+    // 正解
+    btnEl.style.visibility = 'hidden'; 
     currentNumber++;
     
     if (currentNumber <= MAX_NUMBER) {
       dom.nextNumText.textContent = currentNumber;
+      
+      // ★ 5, 10, 15を押し終わった直後（次が6, 11, 16の時）にシャッフル発動！
+      if ([6, 11, 16].includes(currentNumber)) {
+        triggerShuffle();
+      }
     } else {
       dom.nextNumText.textContent = "CLEAR!";
       finishGame();
     }
   } else {
-    // --- 不正解（ペナルティ） ---
-    // 最初の1を間違えた時はタイマーが動いていないのでペナルティ不要
-    if (!isTimerRunning) return; 
-
+    // 不正解ペナルティ (0.2秒硬直)
     isStunned = true;
     dom.gridContainer.style.animation = 'none';
     dom.gridContainer.offsetHeight; 
@@ -174,29 +269,28 @@ function handleTap(num, btnEl) {
       isStunned = false;
       dom.gridContainer.style.animation = 'none';
       dom.gridContainer.style.filter = 'none';
-    }, 200); // 0.2秒の硬直
+    }, 200);
   }
 }
 
 async function finishGame() {
   if (isProcessing) return;
   isProcessing = true;
-  clearInterval(timerInterval);
-  isTimerRunning = false;
+  pauseTimer();
 
-  const time = (performance.now() - startTime) / 1000;
+  const finalTime = accumulatedTime; // 最終タイム
   
-  let rankIndex = RANKS.findIndex(r => time < r.timeLimit);
+  let rankIndex = RANKS.findIndex(r => finalTime < r.timeLimit);
   if(rankIndex === -1) rankIndex = RANKS.length - 1;
   const rank = RANKS[rankIndex];
 
   let nextRankStr = "最高ランク！";
   if (rankIndex > 0) {
     const nextRank = RANKS[rankIndex - 1];
-    nextRankStr = `次の[${nextRank.name}]まで あと ${(time - nextRank.timeLimit).toFixed(2)} 秒`;
+    nextRankStr = `次の[${nextRank.name}]まで あと ${(finalTime - nextRank.timeLimit).toFixed(2)} 秒`;
   }
 
-  // ステータス反映 (AGI)
+  // ステータス反映
   const result = applyMinigameResult(playerRef, 'agi', rank.exp, rank.agiBase);
   
   if (onUpdateCallback) onUpdateCallback();
@@ -204,10 +298,10 @@ async function finishGame() {
 
   await savePlayerData(playerRef);
 
-  const isNewRecord = await savePersonalBest(playerRef.name, "1to20", time);
+  const isNewRecord = await savePersonalBest(playerRef.name, "1to20", finalTime);
 
   // リザルト構築
-  document.getElementById('ot-res-time').textContent = time.toFixed(2) + " 秒";
+  document.getElementById('ot-res-time').textContent = finalTime.toFixed(2) + " 秒";
   document.getElementById('ot-res-rank').textContent = rank.name;
   document.getElementById('ot-res-rank').style.color = rank.color;
   document.getElementById('ot-res-next').textContent = nextRankStr;

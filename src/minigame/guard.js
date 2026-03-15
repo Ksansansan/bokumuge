@@ -243,9 +243,19 @@ function gameLoop(now) {
   dom.multiplier.textContent = `x${currentMultiplier.toFixed(2)}`;
   dom.timer.textContent = elapsedTime.toFixed(1);
 
-  // --- 障害物スポーン（密度上昇） ---
-  // 時間が経つほど間隔が短くなる（0.6秒から0.1秒まで縮まる）
-  spawnInterval = Math.max(0.1, 0.65 - (elapsedTime * (0.008 - elapsedTime / 40000)));
+   // 1. 秒間の出現数（Frequency）を計算する
+  // 初期(0秒)は 1.6個/秒 (間隔0.6s相当)
+  // 1分(60秒)経過で 4.0個/秒 (間隔0.25s相当) になるように設定
+  // 1秒経つごとに出現数が 0.045個ずつ増えていく（線形増加）
+  const ballsPerSecond = 1.6 + (elapsedTime * 0.045);
+  
+  // 2. 出現数から逆算して間隔（Interval）を出す
+  // これにより、後半になっても「急に弾が詰まる」感覚がなくなります
+  spawnInterval = 1 / ballsPerSecond;
+
+  // 下限（最速間隔）を 0.1s に設定して物理的な限界を担保
+  if (spawnInterval < 0.1) spawnInterval = 0.1;
+
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;

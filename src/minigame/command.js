@@ -3,32 +3,36 @@ import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.j
 import { applyMinigameResult } from './minigameCore.js';
 import { playSound } from '../audio.js';
 
-const RANKS =[
-  { name: "S", timeLimit: 8.0, agiBase: 12, exp: 45, color: "#ffeb85" },
-  { name: "A", timeLimit: 11.0, agiBase: 10, exp: 35, color: "#ff6b6b" },
-  { name: "B", timeLimit: 15.0, agiBase: 8, exp: 30, color: "#5ce6e6" },
-  { name: "C", timeLimit: 20.0, agiBase: 6, exp: 25, color: "#94ff6b" },
+// ★ Sランクを11.0sに緩和し、全体を調整
+const RANKS = [
+  { name: "S", timeLimit: 10.0, agiBase: 12, exp: 45, color: "#ffeb85" },
+  { name: "A", timeLimit: 14.0, agiBase: 10, exp: 35, color: "#ff6b6b" },
+  { name: "B", timeLimit: 19.0, agiBase: 8, exp: 30, color: "#5ce6e6" },
+  { name: "C", timeLimit: 25.0, agiBase: 6, exp: 25, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, agiBase: 5, exp: 20, color: "#aaa" }
 ];
 
 let playerRef = null, onUpdateCallback = null;
 let dom = {};
 
-const SET_LENGTHS = [4, 6, 8, 10, 12]; // 全5セット、計40コマンド
+const SET_LENGTHS = [4, 6, 8, 10, 12]; 
 const DIRS = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
 const DIR_SYMBOLS = { 'UP': '↑', 'DOWN': '↓', 'LEFT': '←', 'RIGHT': '→' };
 const DIR_COLORS = { 'UP': '#ff6b6b', 'DOWN': '#6be6ff', 'LEFT': '#94ff6b', 'RIGHT': '#ffd166' };
 
 let currentSet = 0;
-let currentSequence =[];
+let currentSequence = [];
 let currentIndex = 0;
 
-let startTime = 0;
+// ★ ストップウォッチ方式のタイマー管理
+let accumulatedTime = 0;
+let lastStartTime = 0;
 let timerInterval = null;
 let isTimerRunning = false;
+
 let isProcessing = false;
 let isStunned = false;
-let isTransitioning = false; // セット間の「NEXT!」表示中フラグ
+let isTransitioning = false;
 
 export function initCommand(playerObj, updateUIFn) {
   playerRef = playerObj;
@@ -54,25 +58,23 @@ export function initCommand(playerObj, updateUIFn) {
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnReset.addEventListener('click', () => { 
-    if(!isProcessing) { clearInterval(timerInterval); startGame(); } 
+    if(!isProcessing) { pauseTimer(); startGame(); } 
   });
   dom.btnQuit.addEventListener('click', () => { 
-    clearInterval(timerInterval); showView('info'); 
+    pauseTimer(); showView('info'); 
   });
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
 
-  // PCキーボード対応
+  // キーボード対応
   window.addEventListener('keydown', (e) => {
     if (dom.overlay.style.display !== 'flex' || isProcessing) return;
-    
     if (e.key.toLowerCase() === 'r') {
       if (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex') {
-        clearInterval(timerInterval); startGame();
+        pauseTimer(); startGame();
       }
       return;
     }
-
-    if (dom.viewPlay.style.display !== 'flex') return;
+    if (dom.viewPlay.style.display !== 'flex' || isTransitioning || isStunned) return;
 
     if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') { e.preventDefault(); handleInput('UP'); }
     else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') { e.preventDefault(); handleInput('DOWN'); }
@@ -80,14 +82,12 @@ export function initCommand(playerObj, updateUIFn) {
     else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') { e.preventDefault(); handleInput('RIGHT'); }
   });
 
-  // スマホ/マウスボタン対応（20ms制限なし、マルチタッチによる同時押しのみ無効化）
   dom.inputBtns.forEach(btn => {
     const onTouch = (e) => {
       if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
       if (e.type === 'touchstart') e.preventDefault();
       handleInput(btn.dataset.dir);
       
-      // ボタンが押された視覚効果（沈み込み）
       btn.style.transform = 'translateY(4px)';
       btn.style.boxShadow = 'none';
       setTimeout(() => {
@@ -108,6 +108,30 @@ function getShadowColor(dir) {
   return '#000';
 }
 
+// --- ★ タイマー制御関数 ---
+function startTimer() {
+  if (isTimerRunning) return;
+  isTimerRunning = true;
+  lastStartTime = performance.now();
+  timerInterval = setInterval(updateTimerUI, 10);
+  dom.timerText.style.color = "#5ce6e6";
+}
+
+function pauseTimer() {
+  if (!isTimerRunning) return;
+  isTimerRunning = false;
+  accumulatedTime += (performance.now() - lastStartTime) / 1000;
+  clearInterval(timerInterval);
+  updateTimerUI();
+  dom.timerText.style.color = "#fff";
+}
+
+function updateTimerUI() {
+  let elapsed = accumulatedTime;
+  if (isTimerRunning) elapsed += (performance.now() - lastStartTime) / 1000;
+  dom.timerText.textContent = elapsed.toFixed(2);
+}
+
 export async function openCommandModal() {
   dom.overlay.style.display = 'flex';
   showView('info');
@@ -124,6 +148,7 @@ function showView(view) {
 function startGame() {
   showView('play');
   currentSet = 0;
+  accumulatedTime = 0; // ★ リセット
   isTimerRunning = false;
   isStunned = false;
   isProcessing = false;
@@ -141,7 +166,6 @@ function startSet(setIndex) {
   currentIndex = 0;
   currentSequence = [];
   const length = SET_LENGTHS[setIndex];
-
   for (let i = 0; i < length; i++) {
     currentSequence.push(DIRS[Math.floor(Math.random() * DIRS.length)]);
   }
@@ -150,11 +174,8 @@ function startSet(setIndex) {
 
 function renderSequence() {
   dom.sequenceContainer.innerHTML = '';
-  dom.sequenceContainer.style.filter = 'none';
-  
   currentSequence.forEach((dir, i) => {
-    if (i < currentIndex) return; // 入力済みのものは描画しない（詰める）
-    
+    if (i < currentIndex) return;
     const el = document.createElement('div');
     el.textContent = DIR_SYMBOLS[dir];
     el.style.color = DIR_COLORS[dir];
@@ -168,14 +189,11 @@ function renderSequence() {
     el.style.background = 'rgba(255,255,255,0.1)';
     el.style.borderRadius = '6px';
     el.style.border = `1px solid ${DIR_COLORS[dir]}`;
-    
-    // 一番左（次に入力すべきもの）は少し大きく光らせる
     if (i === currentIndex) {
       el.style.transform = 'scale(1.1)';
       el.style.boxShadow = `0 0 10px ${DIR_COLORS[dir]}`;
       el.style.background = 'rgba(255,255,255,0.2)';
     }
-    
     dom.sequenceContainer.appendChild(el);
   });
 }
@@ -183,87 +201,71 @@ function renderSequence() {
 function handleInput(dir) {
   if (isStunned || isProcessing || isTransitioning) return;
 
-  // タイマースタート
-  if (!isTimerRunning) {
-    isTimerRunning = true;
-    startTime = performance.now();
-    dom.timerText.style.color = "#5ce6e6";
-    timerInterval = setInterval(() => {
-      dom.timerText.textContent = ((performance.now() - startTime) / 1000).toFixed(2);
-    }, 10);
+  // ★ 最初の入力でタイマースタート
+  if (!isTimerRunning && accumulatedTime === 0) {
+    startTimer();
   }
 
   if (dir === currentSequence[currentIndex]) {
-    // --- 正解 ---
     playSound('hit');
     currentIndex++;
     
     if (currentIndex >= currentSequence.length) {
-      // セット完了
       currentSet++;
       if (currentSet >= SET_LENGTHS.length) {
         finishGame();
       } else {
-        // 次のセットへの「NEXT!」演出
+        // ★ セット間：タイマーを一時停止する
         isTransitioning = true;
+        pauseTimer(); 
         playSound('click');
         dom.sequenceContainer.innerHTML = '<div style="width:100%; text-align:center; color:#ffeb85; font-size:32px; font-weight:bold; align-self:center; letter-spacing:2px;">NEXT!</div>';
         
         setTimeout(() => {
           isTransitioning = false;
           startSet(currentSet);
-        }, 300); // 0.3秒だけ表示してすぐ次へ
+          startTimer(); // ★ 再開
+        }, 400); // 0.4秒だけ演出
       }
     } else {
-      // セット途中なら再描画して左に詰める
       renderSequence();
     }
   } else {
-    // --- 不正解ペナルティ (0.3秒硬直) ---
+    // ペナルティ (0.3s)
     playSound('error');
     isStunned = true;
     dom.sequenceContainer.style.animation = 'none';
     dom.sequenceContainer.offsetHeight; 
     dom.sequenceContainer.style.animation = 'shake 0.2s';
     dom.sequenceContainer.style.filter = 'brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5)';
-
     setTimeout(() => {
       isStunned = false;
       dom.sequenceContainer.style.animation = 'none';
       dom.sequenceContainer.style.filter = 'none';
-    }, 300); // 0.3秒の硬直
+    }, 300);
   }
 }
 
 async function finishGame() {
   if (isProcessing) return;
   isProcessing = true;
-  clearInterval(timerInterval);
-  isTimerRunning = false;
-  playSound('win');
+  pauseTimer(); // ★ ここで最終タイム確定
 
-  const finalTime = (performance.now() - startTime) / 1000;
+  const finalTime = accumulatedTime;
   
   let rankIndex = RANKS.findIndex(r => finalTime < r.timeLimit);
   if(rankIndex === -1) rankIndex = RANKS.length - 1;
   const rank = RANKS[rankIndex];
 
-  let nextRankStr = "最高ランク！";
-  if (rankIndex > 0) {
-    const nextRank = RANKS[rankIndex - 1];
-    nextRankStr = `次の[${nextRank.name}]まで あと ${(finalTime - nextRank.timeLimit).toFixed(2)} 秒`;
-  }
+  let nextRankStr = rankIndex > 0 ? `次の[${RANKS[rankIndex - 1].name}]まで あと ${(finalTime - RANKS[rankIndex - 1].timeLimit).toFixed(2)} 秒` : "最高ランク！";
 
-  // ステータス反映
   const result = applyMinigameResult(playerRef, 'agi', rank.exp, rank.agiBase);
-  
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 
   await savePlayerData(playerRef);
   const isNewRecord = await savePersonalBest(playerRef.name, "command", finalTime);
 
-  // リザルト構築
   document.getElementById('cm-res-time').textContent = finalTime.toFixed(2) + " 秒";
   document.getElementById('cm-res-rank').textContent = rank.name;
   document.getElementById('cm-res-rank').style.color = rank.color;

@@ -15,7 +15,7 @@ const RANKS = [
 let playerRef = null, onUpdateCallback = null;
 let dom = {};
 
-const SET_LENGTHS = [4, 6, 8, 10, 12]; 
+const SET_LENGTHS = [4, 5, 7, 9, 10]; 
 const DIRS = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
 const DIR_SYMBOLS = { 'UP': '↑', 'DOWN': '↓', 'LEFT': '←', 'RIGHT': '→' };
 const DIR_COLORS = { 'UP': '#ff6b6b', 'DOWN': '#6be6ff', 'LEFT': '#94ff6b', 'RIGHT': '#ffd166' };

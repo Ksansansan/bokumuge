@@ -4,8 +4,8 @@ import { applyMinigameResult } from './minigameCore.js';
 
 // ★ シャッフルによる探索ラグを考慮し、制限時間を少し緩和
 const RANKS =[
-  { name: "S", timeLimit: 7.0, agiBase: 10, exp: 40, color: "#ffeb85" },
-  { name: "A", timeLimit: 10.0, agiBase: 8, exp: 30, color: "#ff6b6b" },
+  { name: "S", timeLimit: 7.5, agiBase: 10, exp: 40, color: "#ffeb85" },
+  { name: "A", timeLimit: 10.5, agiBase: 8, exp: 30, color: "#ff6b6b" },
   { name: "B", timeLimit: 14.0, agiBase: 6, exp: 25, color: "#5ce6e6" },
   { name: "C", timeLimit: 20.0, agiBase: 5, exp: 20, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, agiBase: 4, exp: 20, color: "#aaa" }

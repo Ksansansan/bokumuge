@@ -561,7 +561,7 @@ async function renderRanking() {
       if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
-      else if(["rockPush", "daruma"].includes(currentRankId)) {
+      else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) {
         displayScore = item.score.toFixed(2) + ' 秒';
       }
       else if(currentRankId === 'chicken') {
@@ -591,7 +591,7 @@ async function renderRanking() {
     if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayMyScore = formatNumber(myScore);
     else if(currentRankId === 'floor') displayMyScore += ' 層';
     else if(currentRankId === 'totalLv') displayMyScore = 'Lv.' + displayMyScore;
-    else if(["rockPush", "daruma"].includes(currentRankId)) {
+    else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) {
       displayMyScore = myScore.toFixed(2) + ' 秒';
     }
     else if(currentRankId === 'chicken') {

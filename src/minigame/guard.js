@@ -243,13 +243,15 @@ function gameLoop(now) {
   dom.multiplier.textContent = `x${currentMultiplier.toFixed(2)}`;
   dom.timer.textContent = elapsedTime.toFixed(1);
 
-   // 1. 秒間の出現数（Frequency）を計算する
-  // 初期(0秒)は 1.6個/秒 (間隔0.6s相当)
-  // 1分(60秒)経過で 4.0個/秒 (間隔0.25s相当) になるように設定
-  // 1秒経つごとに出現数が 0.04個ずつ増えていく（線形増加）
-  const ballsPerSecond = 1.6 + (elapsedTime * 0.04);
+  // 1. 現在の「秒間増加率」を計算（0.03 から始まり、90秒かけて 0.05 まで上昇）
+  // 00秒以降は 0.05 固定
+  const currentGrowthRate = 0.03 + Math.min(0.02, (elapsedTime / 90) * 0.02);
   
-  // 2. 出現数から逆算して間隔（Interval）を出す
+  // 2. 秒間の出現数（Frequency）を計算
+  // 初期は 1.6個/秒 (間隔 約0.625s) に
+  const ballsPerSecond = 1.6 + (currentGrowthRate * elapsedTime);
+  
+  // 3. 出現数から逆算して間隔（Interval）を出す
   // これにより、後半になっても「急に弾が詰まる」感覚がなくなります
   spawnInterval = 1 / ballsPerSecond;
 

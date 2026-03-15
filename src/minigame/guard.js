@@ -139,7 +139,7 @@ function updateHpUI() {
 // ★弾幕パターンの生成
 function spawnObstacle() {
   // 速度は緩やかに上昇（速すぎると理不尽になるため密度で勝負）
-  const speedBase = 30 + elapsedTime * 0.6; 
+  const speedBase = 30 + elapsedTime * 0.75; 
   const types = ['normal'];
   
   if (elapsedTime > 5) types.push('diagonal', 'normal'); // 5秒から斜め
@@ -210,12 +210,12 @@ function gameLoop(now) {
   currentScore += 10 * currentMultiplier * dt;
   
   dom.score.textContent = Math.floor(currentScore);
-  dom.multiplier.textContent = `x${currentMultiplier.toFixed(1)}`;
+  dom.multiplier.textContent = `x${currentMultiplier.toFixed(2)}`;
   dom.timer.textContent = elapsedTime.toFixed(1);
 
   // --- 障害物スポーン（密度上昇） ---
   // 時間が経つほど間隔が短くなる（0.7秒から0.1秒まで縮まる）
-  spawnInterval = Math.max(0.1, 0.7 - (elapsedTime * 0.007));
+  spawnInterval = Math.max(0.1, 0.7 - (elapsedTime * 0.008));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
@@ -334,8 +334,8 @@ async function finishGame() {
   
   const finalScore = Math.floor(currentScore);
   
-  const earnedVit = Math.floor(finalScore / 20);
-  const earnedExp = Math.floor(finalScore / 5);
+  const earnedVit = Math.floor(finalScore / 18);
+  const earnedExp = Math.floor(finalScore / 4.5);
 
   const result = applyMinigameResult(playerRef, 'vit', earnedExp, earnedVit);
   

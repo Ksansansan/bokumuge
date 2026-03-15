@@ -221,11 +221,11 @@ function gameLoop(now) {
 
   elapsedTime += dt;
 
-  // --- 倍率とスコアの計算 ---
+  // --- 倍率とスコアの計算 --- (最初の5sは0)
   let phase = 1, requiredTime = 5;
   let passedTime = 0;
   while (true) {
-    if (elapsedTime < passedTime + requiredTime) {
+    if (elapsedTime - 5 < passedTime + requiredTime) {
       currentMultiplier = 1.0 + (phase - 1) * 0.25;
       break;
     }
@@ -241,7 +241,7 @@ function gameLoop(now) {
   dom.timer.textContent = elapsedTime.toFixed(1);
 
   // --- 障害物スポーン（密度上昇） ---
-  // 時間が経つほど間隔が短くなる（0.7秒から0.1秒まで縮まる）
+  // 時間が経つほど間隔が短くなる（0.6秒から0.1秒まで縮まる）
   spawnInterval = Math.max(0.1, 0.6 - (elapsedTime * (0.008 - elapsedTime / 40000)));
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {

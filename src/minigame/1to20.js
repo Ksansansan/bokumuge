@@ -101,6 +101,8 @@ function startGame() {
   numbers.forEach(num => {
     const btn = document.createElement('div');
     btn.textContent = num;
+    btn.dataset.num = num;
+    btn.style.visibility = (num <= 5) ? 'visible' : 'hidden';
     // ボタンのデザイン
     btn.style.background = 'linear-gradient(to bottom, #4a7a2a, #2a4a1a)';
     btn.style.border = '2px solid #94ff6b';
@@ -144,6 +146,11 @@ function handleTap(num, btnEl) {
     }
 
     btnEl.style.visibility = 'hidden'; // 消す（レイアウトは維持）
+    const nextToShow = currentNumber + 5;
+    if (nextToShow <= MAX_NUMBER) {
+      const targetBtn = Array.from(dom.gridContainer.children).find(el => el.dataset.num == nextToShow);
+      if (targetBtn) targetBtn.style.visibility = 'visible';
+    }
     currentNumber++;
     
     if (currentNumber <= MAX_NUMBER) {

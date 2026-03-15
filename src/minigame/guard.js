@@ -139,7 +139,7 @@ function updateHpUI() {
 // ★弾幕パターンの生成
 function spawnObstacle() {
   // 速度は緩やかに上昇（速すぎると理不尽になるため密度で勝負）
-  const speedBase = 30 + elapsedTime * 0.4; 
+  const speedBase = 30 + elapsedTime * 0.6; 
   const types = ['normal'];
   
   if (elapsedTime > 5) types.push('diagonal', 'normal'); // 5秒から斜め

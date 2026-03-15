@@ -225,11 +225,12 @@ function gameLoop(now) {
   let phase = 1, requiredTime = 5;
   let passedTime = 0;
   while (true) {
-    if (elapsedTime - 5.0 < passedTime + requiredTime) {
+    if( elapsedTime < 5){
+      currentMultiplier = 0;
+      break;
+    }else if (elapsedTime - 5 < passedTime + requiredTime) {
       currentMultiplier = 1.0 + (phase - 1) * 0.25;
       break;
-    } else if(elapsedTime >= 5.0) {
-      currentMultiplier = 1.0;
     }
     passedTime += requiredTime;
     phase++;

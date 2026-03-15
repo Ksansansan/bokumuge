@@ -255,8 +255,8 @@ function gameLoop(now) {
   // これにより、後半になっても「急に弾が詰まる」感覚がなくなります
   spawnInterval = 1 / ballsPerSecond;
 
-  // 下限（最速間隔）を 0.1s に設定して物理的な限界を担保
-  if (spawnInterval < 0.1) spawnInterval = 0.1;
+  // 下限（最速間隔）を 0.13s に設定して物理的な限界を担保
+  if (spawnInterval < 0.13) spawnInterval = 0.13;
 
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {

@@ -67,36 +67,39 @@ export function simulateBattle(player, floorData) {
     }
 
     // --- プレイヤーの攻撃 ---
-    if (isPlayerAct) {
-      let damage = Math.max(1, player.str - Math.floor(currentEnemy.vit * 0.25));
-      currentEnemy.currentHp -= damage;
-      playerGauge -= 1000;
-      playerConsecutiveTurns++;
-      enemyConsecutiveTurns = 0; // 敵の連続カウントリセット
-      forcePlayerTurn = false;   // 強制フラグ解除
-      
-      events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
-      
-      // 倒した時の処理
-      if (currentEnemy.currentHp <= 0) {
-        if (currentEnemyIndex < 3) {
-          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
-        } else {
-          drops.push({ name: "装備ガチャチケット", type: 'gacha' });
-          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
+     if (isPlayerAct) {
+        let damage = Math.max(1, player.str - Math.floor(currentEnemy.vit * 0.25));
+        currentEnemy.currentHp -= damage;
+        playerGauge -= 1000;
+        playerConsecutiveTurns++;
+        enemyConsecutiveTurns = 0; 
+        forcePlayerTurn = false;   
+        
+        events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
+        
+        // ▼▼▼ ここから修正 ▼▼▼
+        // 倒した時の処理
+        if (currentEnemy.currentHp <= 0) {
+          // ★ 追加：アニメーションを再生するための「撃破イベント」を発行
+          events.push({ frame: timeFrames, type: 'defeat' });
+
+          // ドロップ処理
+          if (currentEnemyIndex < 3) {
+            if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+          } else {
+            drops.push({ name: "装備ガチャチケット", type: 'gacha' });
+            if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
+          }
+          
+          // ★ ここでタイマーをセットするだけ！
+          // 次の敵のセットや next_enemy イベントの発行は、
+          // 30フレーム経過後にループの先頭（transitionTimer === 0 の時）で自動で行われます。
+          transitionTimer = 30;
+          continue;
         }
-        transitionTimer = 30;
-        currentEnemyIndex++;
-        if (currentEnemyIndex < enemies.length) {
-          currentEnemy = { ...enemies[currentEnemyIndex], maxHp: enemies[currentEnemyIndex].vit * 10, currentHp: enemies[currentEnemyIndex].vit * 10 };
-          enemyGauge = 0;
-          playerConsecutiveTurns = 0;
-          events.push({ frame: timeFrames, type: 'next_enemy', enemy: currentEnemy });
-        }
-        continue;
-      }
-      
-      // ★修正3：10回攻撃したら次フレームは「強制的に敵のターン」にする
+        // ▲▲▲ ここまで修正 ▲▲▲
+        
+        // 10回攻撃したら次フレームは「強制的に敵のターン」にする
       if (playerConsecutiveTurns >= 10 && currentEnemy.currentHp > 0) {
         forceEnemyTurn = true;
         playerConsecutiveTurns = 0;

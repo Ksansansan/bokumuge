@@ -23,6 +23,7 @@ let spawnInterval = 0.7;
 
 // 当たり判定用のエリア情報
 let playAreaRect = null;
+let prevPlayerPos = 40;
 
 export function initGuard(playerObj, updateUIFn) {
   playerRef = playerObj;
@@ -63,25 +64,14 @@ export function initGuard(playerObj, updateUIFn) {
   });
 
   const handleMove = (clientX) => {
-    if (!isPlaying || !playAreaRect || isInvincible) return;
-
-    let oldPos = playerPos; // 移動前の左端座標(%)
-    const rect = dom.playArea.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let percentage = (x / rect.width) * 100;
+    if (!isPlaying || !playAreaRect) return;
+    let x = clientX - playAreaRect.left;
+    let percentage = (x / playAreaRect.width) * 100;
     
-    let leftPos = percentage - 10;
-    playerPos = Math.max(0, Math.min(80, leftPos)); // 新しい左端座標(%)
-    
-    // 表示の更新
+    let leftPos = percentage - 10; // 幅20%の半分を引く
+    playerPos = Math.max(0, Math.min(80, leftPos));
     dom.player.style.left = `${playerPos}%`;
-
-    // ★瞬間移動対策: 移動経路チェック
-    // 自機が現在当たり判定のあるY域(75%〜95%)にいると仮定し、
-    // 移動前後の中心X座標の範囲内に、障害物が存在するかチェックする
-    checkSweepCollision(oldPos + 10, playerPos + 10);
   };
-
 
   const onTouchMove = (e) => { e.preventDefault(); handleMove(e.touches[0].clientX); };
   const onMouseMove = (e) => { if (e.buttons > 0) handleMove(e.clientX); };
@@ -126,6 +116,7 @@ function startGame() {
   currentMultiplier = 1.0;
   hp = 3;
   playerPos = 40;
+  prevPlayerPos = 40;
   isInvincible = false;
   invincibleTimer = 0;
   obstacles =[];
@@ -193,50 +184,6 @@ function spawnObstacle() {
   }
 }
 
-/**
- * ★移動経路上の衝突チェック（テレポート対策）
- * @param {number} oldX100 移動前の中心X (%)
- * @param {number} newX100 移動後の中心X (%)
- */
-function checkSweepCollision(oldX100, newX100) {
-  if (isInvincible) return;
-
-  const minX = Math.min(oldX100, newX100);
-  const maxX = Math.max(oldX100, newX100);
-
-  for (let obs of obstacles) {
-    // 現在当たり判定が発生する高さにいる弾のみを対象にする
-    if (obs.y > 75 && obs.y < 95) {
-      const obsX = obs.lane * 20 + 10;
-      
-      // 弾の中心が、移動経路（自機の幅を考慮）に重なっているか
-      // 自機の判定幅を約16%とする
-      if (obsX >= minX - 8 && obsX <= maxX + 8) {
-        triggerHit();
-        break;
-      }
-    }
-  }
-}
-
-/**
- * ヒット時の共通処理
- */
-function triggerHit() {
-  if (isInvincible) return;
-  hp--;
-  updateHpUI();
-  isInvincible = true;
-  invincibleTimer = 1.0;
-  
-  dom.damageFlash.style.opacity = 1;
-  setTimeout(() => dom.damageFlash.style.opacity = 0, 100);
-  
-  if (hp <= 0) {
-    finishGame();
-  }
-}
-
 function gameLoop(now) {
   if (!isPlaying) return;
   let dt = (now - lastFrameTime) / 1000;
@@ -286,7 +233,10 @@ function gameLoop(now) {
   const rectH = playAreaRect.height;
   
   // 盾（カプセル型）のパラメータ
-  const pCx = rectW * (playerPos / 100 + 0.1); // 中心のX座標
+  const pCx_current = rectW * (playerPos / 100 + 0.1);
+  const pCx_prev = rectW * (prevPlayerPos / 100 + 0.1);
+  const minCx = Math.min(pCx_current, pCx_prev);
+  const maxCx = Math.max(pCx_current, pCx_prev);
   const pCy = rectH * 0.9 - 10;                // 中心のY座標（bottom:10%, 高さ20px）
   const pHalfW = (rectW * 0.16) / 2;           // 幅の半分
   const pHalfH = 10;                           // 高さの半分
@@ -326,33 +276,40 @@ function gameLoop(now) {
 
     // --- ★ 見た目通りのカプセル型当たり判定 ---
     if (!isInvincible && obs.y > 75 && obs.y < 95) {
-      // 鉄球のパラメータ
       const oCx = rectW * (obs.lane * 0.2 + 0.1);
       const oCy = rectH * (obs.y / 100) + 10;
-      const oR = 10; // 半径
+      const oR = 10; 
       
-      const dx = Math.abs(pCx - oCx);
+      // ★ 鉄球のX座標と、「プレイヤーの移動軌跡（線分）」の最短距離 dx を求める
+      let dx = 0;
+      if (oCx < minCx) dx = minCx - oCx;         // 軌跡より左にある
+      else if (oCx > maxCx) dx = oCx - maxCx;    // 軌跡より右にある
+      else dx = 0;                               // 軌跡の上に重なっている（ワープ避け検知！）
+      
       const dy = Math.abs(pCy - oCy);
       let hit = false;
-      
-      // STGの鉄則として、自機の判定を2pxだけ甘くする
       const hitboxTolerance = 2; 
 
       if (dx <= pCapW) {
-        // 盾の直線部分にいる場合
         if (dy <= pHalfH + oR - hitboxTolerance) hit = true;
       } else {
-        // 盾の端の半円部分にいる場合（ピタゴラスの定理）
         const distSq = (dx - pCapW) * (dx - pCapW) + dy * dy;
         const hitRadius = 10 + oR - hitboxTolerance;
         if (distSq <= hitRadius * hitRadius) hit = true;
       }
 
       if (hit) {
-        triggerHit();
+        hp--;
+        updateHpUI();
+        isInvincible = true;
+        invincibleTimer = 1.0;
+        
+        dom.damageFlash.style.opacity = 1;
+        setTimeout(() => dom.damageFlash.style.opacity = 0, 100);
+        
         if (hp <= 0) {
           finishGame();
-          return;
+          return; // ★注意：ここで return する前に prevPlayerPos を更新するか、ゲーム終了なのでOK
         }
       }
     }
@@ -362,6 +319,9 @@ function gameLoop(now) {
       obstacles.splice(i, 1);
     }
   }
+
+  // ★フレームの最後に位置を記録
+  prevPlayerPos = playerPos;
 
   animationId = requestAnimationFrame(gameLoop);
 }

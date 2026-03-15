@@ -1,7 +1,7 @@
 // src/firebase.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuXSWPC0PFNeRQbPPrA-eUBLx5yTiNvv8",
@@ -36,7 +36,7 @@ export async function loginOrRegister(username, pin) {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
       floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
-      createdAt: Date.now(),
+      createdAt: serverTimestamp(),
       timestamps: {} // ★項目ごとの更新日時を保存する枠
     };
     await setDoc(userRef, initialData);
@@ -65,7 +65,7 @@ export async function checkAndSaveFirstClear(player, floor, time) {
       vit: player.battleStats ? player.battleStats.vit : player.vit,
       agi: player.battleStats ? player.battleStats.agi : player.agi,
       lck: player.battleStats ? player.battleStats.lck : player.lck,
-      timestamp: Date.now()
+      timestamp: serverTimestamp()
     };
     await setDoc(docRef, data);
     return true;
@@ -93,7 +93,7 @@ export async function savePlayerData(player) {
 
   // ★「前回セーブした時」と比べて数値が上がっていたら、その項目の日時を更新する！
   const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount"];
-  const now = Date.now();
+  const now = serverTimestamp();
   
   if (lastSavedPlayerState) {
     keysToCheck.forEach(k => {
@@ -125,7 +125,7 @@ export async function savePersonalBest(userId, gameId, score) {
   const docSnap = await getDoc(docRef);
   
   if (!docSnap.exists()) {
-    await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
+    await setDoc(docRef, { userId: userId, time: score, timestamp: serverTimestamp() });
     return true; 
   } else {
     const currentBest = docSnap.data().time; // フィールド名はtimeのまま（過去データ互換のため）
@@ -133,7 +133,7 @@ export async function savePersonalBest(userId, gameId, score) {
     const isBetter = (gameId === "guard") ? (score > currentBest) : (score < currentBest);
     
     if (isBetter) {
-      await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
+      await setDoc(docRef, { userId: userId, time: score, timestamp: serverTimestamp() });
       return true;
     }
   }
@@ -162,7 +162,7 @@ export async function getRankingData(rankId, isTotal = false) {
       const d = doc.data();
       const score = d[dbField] || d[rankId] || 0;
       // 到達した日時（無ければ初期作成日時、それも無ければ今の時間）
-      const ts = (d.timestamps && d.timestamps[dbField]) || d.createdAt || Date.now();
+      const ts = (d.timestamps && d.timestamps[dbField]) || d.createdAt || serverTimestamp();
       rankings.push({ name: d.name, score: score, timestamp: ts });
     });
 
@@ -178,7 +178,7 @@ export async function getRankingData(rankId, isTotal = false) {
     const querySnapshot = await getDocs(collection(db, "minigames", rankId, "scores"));
     querySnapshot.forEach((doc) => {
       const d = doc.data();
-      rankings.push({ name: d.userId, score: d.time, timestamp: d.timestamp || Date.now() });
+      rankings.push({ name: d.userId, score: d.time, timestamp: d.timestamp || serverTimestamp() });
     });
 
     // ★ ミニゲームの種類によってソート方向を変える

@@ -73,7 +73,7 @@ export function initRockPush(playerObj, updateUIFn) {
     if (e.type === 'touchstart') e.preventDefault();
     if (e.touches && e.touches.length > 1) return;
 
-    const now = Date.now();
+    const now = performance.now();
     if (now - lastTapTime < 13) return;
     lastTapTime = now;
 
@@ -126,10 +126,10 @@ function startGame() {
 // ★タイマー開始ロジックを分離
 function startTimer() {
   isTimerRunning = true;
-  startTime = Date.now();
+  startTime = performance.now();
   dom.timerText.style.color = "#5ce6e6";
   timerInterval = setInterval(() => {
-    const elapsed = (Date.now() - startTime) / 1000;
+    const elapsed = (performance.now() - startTime) / 1000;
     dom.timerText.textContent = elapsed.toFixed(2);
   }, 10);
 }
@@ -138,7 +138,7 @@ async function finishGame() {
   clearInterval(timerInterval);
   isTimerRunning = false;
   isProcessing = true;
-  const time = (Date.now() - startTime) / 1000;
+  const time = (performance.now() - startTime) / 1000;
   
   let rankIndex = RANKS.findIndex(r => time < r.timeLimit);
   if(rankIndex === -1) rankIndex = RANKS.length - 1;

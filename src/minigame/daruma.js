@@ -54,16 +54,16 @@ export function initDaruma(playerObj, updateUIFn) {
     if (isStunned || currentIndex >= TOTAL_BLOCKS) return;
     
     // 20ms以内の高速入力（ツールやバグ）を無視
-    const now = Date.now();
+    const now = performance.now();
     if (now - lastInputTime < 20) return;
     lastInputTime = now;
 
     if (!isTimerRunning) {
       isTimerRunning = true;
-      startTime = Date.now();
+      startTime = performance.now();
       dom.timerText.style.color = "#5ce6e6";
       timerInterval = setInterval(() => {
-        dom.timerText.textContent = ((Date.now() - startTime) / 1000).toFixed(2);
+        dom.timerText.textContent = ((performance.now() - startTime) / 1000).toFixed(2);
       }, 10);
     }
 
@@ -191,7 +191,7 @@ async function finishGame() {
   isProcessing = true;
   clearInterval(timerInterval);
   isTimerRunning = false;
-  const time = (Date.now() - startTime) / 1000;
+  const time = (performance.now() - startTime) / 1000;
   
   let rankIndex = RANKS.findIndex(r => time < r.timeLimit);
   if(rankIndex === -1) rankIndex = RANKS.length - 1;

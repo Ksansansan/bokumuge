@@ -346,10 +346,10 @@ btnChallenge.addEventListener('click', () => {
     const BASE_SPEED = 1000 / 60;
     let visualPAgi = Math.max(1, Math.min(battleStats.agi, currentEnemyAgi * 10));
     let visualEAgi = Math.max(1, Math.min(currentEnemyAgi, battleStats.agi * 10));
-    const maxVisualAgi = Math.max(visualPAgi, visualEAgi);
+    const minVisualAgi = Math.min(visualPAgi, visualEAgi); // minに変更
 
-    pGaugeVal += (visualPAgi / maxVisualAgi) * BASE_SPEED * speed;
-    eGaugeVal += (visualEAgi / maxVisualAgi) * BASE_SPEED * speed;
+    pGaugeVal += (visualPAgi / minVisualAgi) * BASE_SPEED * speed;
+    eGaugeVal += (visualEAgi / minVisualAgi) * BASE_SPEED * speed;
 
     if (pGaugeVal > 1000) pGaugeVal = 1000;
     if (eGaugeVal > 1000) eGaugeVal = 1000;

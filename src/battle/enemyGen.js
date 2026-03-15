@@ -93,9 +93,9 @@ export function generateFloorData(targetFloor) {
       
       const pAgi_clipped = Math.max(1, Math.min(recommendedAgi, enemy.agi * 10));
       const eAgi_clipped = Math.max(1, Math.min(enemy.agi, recommendedAgi * 10));
-      const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
+      const minAgi = Math.min(pAgi_clipped, eAgi_clipped); // minに変更
       
-      const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
+      const pSpeed = (pAgi_clipped / minAgi) * BASE_SPEED;
       const framesPerHit = 1000 / pSpeed;
       
       requiredFrames += hitsNeeded * framesPerHit;
@@ -142,10 +142,10 @@ export function generateFloorData(targetFloor) {
       
       const pAgi_clipped = Math.max(1, Math.min(recommendedAgi, enemy.agi * 10));
       const eAgi_clipped = Math.max(1, Math.min(enemy.agi, recommendedAgi * 10));
-      const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
+      const minAgi = Math.min(pAgi_clipped, eAgi_clipped); // minに変更
       
-      const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
-      const eSpeed = (eAgi_clipped / maxAgi) * BASE_SPEED;
+      const pSpeed = (pAgi_clipped / minAgi) * BASE_SPEED;
+      const eSpeed = (eAgi_clipped / minAgi) * BASE_SPEED;
       
       const framesAlive = hitsNeeded * (1000 / pSpeed);
       const enemyAttacks = Math.floor((framesAlive * eSpeed) / 1000);

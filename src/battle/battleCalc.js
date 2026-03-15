@@ -45,10 +45,10 @@ export function simulateBattle(player, floorData) {
     // ★修正：AGIの相対速度計算（最大10倍キャップ）
     let pAgi_clipped = Math.max(1, Math.min(player.agi, currentEnemy.agi * 10));
     let eAgi_clipped = Math.max(1, Math.min(currentEnemy.agi, player.agi * 10));
-    const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
+    const minAgi = Math.min(pAgi_clipped, eAgi_clipped); // minに変更
     
-    playerGauge += (pAgi_clipped / maxAgi) * BASE_SPEED;
-    enemyGauge += (eAgi_clipped / maxAgi) * BASE_SPEED;
+    playerGauge += (pAgi_clipped / minAgi) * BASE_SPEED;
+    enemyGauge += (eAgi_clipped / minAgi) * BASE_SPEED;
 
     let isPlayerAct = false, isEnemyAct = false;
     if (forceEnemyTurn) isEnemyAct = true;
@@ -131,7 +131,19 @@ export function simulateBattle(player, floorData) {
       aggregatedDrops.push({ ...d, count: 1 });
     }
   });
-  
+  // AGI加算ロジック部分
+const TICK = 1000 / 60; // 1秒(60F)で1000溜まる基準値
+
+// 相手との比率を計算（最大10倍）
+let pRatio = player.agi / currentEnemy.agi;
+let eRatio = currentEnemy.agi / player.agi;
+
+// 遅い方の速度を1s(TICK)に固定し、速い方の加算量を倍率化する
+let pSpeed = pRatio >= 1 ? Math.min(10, pRatio) * TICK : TICK;
+let eSpeed = eRatio > 1 ? Math.min(10, eRatio) * TICK : TICK;
+
+playerGauge += pSpeed;
+enemyGauge += eSpeed;
   return {
     isWin: playerHp > 0 && currentEnemyIndex >= enemies.length,
     clearTime: formatTime(timeFrames),

@@ -8,6 +8,7 @@ import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 import { initChicken, openChickenModal } from './minigame/chicken.js';
 import { initGuard, openGuardModal } from './minigame/guard.js';
 import { init1to20, open1to20Modal } from './minigame/1to20.js';
+import { playSound } from './audio.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -33,7 +34,7 @@ const uiE_hp = document.getElementById('ui-e-hp');
 const uiE_hpTxt = document.getElementById('ui-e-hp-txt');
 const uiE_gauge = document.getElementById('ui-e-gauge');
 const guiContainer = document.getElementById('battle-gui-container');
-
+const uiE_char = document.getElementById('ui-e-char');
 // バトルアニメーション用変数
 let animationId = null;
 
@@ -303,6 +304,9 @@ btnChallenge.addEventListener('click', () => {
       const ev = result.events[eventIndex];
       
       if (ev.type === 'start' || ev.type === 'next_enemy') {
+        // ★ スライドインアニメーション
+        uiE_char.classList.remove('enemy-slide-out');
+        uiE_char.classList.add('enemy-slide-in');
         if(ev.type === 'start') { pMaxHp = ev.playerMaxHp; pHp = pMaxHp; } else { eGaugeVal = 0; }
         eMaxHp = ev.enemy.maxHp; eHp = eMaxHp;
         document.getElementById('ui-e-name').textContent = ev.enemy.name;
@@ -313,6 +317,8 @@ btnChallenge.addEventListener('click', () => {
         document.getElementById('ui-e-stat-agi').textContent = formatNumber(ev.enemy.agi);
       } 
       else if (ev.type === 'attack') {
+        if(ev.actor === 'player') playSound('hit');
+        else playSound('damage');
         const dmgText = document.createElement('div');
         dmgText.className = 'dmg-popup';
         dmgText.textContent = formatNumber(ev.damage);
@@ -320,6 +326,12 @@ btnChallenge.addEventListener('click', () => {
         else { dmgText.style.left = '20%'; pHp = ev.hpRemaining; eGaugeVal = 0; }
         document.getElementById('battle-gui-container').appendChild(dmgText);
         setTimeout(() => dmgText.remove(), 800);
+      }
+      else if (ev.type === 'defeat') {
+        // ★ 撃破音 ＆ スライドアウト（退場）
+        playSound('defeat');
+        uiE_char.classList.remove('enemy-slide-in');
+        uiE_char.classList.add('enemy-slide-out');
       }
       else if (ev.type === 'stopper') { eGaugeVal = 1000; }
       eventIndex++;
@@ -367,8 +379,10 @@ btnChallenge.addEventListener('click', () => {
       }
 
       if (result.isWin) {
+        playSound('win');
         handleVictory(result, floorData.floor); 
       } else {
+        playSound('error');
         resultText.textContent = `💀 敗北...`;
         resultText.style.color = '#ff6b6b';
         savePlayerData(player); // 負けてもドロップは保存
@@ -675,3 +689,10 @@ function updateCollectionUI() {
     
     player.collectionCount = totalCollected; // 保存用
   }
+
+  // ★追加：画面内のボタンを押したら勝手に「ポッ」と鳴るようにする（全体適用）
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-show-ranking')) {
+    playSound('click');
+  }
+});

@@ -86,6 +86,18 @@
   }
   @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 50% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-40px) scale(1); opacity: 0; } }
 
+  /* 敵キャラのスライドインアニメーション用 */
+.enemy-char {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+.enemy-slide-out {
+  transform: translateX(100px);
+  opacity: 0;
+}
+.enemy-slide-in {
+  transform: translateX(0);
+  opacity: 1;
+}
   @keyframes rank-self-pulse {
   0% { box-shadow: 0 0 8px rgba(92, 230, 230, 0.3); }
   50% { box-shadow: 0 0 15px rgba(92, 230, 230, 0.6); }

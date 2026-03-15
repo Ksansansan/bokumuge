@@ -20,11 +20,28 @@ export function simulateBattle(player, floorData) {
   let forceEnemyTurn = false;    // 割り込みフラグ
   let forcePlayerTurn = false;
   let timeFrames = 0;
+  let transitionTimer = 0;
 
   events.push({ frame: 0, type: 'start', enemy: currentEnemy, playerMaxHp: playerMaxHp });
 
   while (currentEnemyIndex < enemies.length && playerHp > 0) {
     timeFrames++;
+
+     // ★追加：移動中（0.5秒間）はゲージを増やさず、時間だけ進める
+    if (transitionTimer > 0) {
+      transitionTimer--;
+      // 0になった瞬間に次の敵が現れる
+      if (transitionTimer === 0) {
+        currentEnemyIndex++;
+        if (currentEnemyIndex < enemies.length) {
+          currentEnemy = { ...enemies[currentEnemyIndex], maxHp: enemies[currentEnemyIndex].vit * 10, currentHp: enemies[currentEnemyIndex].vit * 10 };
+          enemyGauge = 0;
+          playerConsecutiveTurns = 0;
+          events.push({ frame: timeFrames, type: 'next_enemy', enemy: currentEnemy });
+        }
+      }
+      continue;
+    }
 
     // ★修正1：AGIの加算値を「相手の10倍」までにクリップする
     let pAgi = Math.min(player.agi, currentEnemy.agi * 10);
@@ -68,7 +85,7 @@ export function simulateBattle(player, floorData) {
           drops.push({ name: "装備ガチャチケット", type: 'gacha' });
           if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
         }
-
+        transitionTimer = 30;
         currentEnemyIndex++;
         if (currentEnemyIndex < enemies.length) {
           currentEnemy = { ...enemies[currentEnemyIndex], maxHp: enemies[currentEnemyIndex].vit * 10, currentHp: enemies[currentEnemyIndex].vit * 10 };

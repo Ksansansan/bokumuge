@@ -73,22 +73,26 @@ export function generateFloorData(targetFloor) {
     }
   ];
 
- // --- 推奨ステータス逆算 ---
-  const TARGET_FRAMES = 30 * 60; // 30秒
-  const pAgi_rec = enemies[3].agi; // 推奨AGIは敵ボスと同じ
+ // --- 推奨ステータス逆算（二分探索で爆速化） ---
+  const TARGET_FRAMES = 30 * 60; // 30秒 (1800フレーム)
+  const recommendedAgi = enemies[3].agi; // 推奨AGIは敵ボスと同じ
   const BASE_SPEED = 1000 / 60; // 1秒(60F)に1回攻撃する基準
 
-  let recommendedStr = Math.floor(enemies[3].vit * 0.25) + 1;
-  while (true) {
+  // ------------------------------------------------
+  // 1. STRの二分探索
+  // ------------------------------------------------
+  let minStr = Math.floor(enemies[3].vit * 0.25) + 1; // 少なくともボスに1ダメージ与えられる値
+  
+  // 指定のSTRで、30秒以内に全敵を倒せるか判定する関数
+  const checkStr = (strVal) => {
     let requiredFrames = 0;
     for (const enemy of enemies) {
-      const dmg = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.25));
+      const dmg = Math.max(1, strVal - Math.floor(enemy.vit * 0.25));
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmg);
       
-      // 相対速度の計算
-      const pAgi_clipped = Math.max(1, Math.min(pAgi_rec, enemy.agi * 10));
-      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, pAgi_rec * 10));
+      const pAgi_clipped = Math.max(1, Math.min(recommendedAgi, enemy.agi * 10));
+      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, recommendedAgi * 10));
       const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
       
       const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
@@ -96,41 +100,85 @@ export function generateFloorData(targetFloor) {
       
       requiredFrames += hitsNeeded * framesPerHit;
     }
-    // インターバル3回分(90F)を足す
-    if (requiredFrames + 90 <= TARGET_FRAMES) break;
-    recommendedStr++;
+    // インターバル3回分(90F)を足して判定
+    return (requiredFrames + 90) <= TARGET_FRAMES;
+  };
+
+  // 倍々ゲームで大まかな上限(maxStr)を探す
+  let maxStr = minStr;
+  while (!checkStr(maxStr)) {
+    // 限界突破防止 (JavaScriptの安全な整数上限)
+    if (maxStr > Number.MAX_SAFE_INTEGER / 2) { maxStr = Number.MAX_SAFE_INTEGER; break; }
+    maxStr *= 2; 
   }
 
-  let recommendedVit = 1;
-  while (true) {
-    let playerHp = recommendedVit * 10;
+  // 二分探索でギリギリのSTRを特定
+  let recommendedStr = maxStr;
+  while (minStr <= maxStr) {
+    const midStr = Math.floor((minStr + maxStr) / 2);
+    if (checkStr(midStr)) {
+      recommendedStr = midStr; // 条件を満たしたので記録
+      maxStr = midStr - 1;     // もっと低い値でも行けるか探す
+    } else {
+      minStr = midStr + 1;     // ダメだったので高い値を探す
+    }
+  }
+
+
+  // ------------------------------------------------
+  // 2. VITの二分探索
+  // ------------------------------------------------
+  let minVit = 1;
+  let maxVit = 1;
+  
+  // 指定のVITで、全敵の攻撃を耐えきれるか判定する関数
+  const checkVit = (vitVal) => {
+    let playerHp = vitVal * 10;
     let isSurvived = true;
     for (const enemy of enemies) {
       const dmgToEnemy = Math.max(1, recommendedStr - Math.floor(enemy.vit * 0.25));
       const enemyHp = enemy.vit * 10;
       const hitsNeeded = Math.ceil(enemyHp / dmgToEnemy);
       
-      const pAgi_clipped = Math.max(1, Math.min(pAgi_rec, enemy.agi * 10));
-      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, pAgi_rec * 10));
+      const pAgi_clipped = Math.max(1, Math.min(recommendedAgi, enemy.agi * 10));
+      const eAgi_clipped = Math.max(1, Math.min(enemy.agi, recommendedAgi * 10));
       const maxAgi = Math.max(pAgi_clipped, eAgi_clipped);
       
       const pSpeed = (pAgi_clipped / maxAgi) * BASE_SPEED;
       const eSpeed = (eAgi_clipped / maxAgi) * BASE_SPEED;
-      const framesAlive = hitsNeeded * (1000 / pSpeed);
       
+      const framesAlive = hitsNeeded * (1000 / pSpeed);
       const enemyAttacks = Math.floor((framesAlive * eSpeed) / 1000);
-      const dmgFromEnemy = Math.max(0, enemy.str - Math.floor(recommendedVit * 0.25));
+      const dmgFromEnemy = Math.max(0, enemy.str - Math.floor(vitVal * 0.25));
       
       playerHp -= (enemyAttacks * dmgFromEnemy);
       if (playerHp <= 0) { isSurvived = false; break; }
     }
-    if (isSurvived) break;
-    recommendedVit++;
+    return isSurvived;
+  };
+
+  // 倍々ゲームで大まかな上限(maxVit)を探す
+  while (!checkVit(maxVit)) {
+    if (maxVit > Number.MAX_SAFE_INTEGER / 2) { maxVit = Number.MAX_SAFE_INTEGER; break; }
+    maxVit *= 2;
+  }
+
+  // 二分探索でギリギリのVITを特定
+  let recommendedVit = maxVit;
+  while (minVit <= maxVit) {
+    const midVit = Math.floor((minVit + maxVit) / 2);
+    if (checkVit(midVit)) {
+      recommendedVit = midVit;
+      maxVit = midVit - 1; 
+    } else {
+      minVit = midVit + 1;
+    }
   }
 
   return {
     floor, isMaxFloor: floor >= MAX_FLOOR, stageName, biome,
-    recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi }, enemies,
+    recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi }, 
+    enemies,
     drops:[
       { name: "装備ガチャチケット", prob: 100, isCollection: false },
       { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: subLevel === 5 ? 30 : 20, isCollection: true }

@@ -334,8 +334,8 @@ async function finishGame() {
   
   const finalScore = Math.floor(currentScore);
   
-  const earnedVit = Math.floor(finalScore / 18);
-  const earnedExp = Math.floor(finalScore / 4.5);
+  const earnedVit = Math.floor(finalScore / 25);
+  const earnedExp = Math.floor(finalScore / 6);
 
   const result = applyMinigameResult(playerRef, 'vit', earnedExp, earnedVit);
   

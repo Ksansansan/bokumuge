@@ -8,6 +8,7 @@ import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 import { initChicken, openChickenModal } from './minigame/chicken.js';
 import { initGuard, openGuardModal } from './minigame/guard.js';
 import { init1to20, open1to20Modal } from './minigame/1to20.js';
+import { initCommand, openCommandModal } from './minigame/command.js'; 
 import { playSound } from './audio.js';
 
 const elStr = document.getElementById('val-str');
@@ -184,6 +185,7 @@ function init() {
   initChicken(player, updateTrainingUI);
   initGuard(player, updateTrainingUI); 
   init1to20(player, updateTrainingUI);
+  initCommand(player, updateTrainingUI);
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -435,6 +437,9 @@ document.getElementById('btn-play-guard').addEventListener('click', () => {
 document.getElementById('btn-play-1to20').addEventListener('click', () => {
   open1to20Modal();
 });
+document.getElementById('btn-play-command').addEventListener('click', () => {
+  openCommandModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -465,7 +470,7 @@ function updateTrainingUI() {
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['command', 'clover', 'slot'];
+const dummyGames =['clover', 'slot'];
 dummyGames.forEach(id => {
   const btn = document.getElementById(`btn-play-${id}`);
   if(btn) {

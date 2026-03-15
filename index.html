@@ -728,6 +728,73 @@
       </div>
     </div>
   </div>
+
+  <!-- ⚡ 1〜20 早押し 専用モーダル -->
+  <div id="modal-1to20" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #1a2a11, #0a1a08); border: 2px solid #3a7a20; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
+      
+      <!-- 1. 説明ビュー -->
+      <div id="ot-view-info" style="display: flex; flex-direction: column;">
+        <h3 style="margin-top:0; color:#94ff6b; text-align:center;">1〜20 早押し (TA)</h3>
+        <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.5;">
+          【ルール】画面に散らばった「1」から「20」までの数字を順番に素早くタップしろ！<br>
+          <span style="color:#ffeb85;">※間違った数字を押すと0.2秒の硬直ペナルティ！</span>
+        </p>
+        
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color:#ffd166;">【ランク報酬表】</strong>
+          <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
+            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (5.0秒未満): 基礎AGI+8 / EXP 35</li>
+            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (7.0秒未満): 基礎AGI+6 / EXP 25</li>
+            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (10.0秒未満): 基礎AGI+5 / EXP 20</li>
+            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (15.0秒未満): 基礎AGI+4 / EXP 15</li>
+            <li><span style="color:#aaa; font-weight:bold;">D</span> (それ以上): 基礎AGI+3 / EXP 15</li>
+          </ul>
+        </div>
+        <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
+          自己ベスト: <span id="ot-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
+          <div class="btn-show-ranking" data-rank-id="1to20" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(148, 255, 107, 0.1); border: 1px solid #3a7a20; border-radius: 20px; color: #94ff6b; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
+        </div>
+        <button id="ot-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#3a7a20; background:linear-gradient(to bottom, #3a7a20, #1d4a0d);">ゲームスタート！</button>
+        <button onclick="document.getElementById('modal-1to20').style.display='none';" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">閉じる</button>
+      </div>
+
+      <!-- 2. プレイビュー -->
+      <div id="ot-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 450px; padding: 10px 0;">
+        <h3 style="margin:0; color:#94ff6b; font-size: 18px;">1〜20 早押し</h3>
+        
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: flex-end; padding: 0 10px;">
+          <div style="font-size: 20px; font-weight: bold; color: #fff;">NEXT: <span id="ot-next-num" style="color:#ff6b6b; font-size:28px;">1</span></div>
+          <div style="font-size: 32px; font-weight: bold; color: #5ce6e6; font-family: monospace;" id="ot-timer">0.00</div>
+        </div>
+        
+        <!-- 数字グリッド (4列x5行) -->
+        <div id="ot-grid-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; flex-grow: 1; margin: 15px 0; background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px; border: 1px solid #3a7a20;">
+          <!-- JSでここにボタンを生成 -->
+        </div>
+
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <button id="ot-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
+          <button id="ot-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
+        </div>
+      </div>
+
+      <!-- 3. リザルトビュー -->
+      <div id="ot-view-result" style="display: none; flex-direction: column; align-items: center;">
+        <h2 style="color:#94ff6b; margin-top:0;">RESULT</h2>
+        <div id="ot-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
+        <div style="font-size: 36px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="ot-res-time">0.00 秒</div>
+        <div style="font-size: 20px; margin-bottom: 5px;">ランク: <span id="ot-res-rank" style="font-size: 36px; font-weight: bold;">--</span></div>
+        <div id="ot-res-next" style="font-size: 12px; color: #aaa; margin-bottom: 15px;">次のランクまで -- 秒</div>
+        
+        <div id="ot-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
+
+        <button id="ot-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#3a7a20; background:linear-gradient(to bottom, #3a7a20, #1d4a0d);">もう一度プレイ (R)</button>
+        <button id="ot-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
+      </div>
+    </div>
+  </div>
+
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>
 

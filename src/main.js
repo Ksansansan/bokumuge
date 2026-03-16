@@ -569,7 +569,7 @@ async function renderRanking() {
       else if(currentRankId === 'chicken') {
         displayScore = item.score.toFixed(2) + ' m'; // ★mを表示
       }
-      else if(currentRankId === "guard") displayScore = Math.floor(item.score) + ' pt';
+      else if(currentRankId === "guard" || currentRankId === "slot") displayScore = Math.floor(item.score) + ' pt';
       const borderLeftStyle = `4px solid ${color}`; 
       // --- 3. HTML生成 (isMe のときだけ rank-row-self クラスを付与) ---
       const selfClass = isMe ? 'rank-row-self' : '';
@@ -599,7 +599,7 @@ async function renderRanking() {
     else if(currentRankId === 'chicken') {
       displayMyScore = myScore.toFixed(2) + ' m'; // ★mを表示
     }
-    else if(currentRankId === "guard") displayScore = Math.floor(item.score) + ' pt';
+    else if(currentRankId === "guard" || currentRankId === "slot") displayScore = Math.floor(item.score) + ' pt';
 
     myRankingContainer.innerHTML = `
       <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">

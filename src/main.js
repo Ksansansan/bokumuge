@@ -10,6 +10,7 @@ import { initGuard, openGuardModal } from './minigame/guard.js';
 import { init1to20, open1to20Modal } from './minigame/1to20.js';
 import { initCommand, openCommandModal } from './minigame/command.js'; 
 import { initClover, openCloverModal } from './minigame/clover.js';
+import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound } from './audio.js';
 
 const elStr = document.getElementById('val-str');
@@ -188,6 +189,7 @@ function init() {
   init1to20(player, updateTrainingUI);
   initCommand(player, updateTrainingUI);
   initClover(player, updateTrainingUI);
+  initSlot(player, updateTrainingUI);
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -445,6 +447,9 @@ document.getElementById('btn-play-command').addEventListener('click', () => {
 document.getElementById('btn-play-clover').addEventListener('click', () => {
   openCloverModal();
 });
+document.getElementById('btn-play-slot').addEventListener('click', () => {
+  openSlotModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -474,16 +479,6 @@ function updateTrainingUI() {
   });
 }
 
-// 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['slot'];
-dummyGames.forEach(id => {
-  const btn = document.getElementById(`btn-play-${id}`);
-  if(btn) {
-    btn.addEventListener('click', () => {
-      alert("この特訓は現在建設中です！（次回アップデートをお待ちください）");
-    });
-  }
-});
 
 // ==========================================
 // 👑 ランキングモーダルへの実データ反映

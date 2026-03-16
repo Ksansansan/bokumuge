@@ -130,7 +130,7 @@ export async function savePersonalBest(userId, gameId, score) {
   } else {
     const currentBest = docSnap.data().time; // フィールド名はtimeのまま（過去データ互換のため）
     // ★ guard はスコアなので「大きい方が更新」。他はTAなので「小さい方が更新」
-    const isBetter = (gameId === "guard") ? (score > currentBest) : (score < currentBest);
+    const isBetter = (gameId === "guard" || gameId === "slot") ? (score > currentBest) : (score < currentBest);
     
     if (isBetter) {
       await setDoc(docRef, { userId: userId, time: score, timestamp: serverTimestamp() });
@@ -185,7 +185,7 @@ export async function getRankingData(rankId, isTotal = false) {
     rankings.sort((a, b) => {
       if (a.score !== b.score) {
         // guard は降順（スコアが高い方が上）、その他は昇順（タイムが短い方が上）
-        return rankId === 'guard' ? b.score - a.score : a.score - b.score;
+        return (rankId === 'guard' || rankId === 'slot') ? b.score - a.score : a.score - b.score;
       }
       return a.timestamp - b.timestamp; // 同値なら先着順
     });

@@ -240,7 +240,7 @@
           <div id="ui-exp-bar-lck" style="width:0%; background:#6be6ff; height:100%; transition: width 0.3s;"></div>
         </div>
         
-        <button id="btn-play-clover" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し (固定時間)</button>
+        <button id="btn-play-clover" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し (TA)</button>
         <button id="btn-play-slot" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c);">狙え！スロット (エンドレス)</button>
       </div>
     </section>
@@ -973,6 +973,98 @@
     /* 茎 */
     .stem { position: absolute; width: 3px; height: 18px; background: #5c7a20; bottom: -4px; left: 14px; transform: rotate(15deg); z-index: -1; }
   </style>
+
+  <!-- 🎰 スロット 専用モーダル -->
+  <div id="modal-slot" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b2511, #141108); border: 2px solid #d4af37; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
+      
+      <!-- 1. 説明ビュー -->
+      <div id="sl-view-info" style="display: flex; flex-direction: column;">
+        <h3 style="margin-top:0; color:#d4af37; text-align:center;">狙え！スロット (エンドレス)</h3>
+        <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.5;">
+          【ルール】3つのリールを「STOP」でピタッと止めろ！<br>
+          <span style="color:#ffeb85;">💎揃いでスコアx2！💰揃いでスコアx1！</span><br>
+          <span style="color:#ff6b6b;">※💀(ドクロ)が出た数だけダメージ！(HP3)</span>
+        </p>
+        
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color:#ffd166;">【スピンボーナス】</strong>
+          <p style="margin:5px 0 0 0; line-height:1.6; color:#aaa;">
+            1スピン終わるごとに回転が速くなり、<b>獲得スコアの倍率が 1.1倍 ずつ複利で上昇</b>していく！<br>
+            生き残るほど圧倒的なタイパでLCKが稼げるぞ！
+          </p>
+        </div>
+        <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
+          自己ベスト: <span id="sl-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
+          <div class="btn-show-ranking" data-rank-id="slot" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 20px; color: #ffd166; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
+        </div>
+        <button id="sl-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#d4af37; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">ゲームスタート！</button>
+        <button onclick="document.getElementById('modal-slot').style.display='none';" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">閉じる</button>
+      </div>
+
+      <!-- 2. プレイビュー -->
+      <div id="sl-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 480px; padding: 5px 0;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; padding: 0 10px; margin-bottom:5px;">
+          <div style="font-size: 16px; color: #ff6b6b; font-weight:bold;" id="sl-hp">❤️❤️❤️</div>
+          <div style="text-align:right;">
+            <div style="font-size: 24px; font-weight: bold; color: #5ce6e6; font-family: monospace;" id="sl-score">0</div>
+            <div style="font-size: 12px; color: #ffd166;">Spin <span id="sl-spin-count">1</span> / 倍率: <span id="sl-multiplier">x1.00</span></div>
+          </div>
+        </div>
+        
+        <!-- スロットリールエリア -->
+        <div style="display: flex; gap: 15px; justify-content: center; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.6); border-radius: 12px; border: 2px solid #8a6d1c; box-shadow: inset 0 0 20px #000;">
+          <!-- リール1 -->
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="width: 70px; height: 70px; background: #fff; border: 3px solid #d4af37; border-radius: 8px; overflow: hidden; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
+              <div id="sl-reel-0" style="position: absolute; width: 100%; top: 0; display:flex; flex-direction:column; align-items:center;"></div>
+              <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,0,0,0.6); transform: translateY(-50%); z-index:10; pointer-events:none;"></div>
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-shadow: inset 0 15px 10px -10px rgba(0,0,0,0.5), inset 0 -15px 10px -10px rgba(0,0,0,0.5); pointer-events:none; z-index:11;"></div>
+            </div>
+            <button id="sl-stop-0" class="btn-fantasy" style="margin-top:15px; width:70px; padding:10px 0; font-size:14px; background:linear-gradient(to bottom, #ff6b6b, #cc0000); border-color:#ffaaaa;">STOP</button>
+          </div>
+          <!-- リール2 -->
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="width: 70px; height: 70px; background: #fff; border: 3px solid #d4af37; border-radius: 8px; overflow: hidden; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
+              <div id="sl-reel-1" style="position: absolute; width: 100%; top: 0; display:flex; flex-direction:column; align-items:center;"></div>
+              <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,0,0,0.6); transform: translateY(-50%); z-index:10; pointer-events:none;"></div>
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-shadow: inset 0 15px 10px -10px rgba(0,0,0,0.5), inset 0 -15px 10px -10px rgba(0,0,0,0.5); pointer-events:none; z-index:11;"></div>
+            </div>
+            <button id="sl-stop-1" class="btn-fantasy" style="margin-top:15px; width:70px; padding:10px 0; font-size:14px; background:linear-gradient(to bottom, #ff6b6b, #cc0000); border-color:#ffaaaa;">STOP</button>
+          </div>
+          <!-- リール3 -->
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="width: 70px; height: 70px; background: #fff; border: 3px solid #d4af37; border-radius: 8px; overflow: hidden; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
+              <div id="sl-reel-2" style="position: absolute; width: 100%; top: 0; display:flex; flex-direction:column; align-items:center;"></div>
+              <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,0,0,0.6); transform: translateY(-50%); z-index:10; pointer-events:none;"></div>
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-shadow: inset 0 15px 10px -10px rgba(0,0,0,0.5), inset 0 -15px 10px -10px rgba(0,0,0,0.5); pointer-events:none; z-index:11;"></div>
+            </div>
+            <button id="sl-stop-2" class="btn-fantasy" style="margin-top:15px; width:70px; padding:10px 0; font-size:14px; background:linear-gradient(to bottom, #ff6b6b, #cc0000); border-color:#ffaaaa;">STOP</button>
+          </div>
+        </div>
+        
+        <div id="sl-message" style="height: 30px; font-size: 20px; font-weight: bold; color: #ffd166; text-align: center; text-shadow: 0 0 5px #000;"></div>
+
+        <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+          <button id="sl-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
+          <button id="sl-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
+        </div>
+      </div>
+
+      <!-- 3. リザルトビュー -->
+      <div id="sl-view-result" style="display: none; flex-direction: column; align-items: center;">
+        <h2 style="color:#d4af37; margin-top:0;">RESULT</h2>
+        <div id="sl-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
+        <div style="font-size: 14px; color:#aaa;">獲得スコア</div>
+        <div style="font-size: 40px; font-weight: bold; color: #fff; margin-bottom: 20px;" id="sl-res-score">0</div>
+        
+        <div id="sl-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
+
+        <button id="sl-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#d4af37; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">もう一度プレイ (R)</button>
+        <button id="sl-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
+      </div>
+    </div>
+  </div>
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>
 

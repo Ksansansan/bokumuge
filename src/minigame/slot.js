@@ -147,8 +147,7 @@ function startNextSpin() {
   dom.msg.textContent = "";
 
   // ★ 修正: リールの初速を大幅に緩和 (210px/s = 1周2秒) し、速度上昇も緩やかに
-  // speed = 210 + (spinCount * 15)
-  const speed = 210 + (spinCount * 15);
+  const speed = 250 + (spinCount * 25);
 
   reels.forEach((r, i) => {
     let shuffled = [...SYMBOLS].sort(() => Math.random() - 0.5);
@@ -216,17 +215,48 @@ function evaluateResult() {
   let diamondCount = results.filter(x => x === '💎').length;
   
   let gained = 0;
+  let scoreMsg = "";
 
-  // --- ドクロ判定（最優先） ---
+  // --- 1. まず役の判定を行う（ドクロがあっても計算する） ---
+  if (diamondCount === 3) {
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 3);
+    scoreMsg = `💎超大当り！ +${gained}pt`;
+  } 
+  else if (coinCount === 3) {
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 1);
+    scoreMsg = `💰大当り！ +${gained}pt`;
+  } 
+  else if (diamondCount === 2) {
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.5);
+    scoreMsg = `💎惜しい！ +${gained}pt`;
+  }
+  else if (coinCount === 2) {
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.2);
+    scoreMsg = `💰惜しい！ +${gained}pt`;
+  }
+
+  // スコアを加算
+  currentScore += gained;
+  dom.score.textContent = currentScore;
+
+  // --- 2. 次にドクロの判定とメッセージの構築 ---
   if (skullCount > 0) {
     hp -= skullCount;
     playSound('error');
     updateHpUI();
-    dom.msg.textContent = `💀 ドクロ ${skullCount}個でダメージ！`;
+    
+    let dmgMsg = `💀ダメージx${skullCount}!`;
+    
+    // スコア獲得がある場合は両方表示
+    if (gained > 0) {
+      dom.msg.textContent = `${scoreMsg} / ${dmgMsg}`;
+    } else {
+      dom.msg.textContent = dmgMsg;
+    }
     dom.msg.style.color = '#ff6b6b';
     
-    // 赤枠演出
-    reels.forEach((r, i) => { 
+    // ドクロのリールを赤枠にする
+    reels.forEach(r => { 
       if(r.result === '💀') r.dom.parentElement.style.borderColor = '#ff0000'; 
     });
     
@@ -234,52 +264,24 @@ function evaluateResult() {
       setTimeout(() => finishGame(), 1000);
       return;
     }
-  } 
-  // --- 役の判定 ---
-  else {
-    if (diamondCount === 3) {
-      // 💎💎💎 3つ揃い
+  } else {
+    // ドクロなしでスコア獲得した場合
+    if (gained > 0) {
       playSound('win');
-      gained = Math.floor(BASE_SCORE * currentMultiplier * 2); // ダイヤは2倍
-      dom.msg.textContent = `💎 超大当り！ +${gained} pt`;
-      dom.msg.style.color = '#ffeb85';
-    } 
-    else if (coinCount === 3) {
-      // 💰💰💰 3つ揃い
-      playSound('win');
-      gained = Math.floor(BASE_SCORE * currentMultiplier * 1);
-      dom.msg.textContent = `💰 大当り！ +${gained} pt`;
-      dom.msg.style.color = '#5ce6e6';
-    } 
-    else if (diamondCount === 2) {
-      // ★ 追加: 💎 2つ (小当たり)
-      playSound('hit');
-      gained = Math.floor(BASE_SCORE * currentMultiplier * 0.4);
-      dom.msg.textContent = `💎 中当たり！ +${gained} pt`;
-      dom.msg.style.color = '#ccc';
-    }
-    else if (coinCount === 2) {
-      // ★ 追加: 💰 2つ (小当たり)
-      playSound('hit');
-      gained = Math.floor(BASE_SCORE * currentMultiplier * 0.2);
-      dom.msg.textContent = `💰 小あたり！ +${gained} pt`;
-      dom.msg.style.color = '#ccc';
-    }
-    else {
-      // ハズレ
-      playSound('error'); // ハズレも少し残念な音を鳴らす
+      dom.msg.textContent = scoreMsg;
+      dom.msg.style.color = (diamondCount >= 2) ? '#ffeb85' : '#5ce6e6';
+    } else {
+      // 完全ハズレ
+      playSound('error');
       dom.msg.textContent = "ハズレ...";
       dom.msg.style.color = '#aaa';
     }
   }
 
-  currentScore += gained;
-  dom.score.textContent = currentScore;
-
   // 1秒後に次のスピンへ
   setTimeout(() => {
     if (hp > 0 && isPlaying) {
-      reels.forEach(r => r.dom.parentElement.style.borderColor = '#d4af37'); // 枠色リセット
+      reels.forEach(r => r.dom.parentElement.style.borderColor = '#d4af37');
       isProcessing = false;
       startNextSpin();
     }
@@ -314,8 +316,8 @@ async function finishGame() {
   const finalScore = Math.floor(currentScore);
   
   // 飛来物ガードと同じ基準で計算
-  const earnedLck = Math.floor(finalScore / 30);
-  const earnedExp = Math.floor(finalScore / 7);
+  const earnedLck = Math.floor(finalScore / 25);
+  const earnedExp = Math.floor(finalScore / 6);
 
   const result = applyMinigameResult(playerRef, 'lck', earnedExp, earnedLck);
   

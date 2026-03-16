@@ -227,11 +227,11 @@ function evaluateResult() {
     scoreMsg = `💰大当り！ +${gained}pt`;
   } 
   else if (diamondCount === 2) {
-    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.4);
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.6);
     scoreMsg = `💎中当たり！ +${gained}pt`;
   }
   else if (coinCount === 2) {
-    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.2);
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.3);
     scoreMsg = `💰小当たり！ +${gained}pt`;
   }
 

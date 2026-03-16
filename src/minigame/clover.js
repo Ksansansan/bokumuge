@@ -4,9 +4,9 @@ import { applyMinigameResult } from './minigameCore.js';
 import { playSound } from '../audio.js';
 
 const RANKS =[
-  { name: "S", timeLimit: 8.0, lckBase: 12, exp: 45, color: "#ffeb85" },
-  { name: "A", timeLimit: 12.0, lckBase: 10, exp: 35, color: "#ff6b6b" },
-  { name: "B", timeLimit: 18.0, lckBase: 8, exp: 30, color: "#5ce6e6" },
+  { name: "S", timeLimit: 10.0, lckBase: 12, exp: 45, color: "#ffeb85" },
+  { name: "A", timeLimit: 14.0, lckBase: 10, exp: 35, color: "#ff6b6b" },
+  { name: "B", timeLimit: 19.0, lckBase: 8, exp: 30, color: "#5ce6e6" },
   { name: "C", timeLimit: 25.0, lckBase: 6, exp: 25, color: "#94ff6b" },
   { name: "D", timeLimit: Infinity, lckBase: 5, exp: 20, color: "#aaa" }
 ];

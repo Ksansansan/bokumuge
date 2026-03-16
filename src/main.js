@@ -683,7 +683,7 @@ function updateCollectionUI() {
       const statColor = statColors[item.stat]; // ★ ステータスに対応した色を取得
 
       // ★ ドロップする階層の表記を作成
-      const dropFloorText = item.type === 'boss' ? `第${f+4}層 (ボス)` : `第${f}〜${f+4}層 (雑魚)`;
+      const dropFloorText = item.type === 'boss' ? `第${f}～${f+4}層 (ボス)` : `第${f}〜${f+4}層 (雑魚)`;
 
       container.innerHTML += `
         <div class="panel">

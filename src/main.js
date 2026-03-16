@@ -9,6 +9,7 @@ import { initChicken, openChickenModal } from './minigame/chicken.js';
 import { initGuard, openGuardModal } from './minigame/guard.js';
 import { init1to20, open1to20Modal } from './minigame/1to20.js';
 import { initCommand, openCommandModal } from './minigame/command.js'; 
+import { initClover, openCloverModal } from './minigame/clover.js';
 import { playSound } from './audio.js';
 
 const elStr = document.getElementById('val-str');
@@ -186,6 +187,7 @@ function init() {
   initGuard(player, updateTrainingUI); 
   init1to20(player, updateTrainingUI);
   initCommand(player, updateTrainingUI);
+  initClover(player, updateTrainingUI);
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {
@@ -440,6 +442,9 @@ document.getElementById('btn-play-1to20').addEventListener('click', () => {
 document.getElementById('btn-play-command').addEventListener('click', () => {
   openCommandModal();
 });
+document.getElementById('btn-play-clover').addEventListener('click', () => {
+  openCloverModal();
+});
 
 // ==========================================
 // 🏋️ 特訓タブのUI更新
@@ -470,7 +475,7 @@ function updateTrainingUI() {
 }
 
 // 大岩以外の未実装ミニゲームボタンを押したときの仮処理
-const dummyGames =['clover', 'slot'];
+const dummyGames =['slot'];
 dummyGames.forEach(id => {
   const btn = document.getElementById(`btn-play-${id}`);
   if(btn) {
@@ -561,7 +566,7 @@ async function renderRanking() {
       if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
-      else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) {
+      else if(["rockPush", "daruma", "1to20", "command", "clover"].includes(currentRankId)) {
         displayScore = item.score.toFixed(2) + ' 秒';
       }
       else if(currentRankId === 'chicken') {
@@ -591,7 +596,7 @@ async function renderRanking() {
     if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayMyScore = formatNumber(myScore);
     else if(currentRankId === 'floor') displayMyScore += ' 層';
     else if(currentRankId === 'totalLv') displayMyScore = 'Lv.' + displayMyScore;
-    else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) {
+    else if(["rockPush", "daruma", "1to20", "command", "clover"].includes(currentRankId)) {
       displayMyScore = myScore.toFixed(2) + ' 秒';
     }
     else if(currentRankId === 'chicken') {

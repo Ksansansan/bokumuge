@@ -889,6 +889,90 @@
     </div>
   </div>
 
+  <!-- 🍀 四つ葉探し 専用モーダル -->
+  <div id="modal-clover" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b2a11, #141a08); border: 2px solid #a88820; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">
+      
+      <!-- 1. 説明ビュー -->
+      <div id="cv-view-info" style="display: flex; flex-direction: column;">
+        <h3 style="margin-top:0; color:#ffd166; text-align:center;">四つ葉探し (TA)</h3>
+        <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.5;">
+          【ルール】群生する三つ葉の中から、たった1つの<b>「四つ葉のクローバー」</b>を見つけ出せ！<br>
+          <span style="color:#ff6b6b;">※間違えて三つ葉をタップすると0.3秒の硬直ペナルティ！</span>
+        </p>
+        
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #4a3b26; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color:#ffd166;">【ランク報酬表】</strong> (全5セット)
+          <ul style="margin:5px 0 0 0; padding-left: 20px; line-height:1.6;">
+            <li><span style="color:#ffeb85; font-weight:bold;">S</span> (8.0秒未満): 基礎LCK+12 / EXP 45</li>
+            <li><span style="color:#ff6b6b; font-weight:bold;">A</span> (12.0秒未満): 基礎LCK+10 / EXP 35</li>
+            <li><span style="color:#5ce6e6; font-weight:bold;">B</span> (18.0秒未満): 基礎LCK+8 / EXP 30</li>
+            <li><span style="color:#94ff6b; font-weight:bold;">C</span> (25.0秒未満): 基礎LCK+6 / EXP 25</li>
+            <li><span style="color:#aaa; font-weight:bold;">D</span> (それ以上): 基礎LCK+5 / EXP 20</li>
+          </ul>
+        </div>
+        <div style="text-align:center; font-size: 14px; margin-bottom: 15px;">
+          自己ベスト: <span id="cv-best-time" style="font-weight:bold; color:#ffeb85; font-size:18px;">--</span><br>
+          <div class="btn-show-ranking" data-rank-id="clover" style="display: inline-block; margin-top: 10px; padding: 5px 15px; background: rgba(168, 136, 32, 0.1); border: 1px solid #a88820; border-radius: 20px; color: #ffd166; font-size: 12px; cursor: pointer;">🏆 ランキングを確認</div>
+        </div>
+        <button id="cv-btn-start" class="btn-fantasy" style="width: 100%; margin-bottom:10px; border-color:#a88820; background:linear-gradient(to bottom, #a88820, #5c480b);">ゲームスタート！</button>
+        <button onclick="document.getElementById('modal-clover').style.display='none';" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">閉じる</button>
+      </div>
+
+      <!-- 2. プレイビュー -->
+      <div id="cv-view-play" style="display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 500px; padding: 10px 0;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: flex-end; padding: 0 10px;">
+          <div style="font-size: 20px; font-weight: bold; color: #fff;">Set: <span id="cv-set-count" style="color:#ffd166; font-size:28px;">1</span> / 5</div>
+          <div style="font-size: 32px; font-weight: bold; color: #5ce6e6; font-family: monospace;" id="cv-timer">0.00</div>
+        </div>
+        
+        <!-- 草原エリア (クローバーが配置される) -->
+        <div id="cv-field-container" style="position: relative; display: grid; width: 100%; flex-grow: 1; margin: 10px 0; background: radial-gradient(circle, #1a3a11, #0a1a05); border-radius: 8px; border: 2px solid #5c7a20; box-shadow: inset 0 0 20px #000; overflow: hidden;">
+          <!-- JSでここにクローバーを生成 -->
+        </div>
+
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <button id="cv-btn-quit" class="btn-fantasy" style="flex:1; background: #333; border-color:#555; padding: 8px; font-size: 14px; margin:0;">やめる</button>
+          <button id="cv-btn-reset" class="btn-fantasy" style="flex:1; background: linear-gradient(to bottom, #555, #222); border-color:#8c7a65; padding: 8px; font-size: 14px; margin:0;">リトライ (R)</button>
+        </div>
+      </div>
+
+      <!-- 3. リザルトビュー -->
+      <div id="cv-view-result" style="display: none; flex-direction: column; align-items: center;">
+        <h2 style="color:#ffd166; margin-top:0;">RESULT</h2>
+        <div id="cv-res-newrecord" style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 5px; display: none;">🎉 NEW RECORD! 🎉</div>
+        <div style="font-size: 36px; font-weight: bold; color: #fff; margin-bottom: 5px;" id="cv-res-time">0.00 秒</div>
+        <div style="font-size: 20px; margin-bottom: 5px;">ランク: <span id="cv-res-rank" style="font-size: 36px; font-weight: bold;">--</span></div>
+        <div id="cv-res-next" style="font-size: 12px; color: #aaa; margin-bottom: 15px;">次のランクまで -- 秒</div>
+        
+        <div id="cv-res-gained" style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 4px; padding: 15px; width: 100%; text-align: center; font-size: 15px; font-weight: bold; line-height: 1.8; margin-bottom: 25px;"></div>
+
+        <button id="cv-btn-retry" class="btn-fantasy" style="width: 100%; margin-bottom: 10px; font-size:20px; border-color:#a88820; background:linear-gradient(to bottom, #a88820, #5c480b);">もう一度プレイ (R)</button>
+        <button id="cv-btn-close" class="btn-fantasy" style="width: 100%; background: #333; border-color:#555;">特訓場へ戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* --- 🍀 クローバー描画用CSS --- */
+    .clover-wrapper {
+      position: relative; width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center; cursor: pointer;
+    }
+    .clover { position: relative; width: 32px; height: 32px; }
+    .leaf { position: absolute; width: 14px; height: 14px; background: #94ff6b; border-radius: 50%; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.2); }
+    /* 三つ葉の配置 */
+    .leaf-3-1 { top: 2px; left: 9px; }
+    .leaf-3-2 { top: 13px; left: 2px; }
+    .leaf-3-3 { top: 13px; left: 16px; }
+    /* 四つ葉の配置 */
+    .leaf-4-1 { top: 2px; left: 9px; }
+    .leaf-4-2 { top: 16px; left: 9px; }
+    .leaf-4-3 { top: 9px; left: 2px; }
+    .leaf-4-4 { top: 9px; left: 16px; }
+    /* 茎 */
+    .stem { position: absolute; width: 3px; height: 18px; background: #5c7a20; bottom: -4px; left: 14px; transform: rotate(15deg); z-index: -1; }
+  </style>
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>
 

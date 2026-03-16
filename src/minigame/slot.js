@@ -168,7 +168,7 @@ function startNextSpin() {
 
     // リールの初期位置をランダムにして、毎回バラバラの位置からスタートさせる
     const initialOffset = Math.floor(Math.random() * NUM_SYMBOLS) * SYMBOL_SIZE;
-    r.y = -initialOffset;
+    r.y = -initialOffset - (SYMBOL_SIZE * NUM_SYMBOLS);
     r.speed = speed;
     r.isStopped = false;
     r.result = null;
@@ -189,7 +189,7 @@ function stopReel(index, btnEl) {
   btnEl.style.color = "#aaa";
   
   // y座標はマイナスなので絶対値を取り、シンボルサイズで割って四捨五入（もっとも近い絵柄）
-  let snapIndex = Math.round(Math.abs(r.y) / SYMBOL_SIZE);
+  let snapIndex = Math.round(Math.abs(r.y) / SYMBOL_SIZE) % NUM_SYMBOLS;
   
   // 万が一限界を超えたら剰余をとる
   snapIndex = snapIndex % NUM_SYMBOLS;
@@ -294,10 +294,10 @@ function gameLoop(now) {
 
   reels.forEach(r => {
     if (!r.isStopped) {
-      r.y -= r.speed * dt;
+      r.y += r.speed * dt;
       // ループ処理 (NUM_SYMBOLS * SYMBOL_SIZE を超えたら位置を戻す)
-      if (r.y <= -SYMBOL_SIZE * NUM_SYMBOLS) {
-        r.y += SYMBOL_SIZE * NUM_SYMBOLS; 
+      if (r.y >=0) {
+        r.y -= SYMBOL_SIZE * NUM_SYMBOLS; 
       }
       r.dom.style.transform = `translateY(${r.y}px)`;
     }

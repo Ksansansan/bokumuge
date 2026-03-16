@@ -59,26 +59,35 @@ export function initSlot(playerObj, updateUIFn) {
 
   dom.btnStart.addEventListener('click', () => { if(!isProcessing) startGame(); });
   dom.btnRetry.addEventListener('click', () => { if(!isProcessing) startGame(); });
-  dom.btnReset.addEventListener('click', () => { if(!isProcessing) startGame(); });
-  dom.btnQuit.addEventListener('click', () => { isPlaying = false; showView('info'); });
+  dom.btnReset.addEventListener('click', () => { 
+    if(!isProcessing) { isPlaying = false; startGame(); } 
+  });
+  dom.btnQuit.addEventListener('click', () => { 
+    isPlaying = false; showView('info'); 
+  });
   dom.btnClose.addEventListener('click', () => { dom.overlay.style.display = 'none'; });
 
   window.addEventListener('keydown', (e) => {
     if (dom.overlay.style.display !== 'flex' || isProcessing) return;
     const k = e.key.toLowerCase();
     if (k === 'r' && (dom.viewPlay.style.display === 'flex' || dom.viewResult.style.display === 'flex')) {
+      isPlaying = false;
       startGame();
     }
-    // PC用に A, S, D キーでも止められるようにする
+    // PC用ショートカット
     if (dom.viewPlay.style.display === 'flex') {
-      if (k === 'a') stopReel(0, btns[0]);
-      if (k === 's') stopReel(1, btns[1]);
-      if (k === 'd') stopReel(2, btns[2]);
+      if (k === 'a' || e.key === 'ArrowLeft') stopReel(0, btns[0]);
+      if (k === 's' || e.key === 'ArrowDown') stopReel(1, btns[1]);
+      if (k === 'd' || e.key === 'ArrowRight') stopReel(2, btns[2]);
     }
   });
 
   btns.forEach((btn, i) => {
-    const onTouch = (e) => { e.preventDefault(); stopReel(i, btn); };
+    const onTouch = (e) => { 
+      if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
+      if (e.type === 'touchstart') e.preventDefault(); 
+      stopReel(i, btn); 
+    };
     btn.addEventListener('mousedown', onTouch);
     btn.addEventListener('touchstart', onTouch, { passive: false });
   });
@@ -98,7 +107,9 @@ function showView(view) {
 }
 
 function updateHpUI() {
-  dom.hp.textContent = "❤️".repeat(hp) + "🖤".repeat(3 - hp);
+  // ★ 修正: hpがマイナスになってもエラーにならないよう Math.max(0, hp) で保護
+  const displayHp = Math.max(0, hp);
+  dom.hp.textContent = "❤️".repeat(displayHp) + "🖤".repeat(3 - displayHp);
 }
 
 function startGame() {
@@ -113,6 +124,11 @@ function startGame() {
   dom.score.textContent = "0";
   dom.msg.textContent = "";
   
+  reels.forEach(r => {
+    r.dom.parentElement.style.borderColor = '#d4af37';
+    r.dom.innerHTML = '';
+  });
+
   updateHpUI();
   startNextSpin();
   
@@ -122,24 +138,25 @@ function startGame() {
 
 function startNextSpin() {
   spinCount++;
-  // 1.1倍ずつ上昇
-  currentMultiplier = 1 + (spinCount - 1) * 0.1;
+  
+  // ★ 修正: 倍率を 1.1倍ずつの「加算（単利）」に変更 (1.0 -> 1.1 -> 1.2 -> 1.3...)
+  currentMultiplier = 1.0 + ((spinCount - 1) * 0.1);
   
   dom.spinCount.textContent = spinCount;
-  dom.multiplier.textContent = `x${currentMultiplier.toFixed(2)}`;
+  dom.multiplier.textContent = `x${currentMultiplier.toFixed(1)}`;
   dom.msg.textContent = "";
 
-  // 速度：最初は 420px/s(1周1秒)。スピンごとに10%速くなる
-  const speed = 420 * Math.pow(1.1, spinCount - 1);
+  // ★ 修正: リールの初速を大幅に緩和 (210px/s = 1周2秒) し、速度上昇も緩やかに
+  // speed = 210 + (spinCount * 15)
+  const speed = 210 + (spinCount * 15);
 
   reels.forEach((r, i) => {
-    // シンボルをシャッフルしてDOMに詰める (2周分=12個)
     let shuffled = [...SYMBOLS].sort(() => Math.random() - 0.5);
     r.symbols = shuffled;
     r.dom.innerHTML = '';
     
-    // 継ぎ目なくループさせるため、シャッフルした配列を2回繰り返す
-    [...shuffled, ...shuffled].forEach(sym => {
+    // 描画用に3周分（18個）並べる（高速になっても途切れないように余裕を持たせる）
+    [...shuffled, ...shuffled, ...shuffled].forEach(sym => {
       const el = document.createElement('div');
       el.textContent = sym;
       el.style.height = `${SYMBOL_SIZE}px`;
@@ -149,12 +166,13 @@ function startNextSpin() {
       r.dom.appendChild(el);
     });
 
-    r.y = 0;
+    // リールの初期位置をランダムにして、毎回バラバラの位置からスタートさせる
+    const initialOffset = Math.floor(Math.random() * NUM_SYMBOLS) * SYMBOL_SIZE;
+    r.y = -initialOffset;
     r.speed = speed;
     r.isStopped = false;
     r.result = null;
     
-    // ボタンの見た目復元
     const btn = document.getElementById(`sl-stop-${i}`);
     btn.style.background = "linear-gradient(to bottom, #ff6b6b, #cc0000)";
     btn.style.color = "#fff";
@@ -170,69 +188,93 @@ function stopReel(index, btnEl) {
   btnEl.style.background = "linear-gradient(to bottom, #555, #222)";
   btnEl.style.color = "#aaa";
   
-  // ピタッと止める処理（最も近いシンボルのY座標にスナップ）
+  // y座標はマイナスなので絶対値を取り、シンボルサイズで割って四捨五入（もっとも近い絵柄）
   let snapIndex = Math.round(Math.abs(r.y) / SYMBOL_SIZE);
-  if (snapIndex >= NUM_SYMBOLS) snapIndex = 0;
   
-  r.y = -snapIndex * SYMBOL_SIZE;
+  // 万が一限界を超えたら剰余をとる
+  snapIndex = snapIndex % NUM_SYMBOLS;
+  
+  r.y = -(snapIndex * SYMBOL_SIZE);
   r.dom.style.transform = `translateY(${r.y}px)`;
   r.result = r.symbols[snapIndex]; 
   
-  checkAllStopped();
-}
-
-function checkAllStopped() {
-  if (reels.every(r => r.isStopped)) {
+  if (reels.every(reel => reel.isStopped)) {
     evaluateResult();
   }
 }
 
 function evaluateResult() {
-  isProcessing = true; // 演出中はボタンロック
+  isProcessing = true; 
   
   const r1 = reels[0].result;
   const r2 = reels[1].result;
   const r3 = reels[2].result;
   
-  let skullCount =[r1, r2, r3].filter(x => x === '💀').length;
+  const results = [r1, r2, r3];
+  let skullCount = results.filter(x => x === '💀').length;
+  let coinCount = results.filter(x => x === '💰').length;
+  let diamondCount = results.filter(x => x === '💎').length;
   
+  let gained = 0;
+
+  // --- ドクロ判定（最優先） ---
   if (skullCount > 0) {
-    // ダメージ処理
     hp -= skullCount;
     playSound('error');
     updateHpUI();
     dom.msg.textContent = `💀 ドクロ ${skullCount}個でダメージ！`;
     dom.msg.style.color = '#ff6b6b';
     
-    // 赤く光る演出
-    reels.forEach(r => { if(r.result==='💀') r.dom.parentElement.style.borderColor = '#ff0000'; });
+    // 赤枠演出
+    reels.forEach((r, i) => { 
+      if(r.result === '💀') r.dom.parentElement.style.borderColor = '#ff0000'; 
+    });
     
     if (hp <= 0) {
       setTimeout(() => finishGame(), 1000);
       return;
     }
-  } else {
-    // 役の判定
-    if (r1 === r2 && r2 === r3) {
+  } 
+  // --- 役の判定 ---
+  else {
+    if (diamondCount === 3) {
+      // 💎💎💎 3つ揃い
       playSound('win');
-      let gained = 0;
-      if (r1 === '💎') {
-        gained = Math.floor(BASE_SCORE * currentMultiplier * 2);
-        dom.msg.textContent = `💎 超大当り！ +${gained} pt`;
-        dom.msg.style.color = '#ffeb85';
-      } else if (r1 === '💰') {
-        gained = Math.floor(BASE_SCORE * currentMultiplier * 1);
-        dom.msg.textContent = `💰 大当り！ +${gained} pt`;
-        dom.msg.style.color = '#5ce6e6';
-      }
-      currentScore += gained;
-      dom.score.textContent = currentScore;
-    } else {
+      gained = Math.floor(BASE_SCORE * currentMultiplier * 2); // ダイヤは2倍
+      dom.msg.textContent = `💎 超大当り！ +${gained} pt`;
+      dom.msg.style.color = '#ffeb85';
+    } 
+    else if (coinCount === 3) {
+      // 💰💰💰 3つ揃い
+      playSound('win');
+      gained = Math.floor(BASE_SCORE * currentMultiplier * 1);
+      dom.msg.textContent = `💰 大当り！ +${gained} pt`;
+      dom.msg.style.color = '#5ce6e6';
+    } 
+    else if (diamondCount === 2) {
+      // ★ 追加: 💎 2つ (小当たり)
       playSound('hit');
+      gained = Math.floor(BASE_SCORE * currentMultiplier * 0.4);
+      dom.msg.textContent = `💎 中当たり！ +${gained} pt`;
+      dom.msg.style.color = '#ccc';
+    }
+    else if (coinCount === 2) {
+      // ★ 追加: 💰 2つ (小当たり)
+      playSound('hit');
+      gained = Math.floor(BASE_SCORE * currentMultiplier * 0.2);
+      dom.msg.textContent = `💰 小あたり！ +${gained} pt`;
+      dom.msg.style.color = '#ccc';
+    }
+    else {
+      // ハズレ
+      playSound('error'); // ハズレも少し残念な音を鳴らす
       dom.msg.textContent = "ハズレ...";
       dom.msg.style.color = '#aaa';
     }
   }
+
+  currentScore += gained;
+  dom.score.textContent = currentScore;
 
   // 1秒後に次のスピンへ
   setTimeout(() => {
@@ -253,7 +295,7 @@ function gameLoop(now) {
   reels.forEach(r => {
     if (!r.isStopped) {
       r.y -= r.speed * dt;
-      // 1周分(420px)上にスクロールしたら0に戻して無限ループ
+      // ループ処理 (NUM_SYMBOLS * SYMBOL_SIZE を超えたら位置を戻す)
       if (r.y <= -SYMBOL_SIZE * NUM_SYMBOLS) {
         r.y += SYMBOL_SIZE * NUM_SYMBOLS; 
       }
@@ -272,8 +314,8 @@ async function finishGame() {
   const finalScore = Math.floor(currentScore);
   
   // 飛来物ガードと同じ基準で計算
-  const earnedLck = Math.floor(finalScore / 30) + 2;
-  const earnedExp = Math.floor(finalScore / 6) + 15;
+  const earnedLck = Math.floor(finalScore / 30);
+  const earnedExp = Math.floor(finalScore / 7);
 
   const result = applyMinigameResult(playerRef, 'lck', earnedExp, earnedLck);
   

@@ -122,8 +122,8 @@ function startGame() {
 
 function startNextSpin() {
   spinCount++;
-  // 複利で1.1倍ずつ上昇
-  currentMultiplier = Math.pow(1.1, spinCount - 1);
+  // 1.1倍ずつ上昇
+  currentMultiplier = 1 + (spinCount - 1) * 0.1;
   
   dom.spinCount.textContent = spinCount;
   dom.multiplier.textContent = `x${currentMultiplier.toFixed(2)}`;

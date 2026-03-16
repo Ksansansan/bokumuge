@@ -1,7 +1,7 @@
 // src/minigame/guard.js
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js';
 import { applyMinigameResult } from './minigameCore.js';
-
+import { playSound } from '../audio.js';
 let playerRef = null, onUpdateCallback = null;
 let dom = {};
 
@@ -342,6 +342,7 @@ function gameLoop(now) {
 
       if (hit) {
         hp--;
+        playSound('damage');
         updateHpUI();
         isInvincible = true;
         invincibleTimer = 1.0;
@@ -372,6 +373,7 @@ async function finishGame() {
   if (isProcessing) return;
   isPlaying = false;
   isProcessing = true;
+  playSound('win');
   if(animationId) cancelAnimationFrame(animationId);
   
   const finalScore = Math.floor(currentScore);

@@ -1,7 +1,7 @@
 // src/minigame/1to20.js
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js';
 import { applyMinigameResult } from './minigameCore.js';
-
+import { playSound } from '../audio.js';
 // ★ シャッフルによる探索ラグを考慮し、制限時間を少し緩和
 const RANKS =[
   { name: "S", timeLimit: 9.0, agiBase: 11, exp: 45, color: "#ffeb85" },
@@ -108,6 +108,7 @@ function updateTimerUI() {
 // --- 高速シャッフル演出 ---
 function triggerShuffle() {
   isShuffling = true;
+  playSound('defeat');
   pauseTimer(); // タイマー一時停止
   
   // まだ押されていない（表示中の）ボタンを取得
@@ -226,6 +227,7 @@ function startGame() {
   goBtn.addEventListener('click', () => {
     goOverlay.style.display = 'none';
     // 「?」を数字にしてゲーム開始
+    playSound('click');
     const btns = dom.gridContainer.querySelectorAll('.ot-num-btn');
     btns.forEach(b => { b.textContent = b.dataset.num; });
     startTimer();
@@ -243,6 +245,7 @@ function handleTap(btnEl) {
 
   if (num === currentNumber) {
     // 正解
+    playSound('click');
     btnEl.style.visibility = 'hidden'; 
     currentNumber++;
     
@@ -260,6 +263,7 @@ function handleTap(btnEl) {
   } else {
     // 不正解ペナルティ (0.2秒硬直)
     isStunned = true;
+    playSound('error');
     dom.gridContainer.style.animation = 'none';
     dom.gridContainer.offsetHeight; 
     dom.gridContainer.style.animation = 'shake 0.2s';
@@ -277,7 +281,7 @@ async function finishGame() {
   if (isProcessing) return;
   isProcessing = true;
   pauseTimer();
-
+  playSound('win');
   const finalTime = accumulatedTime; // 最終タイム
   
   let rankIndex = RANKS.findIndex(r => finalTime < r.timeLimit);

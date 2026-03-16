@@ -1,7 +1,7 @@
 // src/minigame/daruma.js
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js';
 import { applyMinigameResult } from './minigameCore.js';
-
+import { playSound } from '../audio.js';
 // だるま落としのランク設定（難易度が高いので報酬多め）
 const RANKS =[
   { name: "S", timeLimit: 9.0, strBase: 12, exp: 45, color: "#ffeb85" },
@@ -69,6 +69,7 @@ export function initDaruma(playerObj, updateUIFn) {
 
     if (blocks[currentIndex] === color) {
       // 正解
+      playSound('hit');
       currentIndex++;
       dom.countText.textContent = TOTAL_BLOCKS - currentIndex;
       renderBlocks();
@@ -76,6 +77,7 @@ export function initDaruma(playerObj, updateUIFn) {
     } else {
       // 不正解ペナルティ（0.4秒硬直）
       isStunned = true;
+      playSound('error');
       dom.blocksContainer.style.animation = 'shake 0.3s';
       dom.blocksContainer.style.filter = 'brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5) opacity(0.8)'; // 赤く暗くなる演出
       setTimeout(() => {
@@ -191,6 +193,7 @@ async function finishGame() {
   isProcessing = true;
   clearInterval(timerInterval);
   isTimerRunning = false;
+  playSound('win');
   const time = (performance.now() - startTime) / 1000;
   
   let rankIndex = RANKS.findIndex(r => time < r.timeLimit);

@@ -1,7 +1,7 @@
 // src/minigame/rockPush.js
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js'; // ★savePlayerDataを追加
 import { applyMinigameResult } from './minigameCore.js';
-
+import { playSound } from '../audio.js';
 const RANKS = [
   { name: "S", timeLimit: 5.0, strBase: 7, exp: 30, color: "#ffeb85" },
   { name: "A", timeLimit: 7.0, strBase: 6, exp: 25, color: "#ff6b6b" },
@@ -82,7 +82,7 @@ export function initRockPush(playerObj, updateUIFn) {
       if (!isTimerRunning) {
         startTimer();
       }
-
+      playSound('hit'); 
       remainingTaps--;
       dom.countText.textContent = remainingTaps;
       
@@ -138,6 +138,7 @@ async function finishGame() {
   clearInterval(timerInterval);
   isTimerRunning = false;
   isProcessing = true;
+  playSound('win');
   const time = (performance.now() - startTime) / 1000;
   
   let rankIndex = RANKS.findIndex(r => time < r.timeLimit);

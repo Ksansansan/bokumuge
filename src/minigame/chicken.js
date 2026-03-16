@@ -1,6 +1,7 @@
 // src/minigame/chicken.js
 import { savePersonalBest, getPersonalBest, savePlayerData } from '../firebase.js';
 import { applyMinigameResult } from './minigameCore.js';
+import { playSound } from '../audio.js';
 
 // --- ランク定義（評価基準は「崖までの残り距離」）---
 const RANKS =[
@@ -90,7 +91,7 @@ export function initChicken(playerObj, updateUIFn) {
   const onPress = (e) => {
     if (!isPlaying || hasReleased) return;
     if (e && e.cancelable) e.preventDefault(); 
-    
+    playSound('click');
     isAccelerating = true;
     dom.actionBtn.textContent = "加速中...!!";
     dom.actionBtn.style.background = "linear-gradient(to bottom, #ff3333, #990000)";
@@ -99,6 +100,7 @@ export function initChicken(playerObj, updateUIFn) {
   const onRelease = (e) => {
     if (!isPlaying || !isAccelerating) return;
     if (e && e.cancelable) e.preventDefault();
+    playSound('click');
     isAccelerating = false;
     hasReleased = true; // 一度離したらもう押せない
     dom.actionBtn.textContent = "ブレーキ作動！";
@@ -186,6 +188,7 @@ function gameLoop(now) {
 
   if (remaining <= 0) {
     // 落下（失敗）
+    playSound('error');
     dom.currentDistText.textContent = "0.0 m";
     dom.currentDistText.style.color = "#ff0000";
     dom.playerBall.style.left = '90%'; 
@@ -211,7 +214,7 @@ async function finishGame(isFall, remainingDist) {
   isPlaying = false;
   isProcessing = true;
   if (animationId) cancelAnimationFrame(animationId);
-  
+  if (!isFall) playSound('win');
   let rank;
   let nextRankStr = "";
 

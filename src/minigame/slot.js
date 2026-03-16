@@ -219,7 +219,7 @@ function evaluateResult() {
 
   // --- 1. まず役の判定を行う（ドクロがあっても計算する） ---
   if (diamondCount === 3) {
-    gained = Math.floor(BASE_SCORE * currentMultiplier * 3);
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 2);
     scoreMsg = `💎超大当り！ +${gained}pt`;
   } 
   else if (coinCount === 3) {
@@ -227,12 +227,12 @@ function evaluateResult() {
     scoreMsg = `💰大当り！ +${gained}pt`;
   } 
   else if (diamondCount === 2) {
-    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.5);
-    scoreMsg = `💎惜しい！ +${gained}pt`;
+    gained = Math.floor(BASE_SCORE * currentMultiplier * 0.4);
+    scoreMsg = `💎中当たり！ +${gained}pt`;
   }
   else if (coinCount === 2) {
     gained = Math.floor(BASE_SCORE * currentMultiplier * 0.2);
-    scoreMsg = `💰惜しい！ +${gained}pt`;
+    scoreMsg = `💰小当たり！ +${gained}pt`;
   }
 
   // スコアを加算

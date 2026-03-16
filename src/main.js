@@ -55,13 +55,15 @@ export function formatNumber(num) {
 
 // ★図鑑のランクを取得する関数
 function getCollectionRank(count) {
-  if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b" };
-  if (count >= 27) return { rank: 4, name: "金", color: "#ffd700" };
-  if (count >= 9) return { rank: 3, name: "銀", color: "#c0c0c0" };
-  if (count >= 3) return { rank: 2, name: "銅", color: "#cd7f32" };
-  if (count >= 1) return { rank: 1, name: "木", color: "#8c7a65" };
-  return { rank: 0, name: "未取得", color: "#555" };
+  // mult: ステータス上昇に乗算される内部倍率 (金とマスターで跳ね上がる)
+  if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b", mult: 8 }; 
+  if (count >= 27) return { rank: 4, name: "金", color: "#ffd700", mult: 5 }; 
+  if (count >= 9)  return { rank: 3, name: "銀", color: "#c0c0c0", mult: 3 };
+  if (count >= 3)  return { rank: 2, name: "銅", color: "#cd7f32", mult: 2 };
+  if (count >= 1)  return { rank: 1, name: "木", color: "#8c7a65", mult: 1 };
+  return { rank: 0, name: "未取得", color: "#555", mult: 0 };
 }
+
 
 // ★戦闘用に「バフ込みのステータス」を計算する関数
 function getBattleStats(p) {
@@ -70,7 +72,7 @@ function getBattleStats(p) {
   // 図鑑バフの計算（最高到達階層までのアイテムをチェック）
   for (let f = 1; f <= (p.maxClearedFloor || 1); f += 5) {
     const floorData = generateFloorData(f);
-    const g = Math.ceil(f / 5);
+    const g = Math.ceil(f / 20);
     
     const mobCount = p.inventory?.[floorData.biome.mobDrop] || 0;
     bonuses[getDropStatType(f, false)] += g * getCollectionRank(mobCount).rank;
@@ -640,66 +642,79 @@ function updateCollectionUI() {
   if (!container) return;
   container.innerHTML = '';
 
-  let totalCollected = 0;
   let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
-  const rankThresholds = [0, 1, 3, 9, 27, 81, Infinity];
+  let totalCollectedCount = 0;
+  
+  // ★ 上限を81に設定
+  const rankThresholds = [0, 1, 3, 9, 27, 81, Infinity]; 
+  
+  // ★ ステータスごとの色分け定義
+  const statColors = { 
+    "STR": "#ff6b6b", 
+    "VIT": "#6be6ff", 
+    "AGI": "#94ff6b", 
+    "LCK": "#ffd166", 
+    "ALL": "#ffd166" 
+  };
+
   for (let f = 1; f <= (player.maxClearedFloor || 1); f += 5) {
     const floorData = generateFloorData(f);
-    const g = Math.ceil(f / 5);
+    const g = Math.ceil(f / 20); // ★ 20階層ごとに効果上昇
     const statType = getDropStatType(f, false);
 
-    const items = [
-      { name: floorData.biome.mobDrop, type: 'mob', color: '#5ce6e6' },
-      { name: floorData.biome.bossDrop, type: 'boss', color: '#ffd166' }
+    const items =[
+      { name: floorData.biome.mobDrop, type: 'mob', stat: statType },
+      { name: floorData.biome.bossDrop, type: 'boss', stat: 'ALL' }
     ];
 
     items.forEach(item => {
       const count = player.inventory?.[item.name] || 0;
-      totalCollected += count;
+      totalCollectedCount += count;
       const rankInfo = getCollectionRank(count);
-      const buffValue = g * rankInfo.rank;
+      const buffValue = g * rankInfo.mult; // ★ 特別倍率を反映
 
-      // ★合計バフへの加算
-      if (item.type === 'boss') {
-        totalBonuses.ALL += buffValue;
-      } else {
-        totalBonuses[statType] += buffValue;
-      }
+      if (item.type === 'boss') totalBonuses.ALL += buffValue;
+      else totalBonuses[statType] += buffValue;
 
-      // 次のランクの閾値
       const nextIdx = rankInfo.rank + 1;
       const nextGoal = rankThresholds[nextIdx];
       const goalText = nextGoal === Infinity ? "MAX" : `${count}/${nextGoal}`;
       const progress = nextGoal === Infinity ? 100 : (count / nextGoal) * 100;
+      const statColor = statColors[item.stat]; // ★ ステータスに対応した色を取得
+
+      // ★ ドロップする階層の表記を作成
+      const dropFloorText = item.type === 'boss' ? `第${f+4}層 (ボス)` : `第${f}〜${f+4}層 (雑魚)`;
 
       container.innerHTML += `
-          <div class="panel">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="font-size: 16px; color:${rankInfo.color};">${item.name} [${rankInfo.name}]</strong>
-              <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
-            </div>
-            <div style="font-size: 12px; color: ${item.color}; margin: 4px 0;">
-              効果: ${item.type === 'boss' ? '全ステータス' : statType} +${g * rankInfo.rank}%
-            </div>
-            <!-- 進捗バー -->
-            <div style="background: #111; border: 1px solid #4a3b26; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
-              <div style="background: ${rankInfo.color}; width: ${progress}%; height: 100%;"></div>
-            </div>
-            <div style="text-align: right; font-size: 10px; color: #aaa; margin-top: 2px;">次ランクまで: ${goalText}</div>
+        <div class="panel">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 16px; color:${rankInfo.color};">${item.name} [${rankInfo.name}]</strong>
+            <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
           </div>
-        `;
-      });
-    }
-    
-    // ★追加：サマリーパネルの数値を更新
-    document.getElementById('total-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
-    document.getElementById('total-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
-    document.getElementById('total-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
-    document.getElementById('total-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
-    
-    player.collectionCount = totalCollected; // 保存用
+          <!-- ★ ドロップ階層の表示 -->
+          <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: ${dropFloorText}</div>
+          
+          <!-- ★ ステータス上昇を色付きで表示 -->
+          <div style="font-size: 13px; color: ${statColor}; font-weight: bold; margin: 4px 0;">
+            効果: ${item.type === 'boss' ? '全ステータス' : statType} +${buffValue}%
+          </div>
+          
+          <div style="background: #111; border: 1px solid #4a3b26; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
+            <div style="background: ${rankInfo.color}; width: ${progress}%; height: 100%;"></div>
+          </div>
+          <div style="text-align: right; font-size: 10px; color: #aaa; margin-top: 2px;">次ランクまで: ${goalText}</div>
+        </div>
+      `;
+    });
   }
 
+  document.getElementById('total-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
+  document.getElementById('total-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
+  document.getElementById('total-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
+  document.getElementById('total-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
+
+  player.collectionCount = totalCollectedCount;
+}
   // ★追加：画面内のボタンを押したら勝手に「ポッ」と鳴るようにする（全体適用）
 document.addEventListener('click', (e) => {
   if (e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-show-ranking')) {

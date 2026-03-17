@@ -3,7 +3,7 @@ import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, getPersonalBest } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
-import { initGachaUI } from './gacha/gachaUI.js';
+import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
@@ -442,12 +442,18 @@ btnCloseBattle.addEventListener('click', () => {
 function setupTabNavigation() {
   const navBtns = document.querySelectorAll('.nav-btn');
   const tabContents = document.querySelectorAll('.tab-content');
+
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       navBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+      const targetId = btn.getAttribute('data-target');
+      document.getElementById(targetId).classList.add('active');
+
+      if (targetId === 'tab-training') updateTrainingUI();
+      // ★ 装備タブを開いたときにチケット枚数を同期する
+      if (targetId === 'tab-equip') updateTicketCount();
     });
   });
 }

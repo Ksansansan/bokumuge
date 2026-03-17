@@ -267,45 +267,41 @@
       </div>
 
       <div class="panel" style="padding:10px;">
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <button id="btn-gacha-1" class="btn-fantasy" style="flex:1; margin:0; padding:10px; font-size:16px;">1回引く</button>
-          <button id="btn-gacha-10" class="btn-fantasy" style="flex:1; margin:0; padding:10px; font-size:16px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">10連引く</button>
-        </div>
+        <!-- ★ 10連を廃止し、1回引くボタンのみに -->
+        <button id="btn-gacha" class="btn-fantasy" style="width:100%; margin:0 0 10px 0; padding:10px; font-size:16px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">ガチャを引く！</button>
+        
         <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#ccc;">
           <label style="display:flex; align-items:center; cursor:pointer; font-weight:bold;">
             <input type="checkbox" id="eq-auto-check" style="margin-right:5px; transform:scale(1.2);"> AUTOガチャ
           </label>
           <div style="display:flex; align-items:center; gap:5px;">
             停止:
+            <!-- ★ 中身はJSで全レアリティを自動生成します -->
             <select id="eq-auto-stop" style="background:#000; color:#fff; border:1px solid #c49a45; padding:3px; border-radius:4px;">
-              <option value="-1">ストップしない</option>
-              <option value="4">SR以上</option>
-              <option value="5">SSR以上</option>
-              <option value="7">UR以上</option>
-              <option value="12">GEN</option>
             </select>
           </div>
         </div>
         <button id="btn-gacha-stop" class="btn-fantasy" style="display:none; width:100%; margin:10px 0 0 0; padding:10px; font-size:16px; background:linear-gradient(to bottom, #ff6b6b, #cc0000);">AUTO停止</button>
-        <!-- ガチャ結果ログ表示エリア -->
         <div id="gacha-log-area" style="margin-top:10px; max-height:80px; overflow-y:auto; font-size:12px; border-top:1px dashed #555; padding-top:5px;"></div>
       </div>
 
-      <h3 style="color:#c49a45; text-align:center; margin:10px 0 5px 0; font-size:16px;">現在の装備</h3>
+      <h3 style="color:#c49a45; text-align:center; margin:10px 0 5px 0; font-size:16px;">現在の装備 <span style="font-size:10px; color:#aaa; font-weight:normal;">(ダブルタップで外す)</span></h3>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;" id="current-equips-grid">
         <!-- JSで生成 -->
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #c49a45; padding-bottom:5px; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid #c49a45; padding-bottom:5px; margin-bottom:10px;">
         <h3 style="color:#c49a45; margin:0; font-size:16px;">所持装備</h3>
-        <select id="eq-sort" style="background:#000; color:#fff; border:1px solid #c49a45; padding:3px; border-radius:4px; font-size:12px;">
-          <option value="rarity">レア度順</option>
-          <option value="str">STR順</option>
-          <option value="vit">VIT順</option>
-          <option value="agi">AGI順</option>
-          <option value="lck">LCK順</option>
-        </select>
       </div>
+      
+      <!-- ★ ソートの代わりにタブ切り替えを実装 -->
+      <div id="eq-tabs-container" style="display:flex; margin-bottom:10px; border-radius:4px; overflow:hidden; border:1px solid #c49a45;">
+        <button class="eq-tab-btn" data-type="str" style="flex:1; padding:8px; font-weight:bold; cursor:pointer; background:#ff6b6b; color:#000; border:none;">STR</button>
+        <button class="eq-tab-btn" data-type="vit" style="flex:1; padding:8px; font-weight:bold; cursor:pointer; background:#222; color:#6be6ff; border:none;">VIT</button>
+        <button class="eq-tab-btn" data-type="agi" style="flex:1; padding:8px; font-weight:bold; cursor:pointer; background:#222; color:#94ff6b; border:none;">AGI</button>
+        <button class="eq-tab-btn" data-type="lck" style="flex:1; padding:8px; font-weight:bold; cursor:pointer; background:#222; color:#ffd166; border:none;">LCK</button>
+      </div>
+
       <div id="eq-inventory-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;"></div>
     </section>
 

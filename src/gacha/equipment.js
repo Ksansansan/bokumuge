@@ -70,19 +70,32 @@ export function pullGacha(lck) {
   };
 }
 
-// フィボナッチ数列によるレベル計算
+/**
+ * フィボナッチ数列による合成レベル計算 (1個目=Lv1, 以降1,1,2,3,5...でLvUP)
+ * @param {Number} count 現在の所持数
+ */
 export function calcEquipLevel(count) {
-  const fib =[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765];
-  let lv = 1;
-  let remaining = count;
+  if (count <= 0) return { level: 0, current: 0, nextReq: 1 };
   
-  for (let i = 0; i < fib.length; i++) {
-    if (remaining >= fib[i]) { remaining -= fib[i]; lv++; } 
-    else return { level: lv, current: remaining, nextReq: fib[i] };
+  let lv = 1;
+  let remaining = count - 1; // 1個目は本体として消費
+  
+  let a = 1;
+  let b = 1;
+  let nextReq = a;
+  
+  // 無限にフィボナッチ数列を計算してレベルを上げる
+  while (remaining >= nextReq) {
+    remaining -= nextReq;
+    lv++;
+    
+    let temp = a + b;
+    a = b;
+    b = temp;
+    nextReq = a;
   }
-  const maxFib = fib[fib.length - 1];
-  while (remaining >= maxFib) { remaining -= maxFib; lv++; }
-  return { level: lv, current: remaining, nextReq: maxFib };
+  
+  return { level: lv, current: remaining, nextReq: nextReq };
 }
 
 // 装備ステータスの計算 (1.12^n 倍)

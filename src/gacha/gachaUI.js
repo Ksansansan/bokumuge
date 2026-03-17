@@ -7,16 +7,27 @@ import { playSound } from '../audio.js';
 let playerRef = null;
 let onEquipUpdate = null;
 let autoInterval = null;
+let currentInvTab = "str"; // 現在選ばれているタブ
 
 const TYPE_COLORS = { str: "#ff6b6b", vit: "#6be6ff", agi: "#94ff6b", lck: "#ffd166" };
-const TYPE_NAMES = { str: "武器 (STR)", vit: "防具 (VIT)", agi: "靴 (AGI)", lck: "アクセ (LCK)" };
+const TYPE_NAMES = { str: "武器", vit: "防具", agi: "靴", lck: "アクセ" };
 
 export function initGachaUI(playerObj, equipUpdateFn) {
   playerRef = playerObj;
-  onEquipUpdate = equipUpdateFn; // 装備変更時にメインのステータスを更新する用
+  onEquipUpdate = equipUpdateFn; 
   
   if (!playerRef.inventory_equip) playerRef.inventory_equip = { str:{}, vit:{}, agi:{}, lck:{} };
   if (!playerRef.equips) playerRef.equips = { str:null, vit:null, agi:null, lck:null };
+
+  // AUTO停止プルダウンの生成 (UC以上〜GENまで)
+  const stopSelect = document.getElementById('eq-auto-stop');
+  stopSelect.innerHTML = '<option value="-1">ストップしない</option>';
+  for (let i = 1; i < RARITY_DATA.length; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${RARITY_DATA[i].id} 以上`;
+    stopSelect.appendChild(opt);
+  }
 
   updateTicketCount();
   renderCurrentEquips();
@@ -24,61 +35,71 @@ export function initGachaUI(playerObj, equipUpdateFn) {
 
   // --- ボタン設定 ---
   document.getElementById('btn-show-prob').addEventListener('click', showProbModal);
-  
-  document.getElementById('btn-gacha-1').addEventListener('click', () => doGacha(1));
-  document.getElementById('btn-gacha-10').addEventListener('click', () => doGacha(10));
+  document.getElementById('btn-gacha').addEventListener('click', () => doGacha());
   
   document.getElementById('eq-auto-check').addEventListener('change', (e) => {
     if(!e.target.checked) stopAutoGacha();
   });
   document.getElementById('btn-gacha-stop').addEventListener('click', stopAutoGacha);
   
-  document.getElementById('eq-sort').addEventListener('change', renderInventory);
+  // インベントリのタブ切り替えイベント
+  document.querySelectorAll('.eq-tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      playSound('click');
+      currentInvTab = e.target.dataset.type;
+      
+      // 見た目の更新
+      document.querySelectorAll('.eq-tab-btn').forEach(b => {
+        b.style.background = '#222';
+        b.style.color = TYPE_COLORS[b.dataset.type];
+      });
+      e.target.style.background = TYPE_COLORS[currentInvTab];
+      e.target.style.color = '#000';
+      
+      renderInventory();
+    });
+  });
 
-  // 確率モーダルタブ
   document.getElementById('prob-tab-before').addEventListener('click', () => renderProbList(false));
   document.getElementById('prob-tab-after').addEventListener('click', () => renderProbList(true));
 }
 
-function updateTicketCount() {
+// ★ export して外部（main.jsの戦闘後）からも呼べるようにする
+export function updateTicketCount() {
   const tickets = playerRef.inventory?.["装備ガチャチケット"] || 0;
-  document.getElementById('eq-ticket-count').textContent = formatNumber(tickets);
+  const el = document.getElementById('eq-ticket-count');
+  if(el) el.textContent = formatNumber(tickets);
   return tickets;
 }
 
 // --- ガチャ実行ロジック ---
-async function doGacha(times) {
+async function doGacha() {
   const isAuto = document.getElementById('eq-auto-check').checked;
   const stopTarget = parseInt(document.getElementById('eq-auto-stop').value, 10);
   
-  if (isAuto && times === 10) {
-    // AUTOがONならループ開始
+  if (isAuto) {
     startAutoGacha(stopTarget);
     return;
   }
 
   let tickets = playerRef.inventory?.["装備ガチャチケット"] || 0;
-  if (tickets < times) {
+  if (tickets < 1) {
     alert("ガチャチケットが足りません！"); return;
   }
   
   playSound('hit');
-  playerRef.inventory["装備ガチャチケット"] -= times;
+  playerRef.inventory["装備ガチャチケット"]--;
   updateTicketCount();
 
   const logArea = document.getElementById('gacha-log-area');
-  logArea.innerHTML = ''; // ログクリア
+  logArea.innerHTML = '';
 
-  for (let i = 0; i < times; i++) {
-    const result = pullGacha(playerRef.lck);
-    // インベントリに追加
-    playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
-    
-    // ログに出力
-    const logEl = document.createElement('div');
-    logEl.innerHTML = `[${TYPE_NAMES[result.type]}] <span class="r-${result.rarityId}">${result.name}</span> を獲得！`;
-    logArea.prepend(logEl);
-  }
+  const result = pullGacha(playerRef.lck);
+  playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
+  
+  const logEl = document.createElement('div');
+  logEl.innerHTML = `[${TYPE_NAMES[result.type]}] <span class="r-${result.rarityId}">${result.name}</span> を獲得！`;
+  logArea.prepend(logEl);
 
   renderInventory();
   renderCurrentEquips();
@@ -87,10 +108,8 @@ async function doGacha(times) {
 
 // --- AUTOガチャ ---
 function startAutoGacha(stopRarityIndex) {
-  document.getElementById('btn-gacha-1').style.display = 'none';
-  document.getElementById('btn-gacha-10').style.display = 'none';
+  document.getElementById('btn-gacha').style.display = 'none';
   document.getElementById('btn-gacha-stop').style.display = 'block';
-  
   const logArea = document.getElementById('gacha-log-area');
 
   autoInterval = setInterval(async () => {
@@ -114,13 +133,12 @@ function startAutoGacha(stopRarityIndex) {
     } else {
       playSound('click');
     }
-  }, 150); // 0.15秒に1回引く爆速仕様
+  }, 100); // 0.1秒に1回引く
 }
 
 async function stopAutoGacha() {
   clearInterval(autoInterval);
-  document.getElementById('btn-gacha-1').style.display = 'block';
-  document.getElementById('btn-gacha-10').style.display = 'block';
+  document.getElementById('btn-gacha').style.display = 'block';
   document.getElementById('btn-gacha-stop').style.display = 'none';
   document.getElementById('eq-auto-check').checked = false;
   
@@ -136,28 +154,58 @@ function renderCurrentEquips() {
 
   STAT_TYPES.forEach(type => {
     const eqId = playerRef.equips[type];
-    let contentHtml = `<div style="color:#aaa; font-size:12px; margin-top:10px;">装備なし</div>`;
-    
+    const box = document.createElement('div');
+    box.className = 'eq-box';
+    box.style.borderColor = TYPE_COLORS[type];
+
     if (eqId) {
       const rarityIdx = RARITY_DATA.findIndex(r => r.id === eqId);
       const count = playerRef.inventory_equip[type][eqId];
       const lvInfo = calcEquipLevel(count);
       const stats = getEquipStats(rarityIdx, lvInfo.level);
       const name = EQUIP_NAMES[type][rarityIdx];
+      const progress = (lvInfo.current / lvInfo.nextReq) * 100;
       
-      contentHtml = `
-        <div class="r-${eqId}" style="font-weight:bold; font-size:14px; margin-bottom:5px;">${name}</div>
-        <div style="font-size:11px; color:#fff;">${type.toUpperCase()} x${formatNumber(stats.mult)} + ${formatNumber(stats.add)}</div>
-        <div style="font-size:10px; color:#aaa; margin-top:3px;">Lv ${lvInfo.level} <span style="font-size:9px;">(${lvInfo.current}/${lvInfo.nextReq})</span></div>
+      // ★ ステータス名に色をつけ、+は無色、倍率は小数点第1位まで
+      box.innerHTML = `
+        <div style="position:absolute; top:2px; left:5px; font-size:10px; color:${TYPE_COLORS[type]};">${TYPE_NAMES[type]}</div>
+        <div style="margin-top:12px;">
+          <div class="r-${eqId}" style="font-weight:bold; font-size:14px; margin-bottom:5px;">[${eqId}] ${name}</div>
+          <div style="font-size:11px; color:#fff;">
+            <span style="color:${TYPE_COLORS[type]}; font-weight:bold;">${type.toUpperCase()}</span> 
+            <span style="color:#5ce6e6;">x${stats.mult.toFixed(1)}</span> + ${formatNumber(stats.add)}
+          </div>
+          <div style="font-size:10px; color:#aaa; margin-top:3px;">
+            Lv ${lvInfo.level} <span style="font-size:9px;">(${lvInfo.current}/${lvInfo.nextReq})</span>
+          </div>
+          <div style="width:100%; background:#111; height:4px; border-radius:2px; margin-top:3px; overflow:hidden;">
+            <div style="width:${progress}%; background:${TYPE_COLORS[type]}; height:100%;"></div>
+          </div>
+        </div>
+      `;
+
+      // ★ ダブルタップで装備を外す
+      let lastTapTime = 0;
+      box.addEventListener('click', async () => {
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          playSound('error');
+          playerRef.equips[type] = null;
+          renderCurrentEquips();
+          renderInventory();
+          if (onEquipUpdate) onEquipUpdate();
+          await savePlayerData(playerRef);
+        }
+        lastTapTime = now;
+      });
+
+    } else {
+      box.innerHTML = `
+        <div style="position:absolute; top:2px; left:5px; font-size:10px; color:${TYPE_COLORS[type]};">${TYPE_NAMES[type]}</div>
+        <div style="margin-top:12px; color:#aaa; font-size:12px; line-height:30px;">装備なし</div>
       `;
     }
-
-    container.innerHTML += `
-      <div class="eq-box" style="border-color:${TYPE_COLORS[type]};">
-        <div style="position:absolute; top:2px; left:5px; font-size:10px; color:${TYPE_COLORS[type]};">${TYPE_NAMES[type]}</div>
-        <div style="margin-top:12px;">${contentHtml}</div>
-      </div>
-    `;
+    container.appendChild(box);
   });
 }
 
@@ -165,40 +213,28 @@ function renderInventory() {
   const container = document.getElementById('eq-inventory-list');
   container.innerHTML = '';
   
-  const sortType = document.getElementById('eq-sort').value;
   let items =[];
+  const type = currentInvTab; // 現在のタブの部位だけ表示
+  const eqDict = playerRef.inventory_equip[type];
 
-  STAT_TYPES.forEach(type => {
-    const eqDict = playerRef.inventory_equip[type];
-    for (const rId in eqDict) {
-      const count = eqDict[rId];
-      if (count > 0) {
-        const rarityIdx = RARITY_DATA.findIndex(r => r.id === rId);
-        const lvInfo = calcEquipLevel(count);
-        const stats = getEquipStats(rarityIdx, lvInfo.level);
-        items.push({ type, rId, rarityIdx, count, lvInfo, stats, name: EQUIP_NAMES[type][rarityIdx] });
-      }
+  for (const rId in eqDict) {
+    const count = eqDict[rId];
+    if (count > 0) {
+      const rarityIdx = RARITY_DATA.findIndex(r => r.id === rId);
+      const lvInfo = calcEquipLevel(count);
+      const stats = getEquipStats(rarityIdx, lvInfo.level);
+      items.push({ type, rId, rarityIdx, count, lvInfo, stats, name: EQUIP_NAMES[type][rarityIdx] });
     }
-  });
+  }
 
-  // ソート処理
-  items.sort((a, b) => {
-    if (sortType === 'rarity') {
-      if (b.rarityIdx !== a.rarityIdx) return b.rarityIdx - a.rarityIdx;
-      return STAT_TYPES.indexOf(a.type) - STAT_TYPES.indexOf(b.type);
-    } else {
-      // 特定のステータス順の場合、該当部位のアイテムを上に
-      if (a.type === sortType && b.type !== sortType) return -1;
-      if (a.type !== sortType && b.type === sortType) return 1;
-      // 同じ部位なら最終倍率(強さ)でソート
-      return b.stats.mult - a.stats.mult;
-    }
-  });
+  // ★ 強い順 (最終倍率の降順) にソート
+  items.sort((a, b) => b.stats.mult - a.stats.mult);
 
   items.forEach(item => {
     const isEquipped = playerRef.equips[item.type] === item.rId;
     const btnText = isEquipped ? "装備中" : "装備する";
     const btnColor = isEquipped ? "#555" : "#c49a45";
+    const progress = (item.lvInfo.current / item.lvInfo.nextReq) * 100;
 
     const el = document.createElement('div');
     el.className = 'panel';
@@ -211,14 +247,17 @@ function renderInventory() {
     el.innerHTML = `
       <div style="flex-grow:1;">
         <div style="display:flex; align-items:center; margin-bottom:5px;">
-          <span style="font-size:10px; padding:2px 4px; background:${TYPE_COLORS[item.type]}; color:#000; border-radius:3px; margin-right:8px; font-weight:bold;">${item.type.toUpperCase()}</span>
           <span class="r-${item.rId}" style="font-size:16px; font-weight:bold;">[${item.rId}] ${item.name}</span>
         </div>
         <div style="font-size:13px; color:#fff;">
-          効果: ${item.type.toUpperCase()} <span style="color:#5ce6e6;">x${formatNumber(item.stats.mult)}</span> + <span style="color:#ffeb85;">${formatNumber(item.stats.add)}</span>
+          効果: <span style="color:${TYPE_COLORS[item.type]}; font-weight:bold;">${item.type.toUpperCase()}</span> 
+          <span style="color:#5ce6e6;">x${item.stats.mult.toFixed(1)}</span> + ${formatNumber(item.stats.add)}
         </div>
-        <div style="font-size:11px; color:#aaa; margin-top:2px;">
+        <div style="font-size:11px; color:#aaa; margin-top:4px;">
           Lv ${item.lvInfo.level} <span style="font-size:9px;">(${item.lvInfo.current}/${item.lvInfo.nextReq})</span> / 所持: ${formatNumber(item.count)}個
+        </div>
+        <div style="width:80%; background:#111; height:4px; border-radius:2px; margin-top:4px; overflow:hidden;">
+          <div style="width:${progress}%; background:${TYPE_COLORS[item.type]}; height:100%;"></div>
         </div>
       </div>
       <button class="btn-fantasy btn-equip" style="width:auto; padding:8px 15px; font-size:12px; margin:0; background:${btnColor}; border-color:${btnColor}; color:${isEquipped ? '#aaa' : '#000'};">
@@ -226,13 +265,12 @@ function renderInventory() {
       </button>
     `;
     
-    // 装備ボタンのイベント
     el.querySelector('.btn-equip').addEventListener('click', async () => {
       playSound('click');
       playerRef.equips[item.type] = item.rId;
       renderCurrentEquips();
       renderInventory();
-      if (onEquipUpdate) onEquipUpdate(); // メインのステータス更新を呼ぶ
+      if (onEquipUpdate) onEquipUpdate();
       await savePlayerData(playerRef);
     });
 
@@ -245,7 +283,7 @@ function showProbModal() {
   document.getElementById('modal-gacha-prob').style.display = 'flex';
   const mult = getLckBonusMultiplier(playerRef.lck);
   document.getElementById('prob-lck-mult').textContent = `x${mult.toFixed(2)}`;
-  renderProbList(true); // デフォルトは適用後
+  renderProbList(true);
 }
 
 function renderProbList(isAfter) {
@@ -261,12 +299,9 @@ function renderProbList(isAfter) {
   
   const actualProbs = isAfter ? getActualProbabilities(playerRef.lck) : null;
 
-  // 上位から順に表示
   for (let i = RARITY_DATA.length - 1; i >= 0; i--) {
     const r = RARITY_DATA[i];
     const probValue = isAfter ? actualProbs[i] : r.prob;
-    
-    // 0.0001未満の場合は切り捨てずに表示するため特殊フォーマット
     const probStr = probValue < 0.0001 ? "< 0.0001" : probValue.toFixed(4);
 
     container.innerHTML += `
@@ -274,7 +309,7 @@ function renderProbList(isAfter) {
         <div class="r-${r.id}" style="font-weight:bold; font-size:14px;">${r.id}</div>
         <div class="r-${r.id}" style="font-size:10px;">${r.name}</div>
         <div style="color:#5ce6e6;">${probStr}%</div>
-        <div style="color:#ffeb85;">x${r.mult} <span style="font-size:10px;">+${formatNumber(r.add)}</span></div>
+        <div style="color:#ffeb85;">x${r.mult.toFixed(1)} <span style="font-size:10px; color:#fff;">+${formatNumber(r.add)}</span></div>
       </div>
     `;
   }

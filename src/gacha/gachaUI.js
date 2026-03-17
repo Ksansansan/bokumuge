@@ -95,10 +95,13 @@ async function doGacha() {
   logArea.innerHTML = '';
 
   const result = pullGacha(playerRef.lck);
+  const probs = getActualProbabilities(playerRef.lck); // ★追加
+  const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   
   const logEl = document.createElement('div');
-  logEl.innerHTML = `[${TYPE_NAMES[result.type]}] <span class="r-${result.rarityId}">${result.name}</span> を獲得！`;
+  // ★ レア度 [${result.rarityId}] と 確率 ${probStr} を追加
+  logEl.innerHTML = `[${TYPE_NAMES[result.type]}] <span class="r-${result.rarityId}">[${result.rarityId}] ${result.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;
   logArea.prepend(logEl);
 
   renderInventory();
@@ -111,7 +114,7 @@ function startAutoGacha(stopRarityIndex) {
   document.getElementById('btn-gacha').style.display = 'none';
   document.getElementById('btn-gacha-stop').style.display = 'block';
   const logArea = document.getElementById('gacha-log-area');
-
+  const probs = getActualProbabilities(playerRef.lck);
   autoInterval = setInterval(async () => {
     if ((playerRef.inventory?.["装備ガチャチケット"] || 0) <= 0) {
       stopAutoGacha(); return;
@@ -120,10 +123,11 @@ function startAutoGacha(stopRarityIndex) {
     updateTicketCount();
 
     const res = pullGacha(playerRef.lck);
+    const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
 
     const logEl = document.createElement('div');
-    logEl.innerHTML = `[${TYPE_NAMES[res.type]}] <span class="r-${res.rarityId}">${res.name}</span> を獲得！`;
+    logEl.innerHTML = `[${TYPE_NAMES[res.type]}] <span class="r-${res.rarityId}">[${res.rarityId}] ${res.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;
     logArea.prepend(logEl);
     if(logArea.children.length > 20) logArea.lastChild.remove();
 

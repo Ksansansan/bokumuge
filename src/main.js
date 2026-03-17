@@ -3,6 +3,8 @@ import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, getPersonalBest } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
+import { initGachaUI } from './gacha/gachaUI.js';
+import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 import { initChicken, openChickenModal } from './minigame/chicken.js';
@@ -81,12 +83,33 @@ function getBattleStats(p) {
     bonuses['ALL'] += g * getCollectionRank(bossCount).rank;
   }
 
-  return {
-    str: Math.floor(p.str * (1 + (bonuses.STR + bonuses.ALL) / 100)),
-    vit: Math.floor(p.vit * (1 + (bonuses.VIT + bonuses.ALL) / 100)),
-    agi: Math.floor(p.agi * (1 + (bonuses.AGI + bonuses.ALL) / 100)),
-    lck: Math.floor(p.lck * (1 + (bonuses.LCK + bonuses.ALL) / 100))
-  };
+   let finalStats = { str: 0, vit: 0, agi: 0, lck: 0 };
+  const statsList = ["str", "vit", "agi", "lck"];
+
+  statsList.forEach(s => {
+    // 1. 基礎値に図鑑バフを掛ける
+    let baseWithBuff = p[s] * (1 + (bonuses[s.toUpperCase()] + bonuses.ALL) / 100);
+    
+    let eqMult = 1.0;
+    let eqAdd = 0;
+    
+    // 2. 装備の倍率と加算値を取得
+    const eqRarityId = p.equips?.[s];
+    if (eqRarityId) {
+      const rarityIdx = RARITY_DATA.findIndex(r => r.id === eqRarityId);
+      const count = p.inventory_equip?.[s]?.[eqRarityId] || 1;
+      const lvInfo = calcEquipLevel(count);
+      const eqStats = getEquipStats(rarityIdx, lvInfo.level);
+      
+      eqMult = eqStats.mult;
+      eqAdd = eqStats.add;
+    }
+    
+    // 3. 最終計算： (基礎×図鑑) × 装備倍率 + 装備定数
+    finalStats[s] = Math.floor(baseWithBuff * eqMult) + eqAdd;
+  });
+
+  return finalStats;
 }
 
 // ==========================================
@@ -184,6 +207,7 @@ function init() {
   setupTabNavigation();
   player.updateStatusUI = updateStatusUI; 
   player.updateTrainingUI = updateTrainingUI; 
+  initGachaUI(player, updateStatusUI);
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
   initChicken(player, updateTrainingUI);

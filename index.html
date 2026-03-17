@@ -112,6 +112,17 @@
     border-right: 1px solid rgba(92, 230, 230, 0.8) !important;
     border-bottom: 1px solid rgba(92, 230, 230, 0.8) !important;
   }
+
+  /* レアリティカラー定義 */
+  .r-C { color: #aaaaaa; } .r-UC { color: #5ce6e6; } .r-R { color: #5c7a20; } .r-HR { color: #3a7a20; }
+  .r-SR { color: #b16bff; } .r-SSR { color: #ffd166; } .r-ER { color: #ff9900; } .r-UR { color: #ff6b6b; }
+  .r-LR { color: #ff3333; text-shadow: 0 0 5px #ff0000; } .r-MR { color: #ff00ff; text-shadow: 0 0 5px #ff00ff; }
+  .r-GR { color: #ffffff; text-shadow: 0 0 8px #fff, 0 0 15px #ffd700; }
+  .r-XR { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #0055ff; }
+  .r-GEN{ color: #ff0000; text-shadow: 0 0 10px #ff0000, 0 0 20px #ffeb85, 0 0 30px #ffffff; animation: blink 1s infinite;}
+
+  .eq-box { background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 6px; padding: 10px; position: relative; text-align: center; cursor: pointer; }
+  .eq-box:hover { background: rgba(196,154,69,0.2); }
 </style>
 </head>
 <body>
@@ -246,10 +257,76 @@
     </section>
 
 
-    <!-- 🎒 3. 装備タブ (ガワのみ) -->
+    <!-- 🎒 3. 装備タブ -->
     <section id="tab-equip" class="tab-content">
-      <h2>武具・ガチャ</h2><p style="text-align:center; color:#aaa;">（今後の実装をお楽しみに！）</p>
+      <h2>装備・ガチャ</h2>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="font-size:18px; font-weight:bold; color:#ffd166;">🎫 ガチャチケ: <span id="eq-ticket-count" style="font-size:24px;">0</span> 枚</div>
+        <button id="btn-show-prob" class="btn-fantasy" style="padding:5px 10px; font-size:12px; margin:0; width:auto;">排出確率一覧</button>
+      </div>
+
+      <div class="panel" style="padding:10px;">
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <button id="btn-gacha-1" class="btn-fantasy" style="flex:1; margin:0; padding:10px; font-size:16px;">1回引く</button>
+          <button id="btn-gacha-10" class="btn-fantasy" style="flex:1; margin:0; padding:10px; font-size:16px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">10連引く</button>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#ccc;">
+          <label style="display:flex; align-items:center; cursor:pointer; font-weight:bold;">
+            <input type="checkbox" id="eq-auto-check" style="margin-right:5px; transform:scale(1.2);"> AUTOガチャ
+          </label>
+          <div style="display:flex; align-items:center; gap:5px;">
+            停止:
+            <select id="eq-auto-stop" style="background:#000; color:#fff; border:1px solid #c49a45; padding:3px; border-radius:4px;">
+              <option value="-1">ストップしない</option>
+              <option value="4">SR以上</option>
+              <option value="5">SSR以上</option>
+              <option value="7">UR以上</option>
+              <option value="12">GEN</option>
+            </select>
+          </div>
+        </div>
+        <button id="btn-gacha-stop" class="btn-fantasy" style="display:none; width:100%; margin:10px 0 0 0; padding:10px; font-size:16px; background:linear-gradient(to bottom, #ff6b6b, #cc0000);">AUTO停止</button>
+        <!-- ガチャ結果ログ表示エリア -->
+        <div id="gacha-log-area" style="margin-top:10px; max-height:80px; overflow-y:auto; font-size:12px; border-top:1px dashed #555; padding-top:5px;"></div>
+      </div>
+
+      <h3 style="color:#c49a45; text-align:center; margin:10px 0 5px 0; font-size:16px;">現在の装備</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;" id="current-equips-grid">
+        <!-- JSで生成 -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #c49a45; padding-bottom:5px; margin-bottom:10px;">
+        <h3 style="color:#c49a45; margin:0; font-size:16px;">所持装備</h3>
+        <select id="eq-sort" style="background:#000; color:#fff; border:1px solid #c49a45; padding:3px; border-radius:4px; font-size:12px;">
+          <option value="rarity">レア度順</option>
+          <option value="str">STR順</option>
+          <option value="vit">VIT順</option>
+          <option value="agi">AGI順</option>
+          <option value="lck">LCK順</option>
+        </select>
+      </div>
+      <div id="eq-inventory-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;"></div>
     </section>
+
+<!-- 💡 確率表示モーダル (bodyの下部に追加) -->
+  <div id="modal-gacha-prob" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 500; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 90%; max-width: 450px; background: #111; border: 2px solid #c49a45; border-radius: 8px; padding: 15px; color: #f2e4c9; max-height: 85vh; display: flex; flex-direction: column;">
+      <h3 style="color:#c49a45; text-align:center; margin-top:0;">提供割合</h3>
+      <div style="text-align:center; color:#ffd166; margin-bottom:10px; font-weight:bold;">
+        現在のLCK倍率: <span id="prob-lck-mult">x1.00</span>
+      </div>
+      <div style="display:flex; margin-bottom:10px; border-radius:4px; overflow:hidden;">
+        <button id="prob-tab-before" style="flex:1; padding:8px; background:#c49a45; color:#000; font-weight:bold; border:none; cursor:pointer;">LCK適応前</button>
+        <button id="prob-tab-after" style="flex:1; padding:8px; background:#222; color:#c49a45; font-weight:bold; border:none; cursor:pointer;">LCK適応後</button>
+      </div>
+      <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns: 15% 35% 20% 30%; border-bottom:1px solid #555; padding-bottom:5px; margin-bottom:5px; text-align:center; font-weight:bold;">
+        <div>レア</div><div>名前</div><div>確率</div><div>倍率+定数</div>
+      </div>
+      <div id="prob-list-container" style="flex-grow:1; overflow-y:auto; font-size:12px; line-height:1.8;"></div>
+      <button onclick="document.getElementById('modal-gacha-prob').style.display='none';" class="btn-fantasy" style="margin-top:15px; width:100%;">閉じる</button>
+    </div>
+  </div>
 
     <!-- 📖 4. 図鑑タブ -->
     <section id="tab-collection" class="tab-content">

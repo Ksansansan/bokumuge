@@ -147,7 +147,7 @@ function startNextSpin() {
   dom.msg.textContent = "";
 
   // ★ 修正: リールの初速を大幅に緩和 (210px/s = 1周2秒) し、速度上昇も緩やかに
-  const speed = 250 + (spinCount * 25);
+  const speed = 240 + (spinCount * 20);
 
   reels.forEach((r, i) => {
     let shuffled = [...SYMBOLS].sort(() => Math.random() - 0.5);

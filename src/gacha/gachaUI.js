@@ -1,5 +1,5 @@
 // src/gacha/gachaUI.js
-import { RARITY_DATA, STAT_TYPES, getLckBonusMultiplier, getActualProbabilities, pullGacha, calcEquipLevel, getEquipStats } from './equipment.js';
+import { RARITY_DATA, STAT_TYPES, EQUIP_NAMES, getLckBonusMultiplier, getActualProbabilities, pullGacha, calcEquipLevel, getEquipStats } from './equipment.js';
 import { savePlayerData } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';

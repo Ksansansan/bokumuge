@@ -93,9 +93,9 @@ async function doGacha() {
 
   const logArea = document.getElementById('gacha-log-area');
   logArea.innerHTML = '';
-
-  const result = pullGacha(playerRef.lck);
-  const probs = getActualProbabilities(playerRef.lck); // ★追加
+  const currentLck = playerRef.battleStats?.lck || playerRef.lck;
+  const result = pullGacha(currentLck);
+  const probs = getActualProbabilities(currentLck); 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   
@@ -114,7 +114,8 @@ function startAutoGacha(stopRarityIndex) {
   document.getElementById('btn-gacha').style.display = 'none';
   document.getElementById('btn-gacha-stop').style.display = 'block';
   const logArea = document.getElementById('gacha-log-area');
-  const probs = getActualProbabilities(playerRef.lck);
+  const currentLck = playerRef.battleStats?.lck || playerRef.lck;
+  const probs = getActualProbabilities(currentLck);
   autoInterval = setInterval(async () => {
     if ((playerRef.inventory?.["装備ガチャチケット"] || 0) <= 0) {
       stopAutoGacha(); return;
@@ -122,7 +123,7 @@ function startAutoGacha(stopRarityIndex) {
     playerRef.inventory["装備ガチャチケット"]--;
     updateTicketCount();
 
-    const res = pullGacha(playerRef.lck);
+     const res = pullGacha(currentLck); 
     const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
 
@@ -285,7 +286,8 @@ function renderInventory() {
 // --- 確率表示モーダル ---
 function showProbModal() {
   document.getElementById('modal-gacha-prob').style.display = 'flex';
-  const mult = getLckBonusMultiplier(playerRef.lck);
+  const currentLck = playerRef.battleStats?.lck || playerRef.lck;
+  const mult = getLckBonusMultiplier(currentLck);
   document.getElementById('prob-lck-mult').textContent = `x${mult.toFixed(2)}`;
   renderProbList(true);
 }
@@ -300,8 +302,8 @@ function renderProbList(isAfter) {
 
   const container = document.getElementById('prob-list-container');
   container.innerHTML = '';
-  
-  const actualProbs = isAfter ? getActualProbabilities(playerRef.lck) : null;
+  const currentLck = playerRef.battleStats?.lck || playerRef.lck;
+  const actualProbs = isAfter ? getActualProbabilities(currentLck) : null;
 
   for (let i = RARITY_DATA.length - 1; i >= 0; i--) {
     const r = RARITY_DATA[i];

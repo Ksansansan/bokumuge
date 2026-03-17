@@ -27,7 +27,7 @@ export const STAT_TYPES = ["str", "vit", "agi", "lck"];
 
 // LCKボーナス倍率：1.0 + ((LCK/100) ^ 0.4)
 export function getLckBonusMultiplier(lck) {
-  if (lck <= 0) return 1.0;
+  if (lck <= 100) return 1.0;
   return 1.0 + Math.pow(lck / 100, 0.4);
 }
 

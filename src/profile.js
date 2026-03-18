@@ -47,9 +47,9 @@ export async function openProfileModal(username) {
             <span class="r-${eqId}" style="font-weight:bold;">[${eqId}] ${eqName}</span>
           </div>
           <div style="font-size:11px; color:#fff; padding-left:45px;">
-            効果: ${t.k.toUpperCase()} <span style="color:${t.c}">x${stats.mult.toFixed(1)}</span> + ${formatNumber(stats.add)}
+            効果: <span style="color:${t.c}; font-weight:bold;">${t.k.toUpperCase()}</span> <span style="color:#5ce6e6;">x${stats.mult.toFixed(1)}</span> + ${formatNumber(stats.add)}
           </div>
-          <div style="font-size:11px; color:#aaa; padding-left:45px;">
+          <div style="font-size:10px; color:#aaa; padding-left:45px; margin-top:2px;">
             Lv ${lvInfo.level} <span style="font-size:9px;">(${lvInfo.current}/${lvInfo.nextReq})</span>
           </div>
         </div>
@@ -109,7 +109,7 @@ export async function openProfileModal(username) {
       else if (rt.id === 'winCount' || rt.id === 'firstClearCount') score += ' 勝';
       else if (rt.id === 'gachaCount') score += ' 回';
       else if (rt.id === 'totalLv') score = 'Lv.' + score;
-      else if (['rockPush','daruma','1to20','command'].includes(rt.id)) score = score.toFixed(2) + ' 秒';
+      else if (['rockPush','daruma','1to20','command','clover'].includes(rt.id)) score = score.toFixed(2) + ' 秒';
       else if (rt.id === 'chicken') score = score.toFixed(2) + ' m';
       else if (rt.id === 'guard' || rt.id === 'slot') score = formatNumber(score) + ' pt';
       

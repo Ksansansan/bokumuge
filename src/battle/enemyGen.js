@@ -31,6 +31,9 @@ export function generateFloorData(targetFloor) {
   const loopCount = Math.floor((floor - 1) / (BIOMES.length * 5));
   const prefix = PREFIXES[Math.min(loopCount, PREFIXES.length - 1)];
 
+  const gekidoName = `${prefix}魔の激動`;
+  const gekidoBaseBuff = 5 + (5 * loopCount); // 1-50: 5%, 51-100: 10% ...
+
   const biome = BIOMES[biomeIndex];
   const subLevel = ((floor - 1) % 5) + 1;
   const stageName = `${prefix}${biome.name}-${subLevel}`;
@@ -178,10 +181,12 @@ export function generateFloorData(targetFloor) {
   return {
     floor, isMaxFloor: floor >= MAX_FLOOR, stageName, biome,
     recommended: { str: recommendedStr, vit: recommendedVit, agi: recommendedAgi }, 
+    gekido: { name: gekidoName, baseBuff: gekidoBaseBuff },
     enemies,
     drops:[
       { name: "装備ガチャチケット", prob: 100, isCollection: false },
-      { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: subLevel === 5 ? 30 : 20, isCollection: true }
+      { name: subLevel === 5 ? biome.bossDrop : biome.mobDrop, prob: subLevel === 5 ? 30 : 20, isCollection: true },
+      { name: gekidoName, prob: 0.01, isCollection: true, isGekido: true } 
     ]
   };
 }

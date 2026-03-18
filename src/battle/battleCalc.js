@@ -72,9 +72,10 @@ export function simulateBattle(player, floorData) {
         events.push({ frame: timeFrames, type: 'defeat', isLast: isLastEnemy });
 
         // ★ ガチャチケのドロップ枚数計算 (LCKボーナス)
+        const currentLck = player.battleStats?.lck || player.lck || 0;
         let ticketCount = 1;
-        if (player.lck >= 100) {
-          ticketCount += Math.max(0, Math.floor(Math.log(player.lck / 100) / Math.log(3)));
+        if (currentLck >= 100) {
+          ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
         }
 
         if (currentEnemyIndex < 3) {

@@ -2,6 +2,7 @@
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews } from './firebase.js';
+import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
@@ -42,7 +43,7 @@ const guiContainer = document.getElementById('battle-gui-container');
 const uiE_char = document.getElementById('ui-e-char');
 // バトルアニメーション用変数
 let animationId = null;
-
+let isSurrendered = false;
 let player = null; // ログイン成功後にデータが入る
 
 // ★インフレ対応：数値をK, M, Bにする関数
@@ -264,6 +265,7 @@ async function updateFloorUI(floorNum) {
     <li>装備ガチャチケット (ボス100%)</li>
     <li>${floorData.biome.mobDrop} [図鑑] (雑魚20%)</li>
     <li>${floorData.biome.bossDrop} [図鑑] (ボス30%)</li>
+    <li style="color:#b16bff;">${floorData.gekido.name} [特殊] (${gekidoProb}%)</li>
   `;
   // ◀ ▶ ボタン制御
   const prevBtn = document.getElementById('btn-prev');
@@ -299,6 +301,10 @@ async function updateFloorUI(floorNum) {
 }
 // --- ⚔️ バトル実行 ---
 btnChallenge.addEventListener('click', () => {
+  document.getElementById('btn-challenge').style.display = 'none';
+  document.getElementById('btn-surrender').style.display = 'block';
+  isSurrendered = false;
+
   const floorData = generateFloorData(player.floor);
   // ★戦闘には「バフ込みステータス」を渡す
   const battleStats = getBattleStats(player);
@@ -329,6 +335,12 @@ btnChallenge.addEventListener('click', () => {
   function renderLoop() {
     const speed = 1; 
     currentFrame += speed;
+
+    // ★追加：降参フラグが立ったら即座に敗北処理へ飛ばす
+    if (isSurrendered) {
+      currentFrame = result.totalFrames; // 強制終了
+      result.isWin = false; // 負け扱い
+    }
 
     // タイマーの更新（90秒＝5400F）
     const elapsedSec = currentFrame / 60;
@@ -400,7 +412,10 @@ btnChallenge.addEventListener('click', () => {
 
     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
-
+      // ★ボタン戻す
+      document.getElementById('btn-challenge').style.display = 'block';
+      document.getElementById('btn-surrender').style.display = 'none';
+      
       // ★ドロップ結果の表示とインベントリ追加
       if (result.drops.length > 0) {
         if(!player.inventory) player.inventory = {};
@@ -413,9 +428,18 @@ btnChallenge.addEventListener('click', () => {
           // ★ x2 などの表示を追加
           li.innerHTML = `<span style="color:${d.type==='boss'?'#ffd166':'#fff'}">${d.name}</span> <span style="color:#5ce6e6; font-weight:bold;">x${d.count}</span> を獲得！`;
           dropListEl.appendChild(li);
+         // ★マスター(81個)到達ニュース
+          if (currentCount < 81 && newCount >= 81) {
+            addGlobalNews(`👑 【マスター到達】${player.name} が ${d.name} をマスター(MAX)にしました！`, 4);
+          }
+
+          // ★「魔の激動」の遡及レベルアップ処理
+          if (d.name.includes("魔の激動")) {
+            applyGekidoBonus();
+          }
         });
         document.getElementById('battle-drop-result').style.display = 'block';
-        updateCollectionUI(); // ★リザルトが出た瞬間に図鑑を裏で更新
+        updateCollectionUI(); 
       }
 
       if (result.isWin) {
@@ -423,11 +447,11 @@ btnChallenge.addEventListener('click', () => {
         handleVictory(result, floorData.floor); 
       } else {
         playSound('error');
-        resultText.textContent = `💀 敗北...`;
+        resultText.textContent = isSurrendered ? `🏳️ 降参しました` : `💀 敗北...`;
         resultText.style.color = '#ff6b6b';
-        savePlayerData(player); // 負けてもドロップは保存
-        updateCollectionUI();
+        savePlayerData(player); 
       }
+      updateCollectionUI();
       cancelAnimationFrame(animationId);
       return;
     }
@@ -656,6 +680,11 @@ async function handleVictory(result, floorNum) {
 
     if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
       player.maxClearedFloor = floorNum + 1;
+
+      // ★ 5層ごとの突破ニュース (まだ誰もクリアしていない階層は「初クリア」が流れるので除外気味で)
+      if (floorNum % 5 === 0 && !isFirst) {
+        addGlobalNews(`🎌 【到達】${player.name} が第${floorNum}層を突破しました！`, 5);
+      }
       // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）
     }
     await savePlayerData(player);
@@ -801,4 +830,53 @@ function displayNewsText(text) {
     el.offsetHeight; 
     el.style.animation = 'marquee 15s linear infinite';
   }
+}
+
+// --- ★ 魔の激動による遡及EXP付与処理 ---
+// 現在のレベルと端数EXPから「今まで稼いだ全EXP」を計算し、
+// 魔の激動のバフ率分だけ追加のEXPを与えてレベルを上げ直す。
+function applyGekidoBonus() {
+  const stats = ["str", "vit", "agi", "lck"];
+  
+  // 今現在の激動バフの合計を計算
+  let totalGekidoBuff = 0;
+  for (let f = 1; f <= (player.maxClearedFloor || 1); f += 50) {
+    const fd = generateFloorData(f);
+    const count = player.inventory?.[fd.gekido.name] || 0;
+    const rank = getCollectionRank(count); // ランク(1〜5等)
+    totalGekidoBuff += fd.gekido.baseBuff * rank.mult;
+  }
+  
+  // 前回計算時のバフ率と比較して、差分だけを加算する
+  const prevBuff = player.lastGekidoBuff || 0;
+  const diffBuff = totalGekidoBuff - prevBuff;
+  if (diffBuff <= 0) return; // 変わってなければ無視
+
+  stats.forEach(s => {
+    let currentLv = player.lv[s];
+    let currentExp = player.exp[s];
+    
+    // 現在までの累計EXPを逆算
+    let totalExp = 0;
+    for (let i = 1; i < currentLv; i++) {
+      totalExp += getRequiredExp(i);
+    }
+    totalExp += currentExp;
+
+    // 差分バフ（5%なら0.05）の分だけ、過去の努力がそのままEXPとなって降ってくる
+    let bonusExp = Math.floor(totalExp * (diffBuff / 100));
+    
+    // 足し込んで再レベルアップ計算
+    player.exp[s] += bonusExp;
+    let reqExp = getRequiredExp(player.lv[s]);
+    while (player.exp[s] >= reqExp) {
+      player.exp[s] -= reqExp;
+      player.lv[s]++;
+      reqExp = getRequiredExp(player.lv[s]);
+    }
+  });
+
+  player.lastGekidoBuff = totalGekidoBuff;
+  playSound('win');
+  alert(`✨ 「魔の激動」の効果で、全特訓の累計経験値が +${diffBuff}% されました！`);
 }

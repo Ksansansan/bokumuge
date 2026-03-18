@@ -34,7 +34,7 @@ export async function loginOrRegister(username, pin) {
   } else {
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount:0, inventory: {},
+      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount:0, firstClearCount:0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: serverTimestamp(),
       timestamps: {} // ★項目ごとの更新日時を保存する枠
@@ -102,6 +102,8 @@ export async function checkAndSaveFirstClear(player, floor, time) {
       timestamp: serverTimestamp()
     };
     await setDoc(docRef, data);
+    // ★初クリア数をインクリメント
+    player.firstClearCount = (player.firstClearCount || 0) + 1;
     // ★ ニュース送信 (優先度1)
     addGlobalNews(`👑 【初クリア】${player.name} が 第${floor}層 を世界で初めて突破しました！！`, 1);
     return true;
@@ -129,7 +131,7 @@ export async function savePlayerData(player) {
   }
 
   // ★「前回セーブした時」と比べて数値が上がっていたら、その項目の日時を更新する！
-  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount"];
+  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"];
   const now = serverTimestamp();
   
   if (lastSavedPlayerState) {
@@ -200,7 +202,7 @@ export async function getRankingData(rankId, isTotal = false) {
   const rankings =[];
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
 
-  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount"].includes(rankId)) {
+  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"].includes(rankId)) {
     const dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
 
     // ★身内用なので全件取得してJSでソートする

@@ -100,7 +100,7 @@ async function doGacha() {
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★ 0.2%以下の激レアを引いたらニュース送信 (優先度3)
-  if (probVal <= 0.2) {
+  if (probValue <= 0.2) {
     addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
   }
   const logEl = document.createElement('div');
@@ -133,7 +133,7 @@ function startAutoGacha(stopRarityIndex) {
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1; 
     
      // ★ 0.2%以下ニュース
-    if (probVal <= 0.2) {
+    if (probValue <= 0.2) {
       addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
     }
 

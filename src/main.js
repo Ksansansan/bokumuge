@@ -422,6 +422,10 @@ btnChallenge.addEventListener('click', () => {
       
       // ★ドロップ結果の表示とインベントリ追加
       if (result.drops.length > 0) {
+        const currentCount = player.inventory[d.name] || 0;
+          const newCount = currentCount + d.count;
+          player.inventory[d.name] = newCount;
+          
         if(!player.inventory) player.inventory = {};
         const dropListEl = document.getElementById('battle-drop-list');
         dropListEl.innerHTML = '';

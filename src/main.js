@@ -16,6 +16,7 @@ import { initCommand, openCommandModal } from './minigame/command.js';
 import { initClover, openCloverModal } from './minigame/clover.js';
 import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound } from './audio.js';
+import { openProfileModal } from './profile.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -933,3 +934,16 @@ function applyGekidoBonus() {
   playSound('win');
   alert(`✨ 「魔の激動」が強化され、全特訓の累計経験値が +${diffBuff}% 追加されました！`);
 }
+
+// ==========================================
+// 👤 プレイヤープロフィール表示イベント
+// ==========================================
+document.addEventListener('click', (e) => {
+  const nameEl = e.target.closest('.clickable-name');
+  if (nameEl) {
+    const targetName = nameEl.dataset.name || nameEl.textContent.trim();
+    if (targetName) {
+      openProfileModal(targetName);
+    }
+  }
+});

@@ -206,6 +206,13 @@ export async function getPersonalBest(userId, gameId) {
   return docSnap.exists() ? docSnap.data().time : null;
 }
 
+// ★ 追加：特定ユーザーの全データを取得
+export async function getUserProfile(username) {
+  const userSnap = await getDoc(doc(db, "users", username));
+  return userSnap.exists() ? userSnap.data() : null;
+}
+
+
 // ==========================================
 // ランキングデータの取得（JSでソートする方式に変更）
 // ==========================================

@@ -123,6 +123,19 @@
 
   .eq-box { background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 6px; padding: 10px; position: relative; text-align: center; cursor: pointer; }
   .eq-box:hover { background: rgba(196,154,69,0.2); }
+
+  /* タップ可能なプレイヤー名 */
+  .clickable-name {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    transition: color 0.2s, transform 0.1s;
+  }
+  .clickable-name:hover {
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+
 </style>
 </head>
 <body>
@@ -150,7 +163,7 @@
   
   <header>
     <div class="user-info">
-      <span class="username">Null</span>
+      <span class="username clickable-name">Null</span>
       <div class="news-ticker"><span class="news-text">🔔 ぼくらの無限塔へようこそ！</span></div>
     </div>
     <div class="status-bar">
@@ -384,27 +397,19 @@
           <button class="btn-fantasy btn-show-ranking" data-rank-id="winCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #4a0d4a, #2b082b);">⚔️ 累計勝利数</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="gachaCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">🎰 累計ガチャ回数</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="collectionCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #0d4a0d, #082b08);">📖 収集コレクター</button>
-          
+        </div>
+
          <!-- ★ ミニゲーム系ランキング (横4列に変更) -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; border-top: 1px dashed #4a3b26; padding-top: 15px; margin-top: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 100%; border-top: 1px dashed #4a3b26; padding-top: 12px; margin-top: 12px;">
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="rockPush" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2;">大岩プッシュ王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="daruma" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2;">だるま落とし王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="chicken" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #205c7a, #0d314a); line-height:1.2;">崖っぷち王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="guard" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #207a7a, #0d4a4a); line-height:1.2;">飛来物ガード王</button>
           
-          <!-- 各ボタンに width: 100% !important; と margin: 0 !important; を追加して強制上書き -->
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="rockPush" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2; display: block;">大岩プッシュ王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="daruma" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2; display: block;">だるま落とし王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="chicken" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #205c7a, #0d314a); line-height:1.2; display: block;">崖っぷち王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="guard" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #207a7a, #0d4a4a); line-height:1.2; display: block;">飛来物ガード王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="1to20" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #3a7a20, #1d4a0d); line-height:1.2; display: block;">1〜20早押し王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="command" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #5c7a20, #314a0d); line-height:1.2; display: block;">コマンド入力王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="clover" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #a88820, #5c480b); line-height:1.2; display: block;">四つ葉探し王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="slot" style="font-size:10px; padding:10px 2px; margin:0 !important; width:100% !important; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; line-height:1.2; display: block;">スロット王</button>
-          
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="1to20" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #3a7a20, #1d4a0d); line-height:1.2;">1〜20早押し王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="command" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #5c7a20, #314a0d); line-height:1.2;">コマンド入力王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="clover" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b); line-height:1.2;">四つ葉探し王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="slot" style="font-size:10px; padding:8px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; line-height:1.2;">スロット王</button>
         </div>
       </div>
     </section>
@@ -1185,6 +1190,46 @@
       </div>
     </div>
   </div>
+
+  <!-- 👤 プレイヤープロフィール モーダル -->
+  <div id="modal-profile" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #111, #000); border: 2px solid #5ce6e6; border-radius: 8px; padding: 20px; color: #f2e4c9; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(92, 230, 230, 0.5);">
+      
+      <h2 id="prof-name" style="text-align:center; color:#5ce6e6; margin-top:0; border-bottom: 2px dashed #5ce6e6; padding-bottom: 10px;">プレイヤー名</h2>
+      
+      <div style="overflow-y:auto; padding-right:5px; flex-grow:1;">
+        <!-- ステータス -->
+        <div style="margin-bottom:15px;">
+          <div style="color:#aaa; font-size:12px; margin-bottom:5px;">総合ステータス (バフ・装備込み)</div>
+          <div style="display:flex; justify-content:space-between; font-weight:bold; background:rgba(255,255,255,0.1); padding:10px; border-radius:4px;">
+            <span style="color:#ff6b6b">STR: <span id="prof-str">0</span></span>
+            <span style="color:#6be6ff">VIT: <span id="prof-vit">0</span></span>
+            <span style="color:#94ff6b">AGI: <span id="prof-agi">0</span></span>
+            <span style="color:#ffd166">LCK: <span id="prof-lck">0</span></span>
+          </div>
+        </div>
+
+        <!-- 装備 -->
+        <div style="margin-bottom:15px;">
+          <div style="color:#aaa; font-size:12px; margin-bottom:5px;">現在の装備</div>
+          <div id="prof-equips" style="font-size:13px; line-height:1.6; background:rgba(0,0,0,0.5); border:1px solid #4a3b26; border-radius:4px; padding:10px;">
+            <!-- JSで挿入 -->
+          </div>
+        </div>
+
+        <!-- ランキング情報 -->
+        <div>
+          <div style="color:#aaa; font-size:12px; margin-bottom:5px;">主要ランキング順位</div>
+          <div id="prof-ranks" style="font-size:13px; line-height:1.8; background:rgba(0,0,0,0.5); border:1px solid #4a3b26; border-radius:4px; padding:10px;">
+            <p style="text-align:center; color:#aaa;">データ取得中...</p>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="document.getElementById('modal-profile').style.display='none';" class="btn-fantasy" style="margin-top:15px; width:100%; border-color:#5ce6e6; background:linear-gradient(to bottom, #205c7a, #0d314a);">閉じる</button>
+    </div>
+  </div>
+
 <!-- ロジックの読み込み -->
 <script type="module" src="./src/main.js"></script>
 

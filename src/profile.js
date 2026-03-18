@@ -3,8 +3,19 @@ import { getUserProfile, getRankingData } from './firebase.js';
 import { formatNumber } from './main.js';
 import { EQUIP_NAMES, RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { playSound } from './audio.js';
+import { generateFloorData, getDropStatType } from './battle/enemyGen.js';
 
 const RARITY_INDEX = { "C":0, "UC":1, "R":2, "HR":3, "SR":4, "SSR":5, "ER":6, "UR":7, "LR":8, "MR":9, "GR":10, "XR":11, "GEN":12 };
+
+// ★追加：図鑑ランク計算用の関数
+function getCollectionRank(count) {
+  if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b", mult: 8 }; 
+  if (count >= 27) return { rank: 4, name: "金", color: "#ffd700", mult: 5 }; 
+  if (count >= 9)  return { rank: 3, name: "銀", color: "#c0c0c0", mult: 3 };
+  if (count >= 3)  return { rank: 2, name: "銅", color: "#cd7f32", mult: 2 };
+  if (count >= 1)  return { rank: 1, name: "木", color: "#8c7a65", mult: 1 };
+  return { rank: 0, name: "未取得", color: "#555", mult: 0 };
+}
 
 export async function openProfileModal(username) {
   playSound('click');
@@ -26,6 +37,27 @@ export async function openProfileModal(username) {
   document.getElementById('prof-vit').textContent = formatNumber(u.vit || 0);
   document.getElementById('prof-agi').textContent = formatNumber(u.agi || 0);
   document.getElementById('prof-lck').textContent = formatNumber(u.lck || 0);
+
+   // --- ★追加：図鑑バフの合計値計算 ---
+  let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
+  const maxFloor = u.maxClearedFloor || 1;
+  
+  for (let f = 1; f <= maxFloor; f += 5) {
+    const floorData = generateFloorData(f);
+    const g = Math.ceil(f / 20);
+    const statType = getDropStatType(f, false);
+    
+    const mobCount = u.inventory?.[floorData.biome.mobDrop] || 0;
+    const bossCount = u.inventory?.[floorData.biome.bossDrop] || 0;
+    
+    totalBonuses[statType] += g * getCollectionRank(mobCount).mult;
+    totalBonuses['ALL'] += g * getCollectionRank(bossCount).mult;
+  }
+
+  document.getElementById('prof-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
 
   // ★ 修正：装備の詳細表示（武器・防具など記載）
   let eqHtml = '';

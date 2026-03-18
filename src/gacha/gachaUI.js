@@ -96,6 +96,7 @@ async function doGacha() {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const result = pullGacha(currentLck);
   const probs = getActualProbabilities(currentLck); 
+  const probValue = probs[res.rarityIndex]; 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
@@ -128,6 +129,7 @@ function startAutoGacha(stopRarityIndex) {
     updateTicketCount();
 
      const res = pullGacha(currentLck); 
+     const probVal = probs[res.rarityIndex]; 
     const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1; 
@@ -307,10 +309,8 @@ function renderProbList(isAfter) {
   const btnA = document.getElementById('prob-tab-after');
   btnB.style.background = isAfter ? "#222" : "#c49a45";
   btnB.style.color = isAfter ? "#c49a45" : "#000";
-  btnB.style.pointerEvents = isAfter ? "auto" : "none";
   btnA.style.background = isAfter ? "#c49a45" : "#222";
   btnA.style.color = isAfter ? "#000" : "#c49a45";
-  btnA.style.pointerEvents = isAfter ? "none" : "auto";
 
   const container = document.getElementById('prob-list-container');
   container.innerHTML = '';

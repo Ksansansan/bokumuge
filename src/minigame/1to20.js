@@ -295,7 +295,7 @@ async function finishGame() {
   }
 
   // ステータス反映
-  const result = applyMinigameResult(playerRef, 'agi', result.actualExpGain, rank.agiBase);
+  const result = applyMinigameResult(playerRef, 'agi', rank.exp, rank.agiBase);
   
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();

@@ -396,7 +396,7 @@ async function finishGame() {
   let gainHtml = `
     <div style="font-size:16px; margin-bottom:10px;">Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span></div>
     VIT 基礎値: <span style="color:#6be6ff;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
-    EXP 獲得: <span style="color:#5ce6e6;">+${earnedExp}</span>
+    EXP 獲得: <span style="color:#5ce6e6;">+${result.actualExpGain}</span>
   `;
   const prog = Math.floor((result.currentExp / result.nextExp) * 100);
   gainHtml += `<div style="width:100%; background:#111; border:1px solid #4a3b26; height:8px; margin-top:8px; border-radius:4px; overflow:hidden;"><div style="width:${prog}%; background:#6be6ff; height:100%;"></div></div>`;

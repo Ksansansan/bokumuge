@@ -240,7 +240,7 @@ async function finishGame(isFall, remainingDist) {
   }
 
   // ステータス反映
-  const result = applyMinigameResult(playerRef, 'vit', result.actualExpGain, rank.vitBase);
+  const result = applyMinigameResult(playerRef, 'vit', rank.exp, rank.vitBase);
   
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();

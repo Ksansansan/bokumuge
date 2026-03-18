@@ -153,7 +153,7 @@ async function finishGame() {
   }
 
   // ステータス反映
-  const result = applyMinigameResult(playerRef, 'str', result.actualExpGain, rank.strBase);
+  const result = applyMinigameResult(playerRef, 'str', rank.exp, rank.strBase);
   
   // ★追加：ヘッダー（StatusUI）も更新するように依頼する
   if (playerRef.updateStatusUI) {

@@ -259,7 +259,7 @@ async function finishGame() {
 
   let nextRankStr = rankIndex > 0 ? `次の[${RANKS[rankIndex - 1].name}]まで あと ${(finalTime - RANKS[rankIndex - 1].timeLimit).toFixed(2)} 秒` : "最高ランク！";
 
-  const result = applyMinigameResult(playerRef, 'agi', result.actualExpGain, rank.agiBase);
+  const result = applyMinigameResult(playerRef, 'agi', rank.exp, rank.agiBase);
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 

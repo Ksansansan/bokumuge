@@ -39,12 +39,13 @@ export function generateFloorData(targetFloor) {
   const stageName = `${prefix}${biome.name}-${subLevel}`;
 
   const powerMultiplier = Math.pow(1.165, floor - 1); // 指数
+  const biomeMultiplier = Math.pow(1.12, Math.floor((floor - 1) / 5));
   const linearBonus = floor - 1; // 階層比例（定数加算）
 
   // 基本となる雑魚のステータス（STRはVITより少し高めに設定） （ボスの半分）
-  const baseStr = 18 * linearBonus + 24 * powerMultiplier;
-  const baseVit = 24 * linearBonus + 32 * powerMultiplier;
-  const baseAgi = 20 * linearBonus + 26 * powerMultiplier;
+  const baseStr = 18 * linearBonus + 24 * powerMultiplier * biomeMultiplier;
+  const baseVit = 24 * linearBonus + 32 * powerMultiplier * biomeMultiplier;
+  const baseAgi = 20 * linearBonus + 26 * powerMultiplier * biomeMultiplier;
 
   const createMob = (num) => {
     // ★雑魚の個性付け (A=STR型, B=VIT型, C=AGI型)
@@ -62,9 +63,9 @@ export function generateFloorData(targetFloor) {
   };
 
   // ボスのステータス (雑魚より一回り強い)
-  const bossStr = 36 * linearBonus + 48 * powerMultiplier;
-  const bossVit = 48 * linearBonus + 64 * powerMultiplier;
-  const bossAgi = 40 * linearBonus + 52 * powerMultiplier;
+  const bossStr = 36 * linearBonus + 48 * powerMultiplier * biomeMultiplier;
+  const bossVit = 48 * linearBonus + 64 * powerMultiplier * biomeMultiplier;
+  const bossAgi = 40 * linearBonus + 52 * powerMultiplier * biomeMultiplier;
 
   const enemies =[
     createMob(1), createMob(2), createMob(3),

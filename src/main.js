@@ -298,10 +298,6 @@ async function updateFloorUI(floorNum) {
 }
 // --- ⚔️ バトル実行 ---
 btnChallenge.addEventListener('click', () => {
-  document.getElementById('btn-challenge').style.display = 'none';
-  document.getElementById('btn-surrender').style.display = 'block';
-  isSurrendered = false;
-
   const floorData = generateFloorData(player.floor);
   // ★戦闘には「バフ込みステータス」を渡す
   const battleStats = getBattleStats(player);
@@ -310,7 +306,12 @@ btnChallenge.addEventListener('click', () => {
   resultText.textContent = '';
   document.getElementById('battle-drop-result').style.display = 'none';
   modalBattle.style.display = 'flex';
+
+  // ★ 修正：モーダルを開いた直後は「降参」を表示し「閉じる」を隠す
+  document.getElementById('btn-surrender-modal').style.display = 'block';
   btnCloseBattle.style.display = 'none';
+  isSurrendered = false;
+
 
   document.getElementById('ui-p-name').textContent = player.name;
   document.getElementById('ui-p-stat-str').textContent = formatNumber(battleStats.str);
@@ -409,9 +410,8 @@ btnChallenge.addEventListener('click', () => {
 
     // --- バトルの終了判定 (降参・ドロップ色分け・d エラー修正) ---
     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
+      document.getElementById('btn-surrender-modal').style.display = 'none';
       btnCloseBattle.style.display = 'block';
-      document.getElementById('btn-challenge').style.display = 'block';
-      document.getElementById('btn-surrender').style.display = 'none';
 
       if (result.drops.length > 0 && result.isWin && !isSurrendered) {
         if(!player.inventory) player.inventory = {};
@@ -495,6 +495,11 @@ function setupTabNavigation() {
     });
   });
 }
+
+document.getElementById('btn-surrender-modal').addEventListener('click', () => {
+  isSurrendered = true;
+});
+
 
 document.getElementById('btn-play-rockpush').addEventListener('click', () => {
   openRockPushModal();

@@ -182,8 +182,6 @@
     <div class="battle-actions">
       <button id="btn-prev" class="btn-arrow">◀</button>
       <button id="btn-challenge" class="btn-fantasy" style="margin: 0; width: 60%; font-size: 22px;">挑戦！</button>
-      <!-- ★追加：降参ボタン（最初は非表示） -->
-        <button id="btn-surrender" class="btn-fantasy" style="display:none; margin: 0; width: 60%; font-size: 22px; background:linear-gradient(to bottom, #555, #222); border-color:#8c7a65;">降参する</button>
       <button id="btn-next" class="btn-arrow">▶</button>
     </div>
     </section>
@@ -307,25 +305,6 @@
       <div id="eq-inventory-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;"></div>
     </section>
 
-<!-- 💡 確率表示モーダル (bodyの下部に追加) -->
-<div id="modal-gacha-prob" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
-  <div style="width: 90%; max-width: 450px; background: #0a0a0a; border: 2px solid #c49a45; border-radius: 8px; padding: 15px; color: #f2e4c9; max-height: 75vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,1);">
-      <h3 style="color:#c49a45; text-align:center; margin-top:0;">提供割合</h3>
-      <div style="text-align:center; color:#ffd166; margin-bottom:10px; font-weight:bold;">
-        現在のLCK倍率: <span id="prob-lck-mult">x1.00</span>
-      </div>
-      <div style="display:flex; margin-bottom:10px; border-radius:4px; overflow:hidden;">
-        <button id="prob-tab-before" style="flex:1; padding:8px; background:#c49a45; color:#000; font-weight:bold; border:none; cursor:pointer;">LCK適応前</button>
-        <button id="prob-tab-after" style="flex:1; padding:8px; background:#222; color:#c49a45; font-weight:bold; border:none; cursor:pointer;">LCK適応後</button>
-      </div>
-      <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns: 15% 35% 20% 30%; border-bottom:1px solid #555; padding-bottom:5px; margin-bottom:5px; text-align:center; font-weight:bold;">
-        <div>レア</div><div>名前</div><div>確率</div><div>倍率+定数</div>
-      </div>
-      <div id="prob-list-container" style="flex-grow:1; overflow-y:auto; font-size:12px; line-height:1.8;"></div>
-      <button onclick="document.getElementById('modal-gacha-prob').style.display='none';" class="btn-fantasy" style="margin-top:15px; width:100%;">閉じる</button>
-    </div>
-  </div>
-
     <!-- 📖 4. 図鑑タブ -->
     <section id="tab-collection" class="tab-content">
       <h2>ドロップ図鑑</h2>
@@ -448,11 +427,30 @@
         <ul id="battle-drop-list" style="margin: 0; padding-left: 20px; color: #ddd; line-height:1.6;"></ul>
       </div>
 
-      <button id="btn-close-battle" class="btn-fantasy" style="margin: 0; width: 100%; font-size: 16px; padding: 10px;">閉じる</button>
+      <button id="btn-surrender-modal" class="btn-fantasy" style="margin: 0; width: 100%; font-size: 16px; padding: 10px; background:linear-gradient(to bottom, #555, #222); border-color:#8c7a65;">🏳️ 降参する</button>
+      <button id="btn-close-battle" class="btn-fantasy" style="display: none; margin: 0; width: 100%; font-size: 16px; padding: 10px;">閉じる</button>
     </div>
   </div>
 
-
+<!-- 💡 確率表示モーダル (bodyの下部に追加) -->
+<div id="modal-gacha-prob" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+  <div style="width: 90%; max-width: 450px; background: #0a0a0a; border: 2px solid #c49a45; border-radius: 8px; padding: 15px; color: #f2e4c9; max-height: 75vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,1);">
+      <h3 style="color:#c49a45; text-align:center; margin-top:0;">提供割合</h3>
+      <div style="text-align:center; color:#ffd166; margin-bottom:10px; font-weight:bold;">
+        現在のLCK倍率: <span id="prob-lck-mult">x1.00</span>
+      </div>
+      <div style="display:flex; margin-bottom:10px; border-radius:4px; overflow:hidden;">
+        <button id="prob-tab-before" style="flex:1; padding:8px; background:#c49a45; color:#000; font-weight:bold; border:none; cursor:pointer;">LCK適応前</button>
+        <button id="prob-tab-after" style="flex:1; padding:8px; background:#222; color:#c49a45; font-weight:bold; border:none; cursor:pointer;">LCK適応後</button>
+      </div>
+      <div style="font-size:11px; color:#aaa; display:grid; grid-template-columns: 15% 35% 20% 30%; border-bottom:1px solid #555; padding-bottom:5px; margin-bottom:5px; text-align:center; font-weight:bold;">
+        <div>レア</div><div>名前</div><div>確率</div><div>倍率+定数</div>
+      </div>
+      <div id="prob-list-container" style="flex-grow:1; overflow-y:auto; font-size:12px; line-height:1.8;"></div>
+      <button onclick="document.getElementById('modal-gacha-prob').style.display='none';" class="btn-fantasy" style="margin-top:15px; width:100%;">閉じる</button>
+    </div>
+  </div>
+  
 <!-- 🪨 大岩プッシュ専用モーダル -->
   <div id="modal-rock-push" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
     <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b1f18, #140d0a); border: 2px solid #c49a45; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">

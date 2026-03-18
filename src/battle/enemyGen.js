@@ -25,13 +25,13 @@ export function getDropStatType(floor, isBoss) {
   return types[(g - 1) % 4];
 }
 export function generateFloorData(targetFloor) {
-  const biomeIndex = Math.floor((floor - 1) / 5) % BIOMES.length;
-  const biome = BIOMES[biomeIndex];
+ 
   
   const floor = Math.min(targetFloor, MAX_FLOOR);
   const loopCount = Math.floor((floor - 1) / (BIOMES.length * 5));
   const prefix = PREFIXES[Math.min(loopCount, PREFIXES.length - 1)];
-
+  const biomeIndex = Math.floor((floor - 1) / 5) % BIOMES.length;
+  const biome = BIOMES[biomeIndex];
   const mobDropName = `${prefix}${biome.mobDrop}`;
   const bossDropName = `${prefix}${biome.bossDrop}`;
   const gekidoName = `${prefix}魔の激動`;

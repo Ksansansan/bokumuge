@@ -68,15 +68,20 @@ export function simulateBattle(player, floorData) {
       events.push({ frame: timeFrames, type: 'attack', actor: 'player', damage: damage, hpRemaining: currentEnemy.currentHp });
       
       if (currentEnemy.currentHp <= 0) {
-        // ★追加：これが最後の敵かどうかを判定
         const isLastEnemy = (currentEnemyIndex === enemies.length - 1);
         events.push({ frame: timeFrames, type: 'defeat', isLast: isLastEnemy });
 
+        // ★ ガチャチケのドロップ枚数計算 (LCKボーナス)
+        let ticketCount = 1;
+        if (player.lck >= 100) {
+          ticketCount += Math.max(0, Math.floor(Math.log(player.lck / 100) / Math.log(3)));
+        }
+
         if (currentEnemyIndex < 3) {
-          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob' });
+          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob', count: 1 }); // ★ countを追加
         } else {
-          drops.push({ name: "装備ガチャチケット", type: 'gacha' });
-          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss' });
+          drops.push({ name: "装備ガチャチケット", type: 'gacha', count: ticketCount }); // ★ countを適用
+          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss', count: 1 });
         }
         
         // 最後の敵でなければインターバルを挟む

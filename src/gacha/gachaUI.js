@@ -1,6 +1,6 @@
 // src/gacha/gachaUI.js
 import { RARITY_DATA, STAT_TYPES, EQUIP_NAMES, getLckBonusMultiplier, getActualProbabilities, pullGacha, calcEquipLevel, getEquipStats } from './equipment.js';
-import { savePlayerData } from '../firebase.js';
+import { savePlayerData, addGlobalNews } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 
@@ -98,7 +98,11 @@ async function doGacha() {
   const probs = getActualProbabilities(currentLck); 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
-  
+  playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
+  // ★ 0.2%以下の激レアを引いたらニュース送信 (優先度3)
+  if (probVal <= 0.2) {
+    addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
+  }
   const logEl = document.createElement('div');
   // ★ レア度 [${result.rarityId}] と 確率 ${probStr} を追加
   logEl.innerHTML = `[${TYPE_NAMES[result.type]}] <span class="r-${result.rarityId}">[${result.rarityId}] ${result.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;
@@ -126,6 +130,12 @@ function startAutoGacha(stopRarityIndex) {
      const res = pullGacha(currentLck); 
     const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
+    playerRef.gachaCount = (playerRef.gachaCount || 0) + 1; 
+    
+     // ★ 0.2%以下ニュース
+    if (probVal <= 0.2) {
+      addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
+    }
 
     const logEl = document.createElement('div');
     logEl.innerHTML = `[${TYPE_NAMES[res.type]}] <span class="r-${res.rarityId}">[${res.rarityId}] ${res.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;
@@ -297,8 +307,10 @@ function renderProbList(isAfter) {
   const btnA = document.getElementById('prob-tab-after');
   btnB.style.background = isAfter ? "#222" : "#c49a45";
   btnB.style.color = isAfter ? "#c49a45" : "#000";
+  btnB.style.pointerEvents = isAfter ? "auto" : "none";
   btnA.style.background = isAfter ? "#c49a45" : "#222";
   btnA.style.color = isAfter ? "#000" : "#c49a45";
+  btnA.style.pointerEvents = isAfter ? "none" : "auto";
 
   const container = document.getElementById('prob-list-container');
   container.innerHTML = '';

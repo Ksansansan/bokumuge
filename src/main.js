@@ -1,7 +1,7 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
-import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, getPersonalBest } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews } from './firebase.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
@@ -208,6 +208,7 @@ function init() {
   player.updateStatusUI = updateStatusUI; 
   player.updateTrainingUI = updateTrainingUI; 
   initGachaUI(player, updateStatusUI);
+  initNewsTicker();
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
   initChicken(player, updateTrainingUI);
@@ -277,8 +278,10 @@ async function updateFloorUI(floorNum) {
   try {
     const record = await getFirstClearRecord(floorNum);
     if (record) {
+      const d = new Date(record.timestamp);
+      const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       recordEl.innerHTML = `
-        <div style="margin-bottom:5px;">💡 <span class="highlight-text" style="color:#5ce6e6; font-size:18px;">${record.name}</span> が初クリア！</div>
+        <div style="margin-bottom:5px;">💡 <span class="highlight-text" style="color:#5ce6e6; font-size:18px;">${record.name}</span> が初クリア！<span style="font-size:11px; color:#aaa;">(${dateStr})</span></div>
         <div style="font-size:13px; color:#fff;">
           タイム: <span style="color:#ffeb85;">${record.time}</span> / 
           <span style="color:#ff6b6b;">STR ${formatNumber(record.str)}</span> / 
@@ -751,3 +754,51 @@ document.addEventListener('click', (e) => {
     playSound('click');
   }
 });
+
+// ==========================================
+// 📰 ニューステロップ制御 (init関数内で initNewsTicker(); を呼んでください)
+// ==========================================
+let currentNewsQueue =[];
+let currentNewsIndex = 0;
+let lastTopNewsId = null;
+
+function initNewsTicker() {
+  subscribeNews((newsList) => {
+    currentNewsQueue = newsList;
+    updateNewsDisplay();
+  });
+  
+  // 12秒ごとに次のニュースへローテーション
+  setInterval(() => {
+    if (currentNewsQueue.length > 0) {
+      currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
+      displayNewsText(currentNewsQueue[currentNewsIndex].text);
+    }
+  }, 12000);
+}
+
+function updateNewsDisplay() {
+  if (currentNewsQueue.length === 0) {
+    displayNewsText("🔔 ぼくらの無限塔へようこそ！");
+    return;
+  }
+  const topNews = currentNewsQueue[0];
+  // ★ 新しいトップニュース（優先順位1位）が飛び込んできたら音を鳴らして即座に切り替え！
+  if (lastTopNewsId !== topNews.id) {
+    lastTopNewsId = topNews.id;
+    playSound('win'); // ピロリン♪
+    currentNewsIndex = 0;
+    displayNewsText(topNews.text);
+  }
+}
+
+function displayNewsText(text) {
+  const el = document.querySelector('.news-text');
+  if (el.textContent !== text) {
+    el.textContent = text;
+    // アニメーションをリセットして右から流し直す
+    el.style.animation = 'none';
+    el.offsetHeight; 
+    el.style.animation = 'marquee 15s linear infinite';
+  }
+}

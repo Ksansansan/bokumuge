@@ -1,7 +1,7 @@
 // src/firebase.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp, query, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuXSWPC0PFNeRQbPPrA-eUBLx5yTiNvv8",
@@ -34,7 +34,7 @@ export async function loginOrRegister(username, pin) {
   } else {
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, inventory: {},
+      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount:0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: serverTimestamp(),
       timestamps: {} // ★項目ごとの更新日時を保存する枠
@@ -54,6 +54,40 @@ export async function getFirstClearRecord(floor) {
   return snap.exists() ? snap.data() : null;
 }
 
+// ==========================================
+// 📰 ニュース (テロップ) 機能
+// ==========================================
+export async function addGlobalNews(text, priority) {
+  try {
+    await addDoc(collection(db, "news"), {
+      text: text,
+      priority: priority,
+      timestamp: Date.now()
+    });
+  } catch (e) { console.warn("ニュース送信失敗", e); }
+}
+
+export function subscribeNews(callback) {
+  const q = query(collection(db, "news"), orderBy("timestamp", "desc"), limit(20));
+  return onSnapshot(q, (snapshot) => {
+    const newsList =[];
+    const now = Date.now();
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      // 直近10分以内 (600,000ミリ秒) のニュースのみ取得
+      if (now - data.timestamp <= 600000) {
+        newsList.push({ id: doc.id, ...data });
+      }
+    });
+    // 優先度(数字が小さい=高い)順 → 同値なら新しい順でソート
+    newsList.sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      return b.timestamp - a.timestamp;
+    });
+    callback(newsList);
+  });
+}
+
 export async function checkAndSaveFirstClear(player, floor, time) {
   const docRef = doc(db, "firstClears", `floor_${floor}`);
   const snap = await getDoc(docRef);
@@ -68,6 +102,8 @@ export async function checkAndSaveFirstClear(player, floor, time) {
       timestamp: serverTimestamp()
     };
     await setDoc(docRef, data);
+    // ★ ニュース送信 (優先度1)
+    addGlobalNews(`👑 【初クリア】${player.name} が 第${floor}層 を世界で初めて突破しました！！`, 1);
     return true;
   }
   return false;
@@ -80,6 +116,7 @@ export async function savePlayerData(player) {
   player.totalLv = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
   player.winCount = player.winCount || 0;
   player.collectionCount = player.collectionCount || 0;
+  player.gachaCount = player.gachaCount || 0;
   if (!player.timestamps) player.timestamps = {};
   
   const dataToSave = { ...player };
@@ -92,7 +129,7 @@ export async function savePlayerData(player) {
   }
 
   // ★「前回セーブした時」と比べて数値が上がっていたら、その項目の日時を更新する！
-  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount"];
+  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount"];
   const now = serverTimestamp();
   
   if (lastSavedPlayerState) {
@@ -120,24 +157,34 @@ export async function savePlayerData(player) {
 // ==========================================
 // ミニゲームの自己ベスト保存・取得
 // ==========================================
+// --- 自己ベスト保存時 (1位更新ニュースを追加) ---
 export async function savePersonalBest(userId, gameId, score) {
   const docRef = doc(db, "minigames", gameId, "scores", userId);
   const docSnap = await getDoc(docRef);
+  let isNew = false;
   
   if (!docSnap.exists()) {
-    await setDoc(docRef, { userId: userId, time: score, timestamp: serverTimestamp() });
-    return true; 
+    await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
+    isNew = true; 
   } else {
-    const currentBest = docSnap.data().time; // フィールド名はtimeのまま（過去データ互換のため）
-    // ★ guard はスコアなので「大きい方が更新」。他はTAなので「小さい方が更新」
+    const currentBest = docSnap.data().time;
     const isBetter = (gameId === "guard" || gameId === "slot") ? (score > currentBest) : (score < currentBest);
-    
     if (isBetter) {
-      await setDoc(docRef, { userId: userId, time: score, timestamp: serverTimestamp() });
-      return true;
+      await setDoc(docRef, { userId: userId, time: score, timestamp: Date.now() });
+      isNew = true;
     }
   }
-  return false;
+
+  // ★ 1位を更新したかチェックしてニュース送信 (優先度2)
+  if (isNew) {
+    const ranks = await getRankingData(gameId);
+    if (ranks.length > 0 && ranks[0].name === userId) {
+      const gNames = { rockPush: "大岩プッシュ", daruma: "だるま落とし", chicken: "崖っぷちダッシュ", guard: "飛来物ガード", '1to20': "1〜20 早押し", command: "コマンド早入力", clover: "四つ葉探し", slot: "狙え！スロット" };
+      let sStr = (gameId === 'guard' || gameId === 'slot') ? `${score} pt` : (gameId === 'chicken' ? `${score.toFixed(2)} m` : `${score.toFixed(2)} 秒`);
+      addGlobalNews(`🏆 【記録更新】${userId} が ${gNames[gameId]} で1位（${sStr}）に躍り出ました！`, 2);
+    }
+  }
+  return isNew;
 }
 
 export async function getPersonalBest(userId, gameId) {
@@ -153,7 +200,7 @@ export async function getRankingData(rankId, isTotal = false) {
   const rankings =[];
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
 
-  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount"].includes(rankId)) {
+  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount"].includes(rankId)) {
     const dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
 
     // ★身内用なので全件取得してJSでソートする

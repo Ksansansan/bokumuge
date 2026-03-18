@@ -14,18 +14,28 @@ const db = getFirestore(app);
 
 // ★追加：データ変化を追跡するためのキャッシュ
 let lastSavedPlayerState = null;
+// ★追加：サーバーとクライアントの時間のズレを保持する変数
+let serverTimeOffset = 0;
 
+export function getReliableTime() {
+  return Date.now() + serverTimeOffset;
+}
 // ==========================================
 // 簡易ログイン ＆ 新規登録
 // ==========================================
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
+   await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
   const userSnap = await getDoc(userRef);
-
   if (userSnap.exists()) {
+    const serverTime = userSnap.data().lastLoginTime.toMillis();
+    serverTimeOffset = serverTime - Date.now();
     const data = userSnap.data();
     if (data.pin === pin) {
       if (!data.timestamps) data.timestamps = {}; // 古いデータ互換
+      if (!data.meditation) {
+        data.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
+      } 
       lastSavedPlayerState = JSON.parse(JSON.stringify(data)); // キャッシュに保存
       return { success: true, data: data };
     } else {
@@ -37,7 +47,8 @@ export async function loginOrRegister(username, pin) {
       floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount:0, firstClearCount:0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: serverTimestamp(),
-      timestamps: {} // ★項目ごとの更新日時を保存する枠
+      timestamps: {}, // ★項目ごとの更新日時を保存する枠
+      meditation: { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime }
     };
     await setDoc(userRef, initialData);
     lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));

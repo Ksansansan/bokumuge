@@ -254,6 +254,41 @@
         <button id="btn-play-clover" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し (TA)</button>
         <button id="btn-play-slot" class="btn-fantasy" style="padding: 10px; font-size:15px; margin:5px auto; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c);">狙え！スロット (エンドレス)</button>
       </div>
+      <!-- 🧘 瞑想（放置機能）パネル -->
+      <div class="panel" style="margin-top: 25px; border-color: #c49a45; background: radial-gradient(circle at center, #2b2511, #141108);">
+        <div style="color:#ffd166; font-weight:bold; font-size:18px; text-align:center; border-bottom:1px solid #c49a45; padding-bottom:5px;">🧘 瞑想 (放置機能)</div>
+        <p style="font-size:12px; color:#aaa; text-align:center; margin: 8px 0; line-height:1.5;">
+          オフライン中も自動で特訓可能！(上限12時間)<br>
+          <span style="color:#5ce6e6; font-weight:bold;">10分ごとにチケット</span> / <span style="color:#ff6b6b; font-weight:bold;">20分ごとに基礎値</span> を獲得。
+        </p>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-size:14px; font-weight:bold; color:#f2e4c9;">特訓対象:</div>
+          <select id="md-target-select" style="background:#000; color:#fff; border:1px solid #c49a45; padding:5px; border-radius:4px; font-size:14px; font-weight:bold;">
+            <option value="str">STR (攻撃力)</option>
+            <option value="vit">VIT (体力・防御)</option>
+            <option value="agi">AGI (素早さ)</option>
+            <option value="lck">LCK (運)</option>
+          </select>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.6); padding:12px; border-radius:6px; border:1px solid #4a3b26;">
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:#ccc;">経過時間:</span>
+            <span id="md-elapsed-time" style="color:#fff; font-family:monospace; font-weight:bold; font-size:14px;">00:00:00</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:8px;">
+            <span style="color:#ccc;">獲得チケット:</span>
+            <span id="md-est-tickets" style="color:#ffd166; font-weight:bold; font-size:14px;">0 枚</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:8px;">
+            <span style="color:#ccc;">獲得ステータス:</span>
+            <span id="md-est-stats" style="color:#ff6b6b; font-weight:bold; font-size:14px;">+0</span>
+          </div>
+        </div>
+
+        <button id="md-btn-claim" class="btn-fantasy" style="width:100%; margin:15px 0 0 0; padding:12px; font-size:16px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; opacity:0.5; pointer-events:none;">報酬を受け取る！</button>
+      </div>
     </section>
 
 
@@ -450,7 +485,7 @@
       <button onclick="document.getElementById('modal-gacha-prob').style.display='none';" class="btn-fantasy" style="margin-top:15px; width:100%;">閉じる</button>
     </div>
   </div>
-  
+
 <!-- 🪨 大岩プッシュ専用モーダル -->
   <div id="modal-rock-push" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; flex-direction: column;">
     <div style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #2b1f18, #140d0a); border: 2px solid #c49a45; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; color: #f2e4c9;">

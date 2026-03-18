@@ -6,6 +6,7 @@ import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
+import { initMeditation } from './minigame/meditation.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
 import { initDaruma, openDarumaModal } from './minigame/daruma.js';
 import { initChicken, openChickenModal } from './minigame/chicken.js';
@@ -210,6 +211,7 @@ function init() {
   player.updateTrainingUI = updateTrainingUI; 
   initGachaUI(player, updateStatusUI);
   initNewsTicker();
+  initMeditation(player, updateTrainingUI);
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
   initChicken(player, updateTrainingUI);
@@ -252,6 +254,13 @@ async function updateFloorUI(floorNum) {
   document.getElementById('floor-header').textContent = `第 ${floorData.floor} 層`;
   document.getElementById('stage-name').textContent = floorData.stageName;
 
+  const rec = floorData.recommended;
+  document.getElementById('rec-stats').innerHTML = `
+    推奨: <span style="color:#ff6b6b;">STR ${formatNumber(rec.str)}</span> / 
+    <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
+    <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
+  `;
+  
   // ★ドロップの色分けと、ガチャチケ枚数のLCK加算
   let ticketCount = 1;
   const currentLck = player.battleStats?.lck || player.lck || 0;
@@ -413,7 +422,7 @@ btnChallenge.addEventListener('click', () => {
       document.getElementById('btn-surrender-modal').style.display = 'none';
       btnCloseBattle.style.display = 'block';
 
-      if (result.drops.length > 0 && result.isWin && !isSurrendered) {
+      if (result.drops.length > 0) {
         if(!player.inventory) player.inventory = {};
         const dropListEl = document.getElementById('battle-drop-list');
         dropListEl.innerHTML = '';

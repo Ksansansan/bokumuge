@@ -135,7 +135,7 @@ function startAutoGacha(stopRarityIndex) {
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1; 
     
      // ★ 0.2%以下ニュース
-    if (probValue <= 0.2) {
+    if (probVal <= 0.2) {
       addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
     }
 

@@ -102,7 +102,7 @@ async function doGacha() {
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★ 0.2%以下の激レアを引いたらニュース送信 (優先度3)
   if (probValue <= 0.2) {
-    addGlobalNews(`✨ ラッキー！ <span style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
+    addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
   }
   const logEl = document.createElement('div');
   // ★ レア度 [${result.rarityId}] と 確率 ${probStr} を追加
@@ -136,7 +136,7 @@ function startAutoGacha(stopRarityIndex) {
     
      // ★ 0.2%以下ニュース
     if (probVal <= 0.2) {
-      addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
+      addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
     }
 
     const logEl = document.createElement('div');

@@ -116,7 +116,7 @@ export async function checkAndSaveFirstClear(player, floor, time) {
     // ★初クリア数をインクリメント
     player.firstClearCount = (player.firstClearCount || 0) + 1;
     // ★ ニュース送信 (優先度1)
-    addGlobalNews(`👑 【初クリア】<span style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が 第${floor}層 を世界で初めて突破しました！！`, 1);
+    addGlobalNews(`👑 【初クリア】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が 第${floor}層 を世界で初めて突破しました！！`, 1);
     return true;
   }
   return false;
@@ -194,7 +194,7 @@ export async function savePersonalBest(userId, gameId, score) {
     if (ranks.length > 0 && ranks[0].name === userId) {
       const gNames = { rockPush: "大岩プッシュ", daruma: "だるま落とし", chicken: "崖っぷちダッシュ", guard: "飛来物ガード", '1to20': "1〜20 早押し", command: "コマンド早入力", clover: "四つ葉探し", slot: "狙え！スロット" };
       let sStr = (gameId === 'guard' || gameId === 'slot') ? `${score} pt` : (gameId === 'chicken' ? `${score.toFixed(2)} m` : `${score.toFixed(2)} 秒`);
-       addGlobalNews(`🏆 【記録更新】<span style="color:#5ce6e6; font-weight:bold;">${userId}</span> が ${gNames[gameId]} で1位（${sStr}）に躍り出ました！`, 2);
+       addGlobalNews(`🏆 【記録更新】<span class="clickable-name" data-name="${userId}" style="color:#5ce6e6; font-weight:bold;">${userId}</span> が ${gNames[gameId]} で1位（${sStr}）に躍り出ました！`, 2);
     }
   }
   return isNew;

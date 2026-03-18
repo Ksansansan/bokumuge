@@ -314,8 +314,8 @@ async function updateFloorUI(floorNum) {
       const d = new Date(ts);
       const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       
-      recordEl.innerHTML = `
-        <div style="margin-bottom:5px;">💡 <span style="color:#5ce6e6; font-size:18px; font-weight:bold;">${record.name}</span> が初クリア！ <span style="font-size:11px; color:#aaa;">(${dateStr})</span></div>
+       recordEl.innerHTML = `
+        <div style="margin-bottom:5px;">💡 <span class="highlight-text clickable-name" data-name="${record.name}" style="color:#5ce6e6; font-size:18px; font-weight:bold;">${record.name}</span> が初クリア！ <span style="font-size:11px; color:#aaa;">(${dateStr})</span></div>
         <div style="font-size:13px; color:#fff;">
           タイム: <span style="color:#ffeb85;">${record.time}</span> / 
           <span style="color:#ff6b6b;">STR ${formatNumber(record.str)}</span> / 
@@ -473,7 +473,7 @@ btnChallenge.addEventListener('click', () => {
 
           // マスター(81個)到達ニュース
           if (currentCount < 81 && newCount >= 81) {
-            addGlobalNews(`👑 【マスター到達】<span style="color:#5ce6e6;">${player.name}</span> が ${dropItem.name} をマスター(MAX)にしました！`, 4);
+            addGlobalNews(`👑 【マスター到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が ${dropItem.name} をマスター(MAX)にしました！`, 4);
           }
 
           if (dropItem.name.includes("魔の激動")) {
@@ -687,7 +687,7 @@ async function renderRanking() {
         <div class="${selfClass}" style="display:flex; justify-content:space-between; padding:10px; margin-bottom:8px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:${borderLeftStyle};">
           <div style="display:flex; align-items:center;">
             <span style="font-weight:bold; color:${color}; font-size:16px; margin-right:8px;">${index + 1}位.</span>
-            <span style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(あなた)</span>' : ''}</span>
+            <span class="clickable-name" data-name="${item.name}" style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(あなた)</span>' : ''}</span>
           </div>
           <span style="font-weight:bold; color:#fff; font-family:monospace;">${displayScore}</span>
         </div>
@@ -712,7 +712,7 @@ async function renderRanking() {
 
     myRankingContainer.innerHTML = `
       <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(92, 230, 230, 0.1); border-left:3px solid #5ce6e6; border-radius:4px;">
-        <span style="font-weight:bold; color:#5ce6e6;">圏外. ${player.name} (あなた)</span>
+        <span style="font-weight:bold; color:#5ce6e6;">圏外.<span class="clickable-name" data-name="${player.name}" style="font-weight:bold; color:#fff;">${player.name}</span> (あなた)</span>
         <span style="font-weight:bold; color:#fff;">${displayMyScore}</span>
       </div>
     `;
@@ -735,7 +735,7 @@ async function handleVictory(result, floorNum) {
 
       // ★ 5層ごとの突破ニュース (まだ誰もクリアしていない階層は「初クリア」が流れるので除外気味で)
       if (floorNum % 5 === 0 && !isFirst) {
-        addGlobalNews(`🎌 【到達】<span style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が第${floorNum}層を突破しました！`, 5);
+        addGlobalNews(`🎌 【到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が第${floorNum}層を突破しました！`, 5);
       }
       // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）
     }

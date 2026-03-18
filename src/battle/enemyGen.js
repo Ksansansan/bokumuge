@@ -38,7 +38,7 @@ export function generateFloorData(targetFloor) {
   const subLevel = ((floor - 1) % 5) + 1;
   const stageName = `${prefix}${biome.name}-${subLevel}`;
 
-  const powerMultiplier = Math.pow(1.15, floor - 1); // 指数
+  const powerMultiplier = Math.pow(1.165, floor - 1); // 指数
   const linearBonus = floor - 1; // 階層比例（定数加算）
 
   // 基本となる雑魚のステータス（STRはVITより少し高めに設定） （ボスの半分）

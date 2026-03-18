@@ -259,6 +259,10 @@ async function updateFloorUI(floorNum) {
     <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
     <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
   `;
+  const currentLck = player.battleStats?.lck || player.lck || 0;
+  const lckMult = getLckBonusMultiplier(currentLck);
+  const gekidoProb = (0.01 * lckMult).toFixed(4);
+  
   // ★【重要】ドロップ情報の表示
   const dropList = document.getElementById('drop-list');
   dropList.innerHTML = `

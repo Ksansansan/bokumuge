@@ -260,7 +260,32 @@ async function updateFloorUI(floorNum) {
     <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
     <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
   `;
-  
+
+   // ★ 修正：階層移動ボタンの透明化 (disabled クラスの付け外し)
+  const prevBtn = document.getElementById('btn-prev');
+  const nextBtn = document.getElementById('btn-next');
+
+  if (floorNum <= 1) {
+    prevBtn.classList.add('disabled');
+    prevBtn.style.opacity = "0.3";
+    prevBtn.style.pointerEvents = "none";
+  } else {
+    prevBtn.classList.remove('disabled');
+    prevBtn.style.opacity = "1";
+    prevBtn.style.pointerEvents = "auto";
+  }
+
+  // 自分の最高到達階層（maxClearedFloor）より先には行けない
+  if (floorNum >= (player.maxClearedFloor || 1)) {
+    nextBtn.classList.add('disabled');
+    nextBtn.style.opacity = "0.3";
+    nextBtn.style.pointerEvents = "none";
+  } else {
+    nextBtn.classList.remove('disabled');
+    nextBtn.style.opacity = "1";
+    nextBtn.style.pointerEvents = "auto";
+  }
+
   // ★ドロップの色分けと、ガチャチケ枚数のLCK加算
   let ticketCount = 1;
   const currentLck = player.battleStats?.lck || player.lck || 0;

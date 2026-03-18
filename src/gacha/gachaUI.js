@@ -96,13 +96,13 @@ async function doGacha() {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const result = pullGacha(currentLck);
   const probs = getActualProbabilities(currentLck); 
-  const probValue = probs[res.rarityIndex]; 
+  const probValue = probs[result.rarityIndex]; 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★ 0.2%以下の激レアを引いたらニュース送信 (優先度3)
   if (probValue <= 0.2) {
-    addGlobalNews(`✨ ラッキー！ ${playerRef.name} が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
+    addGlobalNews(`✨ ラッキー！ <span style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
   }
   const logEl = document.createElement('div');
   // ★ レア度 [${result.rarityId}] と 確率 ${probStr} を追加

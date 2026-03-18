@@ -603,7 +603,7 @@ async function renderRanking() {
   let myScore = null;
   if (["str", "vit", "agi", "lck"].includes(currentRankId)) {
     myScore = isTotalMode ? (player.battleStats ? player.battleStats[currentRankId] : player[currentRankId]) : player[currentRankId];
-  } else if (["floor", "totalLv", "winCount", "collectionCount"].includes(currentRankId)) {
+  } else if (["floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"].includes(currentRankId)) {
     myScore = player[currentRankId] || (currentRankId==='floor'?1:0);
   } else {
     myScore = await getPersonalBest(player.name, currentRankId); // ミニゲーム
@@ -694,7 +694,7 @@ async function handleVictory(result, floorNum) {
 
       // ★ 5層ごとの突破ニュース (まだ誰もクリアしていない階層は「初クリア」が流れるので除外気味で)
       if (floorNum % 5 === 0 && !isFirst) {
-        addGlobalNews(`🎌 【到達】${player.name} が第${floorNum}層を突破しました！`, 5);
+        addGlobalNews(`🎌 【到達】<span style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が第${floorNum}層を突破しました！`, 5);
       }
       // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）
     }

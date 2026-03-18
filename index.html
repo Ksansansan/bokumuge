@@ -127,7 +127,7 @@
 </head>
 <body>
 <!-- 🚪 ログイン画面モーダル -->
-  <div id="modal-login" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 1000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+  <div id="modal-login" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     <h1 style="color:#c49a45; font-family:serif; font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(196,154,69,0.5);">ぼくらの無限塔</h1>
     <div style="background: rgba(20, 15, 12, 0.8); border: 1px solid #c49a45; border-radius: 8px; padding: 25px; width: 80%; max-width: 320px;">
       <p style="font-size: 13px; text-align:center; margin-top:0; color:#aaa; line-height: 1.5;">名前と4桁の数字を決めてください。<br>次回以降、同じ入力で続きから遊べます。</p>
@@ -359,7 +359,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <!-- 本編系ランキング -->
           <button class="btn-fantasy btn-show-ranking" data-rank-id="floor" style="font-size:13px; padding:8px; margin:0;">👑 最高到達層</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="firstClearCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #b16bff, #4a0d4a);">👑 初クリア数 王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="firstClearCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #b16bff, #4a0d4a);">👑 初クリア数</button>
         
           <button class="btn-fantasy btn-show-ranking" data-rank-id="str" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #7a2020, #4a0d0d);">💪 STRランキング</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="vit" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #205c7a, #0d314a);">🛡️ VITランキング</button>
@@ -367,24 +367,23 @@
           <button class="btn-fantasy btn-show-ranking" data-rank-id="lck" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #a88820, #5c480b);">🍀 LCKランキング</button>
           
                     <button class="btn-fantasy btn-show-ranking" data-rank-id="totalLv" style="font-size:13px; padding:8px; margin:0;">👑 総特訓レベル</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="winCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #4a0d4a, #2b082b);">⚔️ 累計勝利数 王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="winCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #4a0d4a, #2b082b);">⚔️ 累計勝利数</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="gachaCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">🎰 累計ガチャ回数</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="collectionCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #0d4a0d, #082b08);">📖 収集コレクター</button>
           
-          <!-- ミニゲーム系ランキング -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+         <!-- ★ ミニゲーム系ランキング (横4列に変更) -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; border-top: 1px dashed #4a3b26; padding-top: 12px;">
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="rockPush" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">大岩プッシュ王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="daruma" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">だるま落とし王</button>
           
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="rockPush" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">大岩プッシュ王</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="daruma" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d);">だるま落とし王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="chicken" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #205c7a, #0d314a);">崖っぷち王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="guard" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #207a7a, #0d4a4a);">飛来物ガード王</button>
           
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="chicken" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #205c7a, #0d314a);">崖っぷち王</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="guard" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #207a7a, #0d4a4a);">飛来物ガード王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="1to20" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #3a7a20, #1d4a0d);">1〜20早押し王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="command" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #5c7a20, #314a0d);">コマンド入力王</button>
           
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="1to20" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #3a7a20, #1d4a0d);">1〜20早押し王</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="command" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #5c7a20, #314a0d);">コマンド入力王</button>
-          
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="clover" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し王</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="slot" style="font-size:14px; padding:10px; margin:0; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c);">スロット王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="clover" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #a88820, #5c480b);">四つ葉探し王</button>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="slot" style="font-size:11px; padding:6px 2px; margin:0; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">スロット王</button>
         </div>
       </div>
     </section>

@@ -183,7 +183,7 @@ export async function savePersonalBest(userId, gameId, score) {
     if (ranks.length > 0 && ranks[0].name === userId) {
       const gNames = { rockPush: "大岩プッシュ", daruma: "だるま落とし", chicken: "崖っぷちダッシュ", guard: "飛来物ガード", '1to20': "1〜20 早押し", command: "コマンド早入力", clover: "四つ葉探し", slot: "狙え！スロット" };
       let sStr = (gameId === 'guard' || gameId === 'slot') ? `${score} pt` : (gameId === 'chicken' ? `${score.toFixed(2)} m` : `${score.toFixed(2)} 秒`);
-      addGlobalNews(`🏆 【記録更新】${userId} が ${gNames[gameId]} で1位（${sStr}）に躍り出ました！`, 2);
+       addGlobalNews(`🏆 【記録更新】<span style="color:#5ce6e6; font-weight:bold;">${userId}</span> が ${gNames[gameId]} で1位（${sStr}）に躍り出ました！`, 2);
     }
   }
   return isNew;

@@ -240,7 +240,7 @@ async function finishGame(isFall, remainingDist) {
   }
 
   // ステータス反映
-  const result = applyMinigameResult(playerRef, 'vit', rank.exp, rank.vitBase);
+  const result = applyMinigameResult(playerRef, 'vit', result.actualExpGain, rank.vitBase);
   
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
@@ -267,7 +267,7 @@ async function finishGame(isFall, remainingDist) {
   let gainHtml = `
     <div style="font-size:16px; margin-bottom:10px;">Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span></div>
     VIT 基礎値: <span style="color:#6be6ff;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
-    EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>
+    EXP 獲得: <span style="color:#5ce6e6;">+${result.actualExpGain}</span>
   `;
   
   const prog = Math.floor((result.currentExp / result.nextExp) * 100);

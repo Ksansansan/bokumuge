@@ -153,7 +153,7 @@ async function finishGame() {
   }
 
   // ステータス反映
-  const result = applyMinigameResult(playerRef, 'str', rank.exp, rank.strBase);
+  const result = applyMinigameResult(playerRef, 'str', result.actualExpGain, rank.strBase);
   
   // ★追加：ヘッダー（StatusUI）も更新するように依頼する
   if (playerRef.updateStatusUI) {
@@ -178,7 +178,7 @@ async function finishGame() {
       Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span>
     </div>
     STR 基礎値: <span style="color:#ff6b6b;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
-    EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>
+    EXP 獲得: <span style="color:#5ce6e6;">+${result.actualExpGain}</span>
   `;
   
   // 経験値バー

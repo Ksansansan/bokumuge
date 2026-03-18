@@ -259,7 +259,7 @@ async function finishGame() {
 
   let nextRankStr = rankIndex > 0 ? `次の[${RANKS[rankIndex - 1].name}]まで あと ${(finalTime - RANKS[rankIndex - 1].timeLimit).toFixed(2)} 秒` : "最高ランク！";
 
-  const result = applyMinigameResult(playerRef, 'agi', rank.exp, rank.agiBase);
+  const result = applyMinigameResult(playerRef, 'agi', result.actualExpGain, rank.agiBase);
   if (onUpdateCallback) onUpdateCallback();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 
@@ -274,7 +274,7 @@ async function finishGame() {
   let gainHtml = `
     <div style="font-size:16px; margin-bottom:10px;">Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span></div>
     AGI 基礎値: <span style="color:#94ff6b;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
-    EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>
+    EXP 獲得: <span style="color:#5ce6e6;">+${result.actualExpGain}</span>
   `;
   const prog = Math.floor((result.currentExp / result.nextExp) * 100);
   gainHtml += `<div style="width:100%; background:#111; border:1px solid #4a3b26; height:8px; margin-top:8px; border-radius:4px; overflow:hidden;"><div style="width:${prog}%; background:#94ff6b; height:100%;"></div></div>`;

@@ -252,42 +252,35 @@ async function updateFloorUI(floorNum) {
   document.getElementById('floor-header').textContent = `第 ${floorData.floor} 層`;
   document.getElementById('stage-name').textContent = floorData.stageName;
 
-  // --- 推奨ステータスの色分け ---
-  const rec = floorData.recommended;
-  document.getElementById('rec-stats').innerHTML = `
-    推奨: <span style="color:#ff6b6b;">STR ${formatNumber(rec.str)}</span> / 
-    <span style="color:#6be6ff;">VIT ${formatNumber(rec.vit)}</span> / 
-    <span style="color:#94ff6b;">AGI ${formatNumber(rec.agi)}</span>
-  `;
+  // ★ドロップの色分けと、ガチャチケ枚数のLCK加算
+  let ticketCount = 1;
   const currentLck = player.battleStats?.lck || player.lck || 0;
+  if (currentLck >= 100) {
+    ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
+  }
   const lckMult = getLckBonusMultiplier(currentLck);
   const gekidoProb = (0.01 * lckMult).toFixed(4);
-  
-  // ★【重要】ドロップ情報の表示
-  const dropList = document.getElementById('drop-list');
-  dropList.innerHTML = `
-    <li>装備ガチャチケット (ボス100%)</li>
-    <li>${floorData.biome.mobDrop} [図鑑] (雑魚20%)</li>
-    <li>${floorData.biome.bossDrop} [図鑑] (ボス30%)</li>
+
+  document.getElementById('drop-list').innerHTML = `
+    <li style="color:#fff;">装備ガチャチケット <span style="font-weight:bold;">x${ticketCount}</span> (ボス100%)</li>
+    <li style="color:#5ce6e6;">${floorData.biome.mobDrop}[図鑑] (雑魚20%)</li>
+    <li style="color:#ffd166;">${floorData.biome.bossDrop} [図鑑] (ボス30%)</li>
     <li style="color:#b16bff;">${floorData.gekido.name} [特殊] (${gekidoProb}%)</li>
   `;
-  // ◀ ▶ ボタン制御
-  const prevBtn = document.getElementById('btn-prev');
-  const nextBtn = document.getElementById('btn-next');
-  prevBtn.className = (floorNum <= 1) ? 'btn-arrow disabled' : 'btn-arrow';
-  nextBtn.className = (floorNum >= (player.maxClearedFloor || 1)) ? 'btn-arrow disabled' : 'btn-arrow';
 
-  // --- 初クリア者情報の表示（色分け ＆ LCK追加） ---
+  // ★初クリア者表示 (serverTimestamp の処理)
   const recordEl = document.getElementById('clear-record');
   recordEl.innerHTML = "💡 記録を確認中...";
-
   try {
     const record = await getFirstClearRecord(floorNum);
     if (record) {
-      const d = new Date(record.timestamp);
+      // serverTimestamp は toMillis() を持つオブジェクトで返ってくることがある
+      const ts = record.timestamp?.toMillis ? record.timestamp.toMillis() : record.timestamp;
+      const d = new Date(ts);
       const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      
       recordEl.innerHTML = `
-        <div style="margin-bottom:5px;">💡 <span class="highlight-text" style="color:#5ce6e6; font-size:18px;">${record.name}</span> が初クリア！<span style="font-size:11px; color:#aaa;">(${dateStr})</span></div>
+        <div style="margin-bottom:5px;">💡 <span style="color:#5ce6e6; font-size:18px; font-weight:bold;">${record.name}</span> が初クリア！ <span style="font-size:11px; color:#aaa;">(${dateStr})</span></div>
         <div style="font-size:13px; color:#fff;">
           タイム: <span style="color:#ffeb85;">${record.time}</span> / 
           <span style="color:#ff6b6b;">STR ${formatNumber(record.str)}</span> / 
@@ -414,43 +407,53 @@ btnChallenge.addEventListener('click', () => {
     document.getElementById('ui-e-hp-txt').textContent = `${formatNumber(Math.max(0, eHp))} / ${formatNumber(eMaxHp)}`;
     document.getElementById('ui-e-gauge').style.width = `${(eGaugeVal / 1000) * 100}%`;
 
+    // --- バトルの終了判定 (降参・ドロップ色分け・d エラー修正) ---
     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
-      // ★ボタン戻す
       document.getElementById('btn-challenge').style.display = 'block';
       document.getElementById('btn-surrender').style.display = 'none';
-      
-      // ★ドロップ結果の表示とインベントリ追加
-      if (result.drops.length > 0) {
-        const currentCount = player.inventory[d.name] || 0;
-          const newCount = currentCount + d.count;
-          player.inventory[d.name] = newCount;
-          
+
+      if (result.drops.length > 0 && result.isWin && !isSurrendered) {
         if(!player.inventory) player.inventory = {};
         const dropListEl = document.getElementById('battle-drop-list');
         dropListEl.innerHTML = '';
         
-        result.drops.forEach(d => {
-          player.inventory[d.name] = (player.inventory[d.name] || 0) + d.count;
+        let hasGekidoUpdate = false;
+
+        // ★ d 変数エラーの修正と色分け
+        result.drops.forEach(dropItem => {
+          const currentCount = player.inventory[dropItem.name] || 0;
+          const newCount = currentCount + dropItem.count;
+          player.inventory[dropItem.name] = newCount;
+          
+          let color = '#fff';
+          if (dropItem.type === 'mob') color = '#5ce6e6';
+          else if (dropItem.type === 'boss') color = '#ffd166';
+          else if (dropItem.type === 'gekido' || dropItem.name.includes('激動')) color = '#b16bff';
+
           const li = document.createElement('li');
-          // ★ x2 などの表示を追加
-          li.innerHTML = `<span style="color:${d.type==='boss'?'#ffd166':'#fff'}">${d.name}</span> <span style="color:#5ce6e6; font-weight:bold;">x${d.count}</span> を獲得！`;
+          li.innerHTML = `<span style="color:${color}">${dropItem.name}</span> <span style="color:#fff; font-weight:bold;">x${dropItem.count}</span> を獲得！`;
           dropListEl.appendChild(li);
-         // ★マスター(81個)到達ニュース
+
+          // マスター(81個)到達ニュース
           if (currentCount < 81 && newCount >= 81) {
-            addGlobalNews(`👑 【マスター到達】${player.name} が ${d.name} をマスター(MAX)にしました！`, 4);
+            addGlobalNews(`👑 【マスター到達】<span style="color:#5ce6e6;">${player.name}</span> が ${dropItem.name} をマスター(MAX)にしました！`, 4);
           }
 
-          // ★「魔の激動」の遡及レベルアップ処理
-          if (d.name.includes("魔の激動")) {
-            applyGekidoBonus();
+          if (dropItem.name.includes("魔の激動")) {
+            hasGekidoUpdate = true;
           }
         });
         document.getElementById('battle-drop-result').style.display = 'block';
+        
+        // ★ ドロップ処理がすべて終わってからバフを再計算する
+        if (hasGekidoUpdate) {
+          applyGekidoBonus();
+        }
         updateCollectionUI(); 
       }
 
-      if (result.isWin) {
+      if (result.isWin && !isSurrendered) {
         playSound('win');
         handleVictory(result, floorData.floor); 
       } else {
@@ -706,7 +709,7 @@ async function handleVictory(result, floorNum) {
   }
 }
 
-// --- 📖 図鑑UI更新関数 ---
+// --- 📖 図鑑UIの更新 (魔の激動と未取得表示の追加) ---
 function updateCollectionUI() {
   const container = document.getElementById('collection-list-container');
   if (!container) return;
@@ -714,61 +717,46 @@ function updateCollectionUI() {
 
   let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
   let totalCollectedCount = 0;
-  
-  // ★ 上限を81に設定
   const rankThresholds = [0, 1, 3, 9, 27, 81, Infinity]; 
-  
-  // ★ ステータスごとの色分け定義
-  const statColors = { 
-    "STR": "#ff6b6b", 
-    "VIT": "#6be6ff", 
-    "AGI": "#94ff6b", 
-    "LCK": "#ffd166", 
-    "ALL": "#ffd166" 
-  };
+  const statColors = { "STR": "#ff6b6b", "VIT": "#6be6ff", "AGI": "#94ff6b", "LCK": "#ffd166", "ALL": "#ffd166" };
 
+  // 1. 通常ドロップの描画
   for (let f = 1; f <= (player.maxClearedFloor || 1); f += 5) {
     const floorData = generateFloorData(f);
-    const g = Math.ceil(f / 20); // ★ 20階層ごとに効果上昇
+    const g = Math.ceil(f / 20);
     const statType = getDropStatType(f, false);
 
     const items =[
-      { name: floorData.biome.mobDrop, type: 'mob', stat: statType },
-      { name: floorData.biome.bossDrop, type: 'boss', stat: 'ALL' }
+      { name: floorData.biome.mobDrop, type: 'mob', stat: statType, color: '#5ce6e6', dropText: `第${f}〜${f+4}層 (雑魚)` },
+      { name: floorData.biome.bossDrop, type: 'boss', stat: 'ALL', color: '#ffd166', dropText: `第${f+4}層 (ボス)` }
     ];
 
     items.forEach(item => {
       const count = player.inventory?.[item.name] || 0;
       totalCollectedCount += count;
       const rankInfo = getCollectionRank(count);
-      const buffValue = g * rankInfo.mult; // ★ 特別倍率を反映
+      const buffValue = g * rankInfo.mult;
 
       if (item.type === 'boss') totalBonuses.ALL += buffValue;
       else totalBonuses[statType] += buffValue;
 
+      // ★ 未取得でも0として描画する
       const nextIdx = rankInfo.rank + 1;
       const nextGoal = rankThresholds[nextIdx];
       const goalText = nextGoal === Infinity ? "MAX" : `${count}/${nextGoal}`;
       const progress = nextGoal === Infinity ? 100 : (count / nextGoal) * 100;
-      const statColor = statColors[item.stat]; // ★ ステータスに対応した色を取得
-
-      // ★ ドロップする階層の表記を作成
-      const dropFloorText = item.type === 'boss' ? `第${f}～${f+4}層 (ボス)` : `第${f}〜${f+4}層 (雑魚)`;
+      const statColor = statColors[item.stat];
 
       container.innerHTML += `
         <div class="panel">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="font-size: 16px; color:${rankInfo.color};">${item.name} [${rankInfo.name}]</strong>
+            <strong style="font-size: 16px; color:${rankInfo.color};">${item.name}[${rankInfo.name}]</strong>
             <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
           </div>
-          <!-- ★ ドロップ階層の表示 -->
-          <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: ${dropFloorText}</div>
-          
-          <!-- ★ ステータス上昇を色付きで表示 -->
+          <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: ${item.dropText}</div>
           <div style="font-size: 13px; color: ${statColor}; font-weight: bold; margin: 4px 0;">
             効果: ${item.type === 'boss' ? '全ステータス' : statType} +${buffValue}%
           </div>
-          
           <div style="background: #111; border: 1px solid #4a3b26; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
             <div style="background: ${rankInfo.color}; width: ${progress}%; height: 100%;"></div>
           </div>
@@ -776,6 +764,37 @@ function updateCollectionUI() {
         </div>
       `;
     });
+  }
+
+  // 2. 魔の激動（特殊コレクション）の描画
+  container.innerHTML += `<h3 style="color:#b16bff; text-align:center; margin-top:20px; border-top:1px dashed #b16bff; padding-top:10px;">特殊コレクション</h3>`;
+  for (let f = 1; f <= (player.maxClearedFloor || 1); f += 50) {
+    const fd = generateFloorData(f);
+    const count = player.inventory?.[fd.gekido.name] || 0;
+    totalCollectedCount += count;
+    const rankInfo = getCollectionRank(count);
+    const buffValue = fd.gekido.baseBuff * rankInfo.mult;
+
+    const nextIdx = rankInfo.rank + 1;
+    const nextGoal = rankThresholds[nextIdx];
+    const progress = nextGoal === Infinity ? 100 : (count / nextGoal) * 100;
+
+    container.innerHTML += `
+      <div class="panel" style="border-color:#b16bff;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 16px; color:${rankInfo.color};">${fd.gekido.name} [${rankInfo.name}]</strong>
+          <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
+        </div>
+        <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: 第${f}〜${f+49}層 (全敵 0.01%)</div>
+        <div style="font-size: 13px; color: #b16bff; font-weight: bold; margin: 4px 0;">
+          効果: 累計特訓経験値 +${buffValue}%
+        </div>
+        <div style="background: #111; border: 1px solid #4a3b26; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
+          <div style="background: ${rankInfo.color}; width: ${progress}%; height: 100%;"></div>
+        </div>
+        <div style="text-align: right; font-size: 10px; color: #aaa; margin-top: 2px;">次ランクまで: ${count}/${nextGoal === Infinity ? "MAX" : nextGoal}</div>
+      </div>
+    `;
   }
 
   document.getElementById('total-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
@@ -793,19 +812,17 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 📰 ニューステロップ制御 (init関数内で initNewsTicker(); を呼んでください)
+// 📰 ニューステロップ制御 (割り込み機能の強化)
 // ==========================================
 let currentNewsQueue =[];
 let currentNewsIndex = 0;
-let lastTopNewsId = null;
+let currentPlayingId = null;
 
 function initNewsTicker() {
   subscribeNews((newsList) => {
     currentNewsQueue = newsList;
     updateNewsDisplay();
   });
-  
-  // 12秒ごとに次のニュースへローテーション
   setInterval(() => {
     if (currentNewsQueue.length > 0) {
       currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
@@ -815,67 +832,55 @@ function initNewsTicker() {
 }
 
 function updateNewsDisplay() {
-  if (currentNewsQueue.length === 0) {
-    displayNewsText("🔔 ぼくらの無限塔へようこそ！");
-    return;
-  }
+  if (currentNewsQueue.length === 0) return;
   const topNews = currentNewsQueue[0];
-  // ★ 新しいトップニュース（優先順位1位）が飛び込んできたら音を鳴らして即座に切り替え！
-  if (lastTopNewsId !== topNews.id) {
-    lastTopNewsId = topNews.id;
-    playSound('win'); // ピロリン♪
+  // ★より新しい/優先度が高いニュースが来たら、アニメーションをぶった切って即表示
+  if (currentPlayingId !== topNews.id) {
+    currentPlayingId = topNews.id;
+    playSound('win');
     currentNewsIndex = 0;
     displayNewsText(topNews.text);
   }
 }
 
-function displayNewsText(text) {
+function displayNewsText(htmlText) {
   const el = document.querySelector('.news-text');
-  if (el.textContent !== text) {
-    el.textContent = text;
-    // アニメーションをリセットして右から流し直す
-    el.style.animation = 'none';
-    el.offsetHeight; 
-    el.style.animation = 'marquee 15s linear infinite';
-  }
+  el.innerHTML = htmlText; // ★タグを解釈させるため innerHTML に変更
+  el.style.animation = 'none';
+  el.offsetHeight; 
+  el.style.animation = 'marquee 15s linear infinite';
 }
 
-// --- ★ 魔の激動による遡及EXP付与処理 ---
-// 現在のレベルと端数EXPから「今まで稼いだ全EXP」を計算し、
-// 魔の激動のバフ率分だけ追加のEXPを与えてレベルを上げ直す。
+// --- 魔の激動バフの計算関数 ---
+function getTotalGekidoBuff(p) {
+  let total = 0;
+  for (let f = 1; f <= (p.maxClearedFloor || 1); f += 50) {
+    const fd = generateFloorData(f);
+    const count = p.inventory?.[fd.gekido.name] || 0;
+    const rank = getCollectionRank(count); // main.js内にある既存の関数
+    total += fd.gekido.baseBuff * rank.mult;
+  }
+  return total;
+}
+
+// --- 遡及EXP付与 ---
 function applyGekidoBonus() {
   const stats = ["str", "vit", "agi", "lck"];
-  
-  // 今現在の激動バフの合計を計算
-  let totalGekidoBuff = 0;
-  for (let f = 1; f <= (player.maxClearedFloor || 1); f += 50) {
-    const fd = generateFloorData(f);
-    const count = player.inventory?.[fd.gekido.name] || 0;
-    const rank = getCollectionRank(count); // ランク(1〜5等)
-    totalGekidoBuff += fd.gekido.baseBuff * rank.mult;
-  }
-  
-  // 前回計算時のバフ率と比較して、差分だけを加算する
+  let totalGekidoBuff = getTotalGekidoBuff(player);
   const prevBuff = player.lastGekidoBuff || 0;
   const diffBuff = totalGekidoBuff - prevBuff;
-  if (diffBuff <= 0) return; // 変わってなければ無視
+  
+  if (diffBuff <= 0) return;
 
   stats.forEach(s => {
     let currentLv = player.lv[s];
-    let currentExp = player.exp[s];
-    
-    // 現在までの累計EXPを逆算
     let totalExp = 0;
-    for (let i = 1; i < currentLv; i++) {
-      totalExp += getRequiredExp(i);
-    }
-    totalExp += currentExp;
+    for (let i = 1; i < currentLv; i++) totalExp += getRequiredExp(i);
+    totalExp += player.exp[s];
 
-    // 差分バフ（5%なら0.05）の分だけ、過去の努力がそのままEXPとなって降ってくる
     let bonusExp = Math.floor(totalExp * (diffBuff / 100));
-    
-    // 足し込んで再レベルアップ計算
     player.exp[s] += bonusExp;
+    
     let reqExp = getRequiredExp(player.lv[s]);
     while (player.exp[s] >= reqExp) {
       player.exp[s] -= reqExp;
@@ -886,5 +891,5 @@ function applyGekidoBonus() {
 
   player.lastGekidoBuff = totalGekidoBuff;
   playSound('win');
-  alert(`✨ 「魔の激動」の効果で、全特訓の累計経験値が +${diffBuff}% されました！`);
+  alert(`✨ 「魔の激動」が強化され、全特訓の累計経験値が +${diffBuff}% 追加されました！`);
 }

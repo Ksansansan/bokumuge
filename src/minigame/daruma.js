@@ -207,7 +207,7 @@ async function finishGame() {
   }
 
   // ステータス反映 (大岩プッシュと同じ minigameCore を使用)
-  const result = applyMinigameResult(playerRef, 'str', rank.exp, rank.strBase);
+  const result = applyMinigameResult(playerRef, 'str', result.actualExpGain, rank.strBase);
   if (playerRef.updateStatusUI) {
     playerRef.updateStatusUI();
   }
@@ -224,7 +224,7 @@ async function finishGame() {
   let gainHtml = `
     <div style="font-size:16px; margin-bottom:10px;">Lv.${result.currentLv} <span style="font-size:12px; color:#aaa;">(${result.currentExp}/${result.nextExp})</span></div>
     STR 基礎値: <span style="color:#ff6b6b;">+${result.actualBaseGain}</span> <span style="font-size:11px; color:#aaa;">(倍率 x${result.multiplier.toFixed(2)})</span><br>
-    EXP 獲得: <span style="color:#5ce6e6;">+${rank.exp}</span>
+    EXP 獲得: <span style="color:#5ce6e6;">+${result.actualExpGain}</span>
   `;
   
   const progress = Math.floor((result.currentExp / result.nextExp) * 100);

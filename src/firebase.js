@@ -105,7 +105,7 @@ export async function checkAndSaveFirstClear(player, floor, time) {
     // ★初クリア数をインクリメント
     player.firstClearCount = (player.firstClearCount || 0) + 1;
     // ★ ニュース送信 (優先度1)
-    addGlobalNews(`👑 【初クリア】${player.name} が 第${floor}層 を世界で初めて突破しました！！`, 1);
+    addGlobalNews(`👑 【初クリア】<span style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が 第${floor}層 を世界で初めて突破しました！！`, 1);
     return true;
   }
   return false;

@@ -12,30 +12,25 @@ const STATUS_CONFIG = {
  * 経験値を加算し、レベルアップ処理を行う関数
  */
 export function applyMinigameResult(player, statKey, expGained, baseGained) {
-  // データ構造の初期化保証
   if (!player.exp) player.exp = { str: 0, vit: 0, agi: 0, lck: 0 };
   if (!player.lv) player.lv = { str: 1, vit: 1, agi: 1, lck: 1 };
   
-  // ★合計レベルを計算
   const totalLevel = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
-
   const currentLv = player.lv[statKey];
-  
-  // ★倍率取得関数に totalLevel を渡す
   const multiplier = getLevelMultiplier(currentLv, totalLevel);
   
-  // 倍率適用後の上昇量
   const actualBaseGain = Math.floor(baseGained * multiplier);
   player[statKey] += actualBaseGain;
 
-  // 経験値加算
-  player.exp[statKey] += expGained;
+  // ★修正：魔の激動のバフ（%）を経験値に適用
+  const gekidoBuff = player.lastGekidoBuff || 0;
+  const actualExpGain = Math.floor(expGained * (1 + gekidoBuff / 100));
 
-  // レベルアップ判定
+  player.exp[statKey] += actualExpGain;
+
   let leveledUp = false;
   let reqExp = getRequiredExp(player.lv[statKey]);
 
-  // 一気に複数レベルアップすることもあるのでwhileループ
   while (player.exp[statKey] >= reqExp) {
     player.exp[statKey] -= reqExp;
     player.lv[statKey]++;
@@ -44,13 +39,11 @@ export function applyMinigameResult(player, statKey, expGained, baseGained) {
   }
 
   return {
-    statKey,
-    actualBaseGain,
-    multiplier,
-    leveledUp,
+    statKey, actualBaseGain, multiplier, leveledUp,
     currentLv: player.lv[statKey],
     currentExp: player.exp[statKey],
-    nextExp: reqExp
+    nextExp: reqExp,
+    actualExpGain // ★リザルト表示用に返す
   };
 }
 

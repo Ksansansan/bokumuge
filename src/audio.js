@@ -55,7 +55,7 @@ export function playSound(type) {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(120, now);
       osc.frequency.setValueAtTime(120, now + 0.1);
-      gain.gain.setValueAtTime(0.07, now);
+      gain.gain.setValueAtTime(0.1, now);
       gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
       osc.start(now); osc.stop(now + 0.2);
       break;

@@ -372,6 +372,7 @@ btnChallenge.addEventListener('click', () => {
     if (isSurrendered) {
       currentFrame = result.totalFrames; // 強制終了
       result.isWin = false; // 負け扱い
+      eventIndex = result.events.length; // 残りの「攻撃」や「音」のイベントを全てスキップする！
     }
 
     // タイマーの更新（90秒＝5400F）

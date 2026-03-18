@@ -126,7 +126,6 @@ async function claimRewards() {
   if (elapsedTicket === MAX_OFFLINE_MS) playerRef.meditation.lastTicketTime = now;
 
   playSound('win');
-  alert(`🧘 瞑想の成果！\n${target.toUpperCase()} 基礎値: +${formatNumber(statGain)}\nガチャチケット: +${formatNumber(ticketGain)}枚`);
 
   if (onUpdateUI) onUpdateUI();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();

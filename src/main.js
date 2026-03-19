@@ -486,6 +486,7 @@ btnChallenge.addEventListener('click', () => {
         if (hasGekidoUpdate) {
           applyGekidoBonus();
         }
+         updateTicketCount(); 
         updateCollectionUI(); 
       }
 

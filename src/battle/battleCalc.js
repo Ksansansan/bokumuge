@@ -132,9 +132,9 @@ export function simulateBattle(player, floorData) {
   drops.forEach(d => {
     const existing = aggregatedDrops.find(x => x.name === d.name);
     if (existing) {
-      existing.count++;
+      existing.count += d.count; 
     } else {
-      aggregatedDrops.push({ ...d, count: 1 });
+      aggregatedDrops.push({ ...d});
     }
   });
   // AGI加算ロジック部分

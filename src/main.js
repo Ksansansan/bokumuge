@@ -933,7 +933,6 @@ function applyGekidoBonus() {
 
   player.lastGekidoBuff = totalGekidoBuff;
   playSound('win');
-  alert(`✨ 「魔の激動」が強化され、全特訓の累計経験値が +${diffBuff}% 追加されました！`);
 }
 
 // ==========================================

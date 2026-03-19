@@ -1,4 +1,5 @@
 // src/battle/battleCalc.js
+import { getLckBonusMultiplier } from '../gacha/equipment.js';
 
 export function simulateBattle(player, floorData) {
   const enemies = floorData.enemies;
@@ -73,11 +74,17 @@ export function simulateBattle(player, floorData) {
 
         // ★ ガチャチケのドロップ枚数計算 (LCKボーナス)
         const currentLck = player.battleStats?.lck || player.lck || 0;
+        const lckMult = getLckBonusMultiplier(currentLck);
+
         let ticketCount = 1;
         if (currentLck >= 100) {
           ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
         }
-
+        
+        if (Math.random() < (0.0001 * lckMult)) {
+          rawDrops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
+        }
+        
         if (currentEnemyIndex < 3) {
           if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob', count: 1 }); // ★ countを追加
         } else {

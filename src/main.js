@@ -472,7 +472,7 @@ btnChallenge.addEventListener('click', () => {
           dropListEl.appendChild(li);
 
           // マスター(81個)到達ニュース
-          if (currentCount < 81 && newCount >= 81) {
+          if (dropItem.type !== 'gacha' && currentCount < 81 && newCount >= 81) {
             addGlobalNews(`👑 【マスター到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が ${dropItem.name} をマスター(MAX)にしました！`, 4);
           }
 

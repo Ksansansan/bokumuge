@@ -82,9 +82,9 @@ export function simulateBattle(player, floorData) {
         }
         
         if (Math.random() < (0.0001 * lckMult)) {
-          rawDrops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
+          drops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
         }
-        
+
         if (currentEnemyIndex < 3) {
           if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob', count: 1 }); // ★ countを追加
         } else {

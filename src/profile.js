@@ -20,6 +20,7 @@ function getCollectionRank(count) {
 export async function openProfileModal(username) {
   playSound('click');
   const modal = document.getElementById('modal-profile');
+  const modalInner = modal.querySelector('div');
   modal.style.display = 'flex';
   document.getElementById('prof-name').textContent = username;
   document.getElementById('prof-equips').innerHTML = '<span style="color:#aaa;">取得中...</span>';
@@ -32,6 +33,7 @@ export async function openProfileModal(username) {
     return;
   }
 
+  
   // ★ 修正：基礎ステータスを表示
   document.getElementById('prof-str').textContent = formatNumber(u.str || 0);
   document.getElementById('prof-vit').textContent = formatNumber(u.vit || 0);
@@ -53,11 +55,40 @@ export async function openProfileModal(username) {
     totalBonuses[statType] += g * getCollectionRank(mobCount).mult;
     totalBonuses['ALL'] += g * getCollectionRank(bossCount).mult;
   }
-
+  
   document.getElementById('prof-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
   document.getElementById('prof-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
   document.getElementById('prof-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
   document.getElementById('prof-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
+
+  const finalValues = {};
+  ['str', 'vit', 'agi', 'lck'].forEach(s => {
+    // 基礎値 × 図鑑バフ
+    let val = (u[s] || 0) * (1 + (totalBonuses[s.toUpperCase()] + totalBonuses.ALL) / 100);
+    // ＋ 装備補正
+    const eqId = u.equips?.[s];
+    if (eqId) {
+      const rarityIdx = RARITY_INDEX[eqId];
+      const stats = getEquipStats(rarityIdx, calcEquipLevel(u.inventory_equip?.[s]?.[eqId] || 1).level);
+      val = (val * stats.mult) + stats.add;
+    }
+    finalValues[s] = val;
+  });
+
+  // 一番高いステータスを判定
+  const statColors = { str: "#ff6b6b", vit: "#6be6ff", agi: "#94ff6b", lck: "#ffd166" };
+  let mainStat = 'str';
+  if (finalValues.vit > finalValues[mainStat]) mainStat = 'vit';
+  if (finalValues.agi > finalValues[mainStat]) mainStat = 'agi';
+  if (finalValues.lck > finalValues[mainStat]) mainStat = 'lck';
+
+  // --- 2. プロフィールのテーマカラーを変更 ---
+  const themeColor = statColors[mainStat];
+  modalInner.style.borderColor = themeColor;
+  modalInner.style.boxShadow = `0 0 20px ${themeColor}80`; // 色付きの光
+  const nameEl = document.getElementById('prof-name');
+  nameEl.style.color = themeColor;
+  nameEl.style.borderColor = themeColor;
 
   // ★ 修正：装備の詳細表示（武器・防具など記載）
   let eqHtml = '';

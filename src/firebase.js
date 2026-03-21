@@ -24,9 +24,9 @@ export function getReliableTime() {
 // 簡易ログイン ＆ 新規登録
 // ==========================================
 export async function loginOrRegister(username, pin) {
+  const userSnap = await getDoc(userRef);
   const userRef = doc(db, "users", username);
    await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
-  const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
     const serverTime = userSnap.data().lastLoginTime.toMillis();
     serverTimeOffset = serverTime - Date.now();

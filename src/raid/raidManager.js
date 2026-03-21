@@ -9,8 +9,8 @@ import { updateTicketCount } from '../gacha/gachaUI.js';
 let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
-let lastScrollTop = 0;
-const RAID_HOURS =[0, 3, 6, 9, 12, 15,17, 18, 21];
+
+const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {
@@ -18,7 +18,7 @@ export function initRaidManager(playerObj) {
   subscribeRaidData((data) => {
     currentRaidData = data;
     checkAndRenderRaid();
-    renderGlobalBuffs(); // バフ一覧も更新
+    renderGlobalBuffs();
   });
   countdownInterval = setInterval(checkAndRenderRaid, 1000);
 }
@@ -29,7 +29,6 @@ export function cancelRaidWaitingIfActive() {
   }
 }
 
-// スケジュール判定（レイドを一意のIDで管理する）
 function getRaidSchedule() {
   const now = new Date();
   const h = now.getHours();
@@ -68,7 +67,6 @@ function getRaidSchedule() {
   return { isRaidTime, timeStr, currentRaidId };
 }
 
-// バフ一覧の描画
 function renderGlobalBuffs() {
   const buffLv = getCachedBuffLevel();
   const panel = document.getElementById('raid-buff-panel');
@@ -97,18 +95,11 @@ async function checkAndRenderRaid() {
 
   const sched = getRaidSchedule();
 
-  // ★ 追加：書き換え前に、現在のスクロール位置を保存しておく
-  const rankContainer = document.getElementById('raid-rank-scroll');
-  if (rankContainer) {
-    lastScrollTop = rankContainer.scrollTop;
-  }
-
-  // --- 新しいレイド時間の開始時に初期化する ---
+  // --- 1. 新しいレイドの初期化 ---
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
-    const baseHp = Math.floor(2700 * Math.pow(1.5, nextLv - 1));
+    const baseHp = Math.floor(2700 * Math.pow(3, nextLv - 1));
     
-    // ★ 修正：現在のデータを「前回の結果（lastRaidData）」として退避させてから初期化！
     let prevData = null;
     if (currentRaidData && currentRaidData.participants) {
       prevData = {
@@ -125,27 +116,28 @@ async function checkAndRenderRaid() {
       level: nextLv, maxHp: baseHp, currentHp: baseHp,
       isActive: true, isOpen: false, isDefeated: false,
       waitingPlayers:[], participants: {},
-      lastRaidData: prevData // ★ 退避したデータを保存
+      lastRaidData: prevData
     });
     return;
   }
 
-  // --- 報酬受け取り判定 ---
-  // ★ 修正：現在終わったレイドか、前回終わったレイド（lastRaidData）のどちらかから自分のデータを探す
+  // --- 2. 報酬受け取り判定 (最優先) ---
+  // ★修正：前回の報酬を受け取っていないなら、今のレイド状況に関わらず報酬画面を優先する
   let targetDataForReward = null;
-  
-  if (!sched.isRaidTime || (currentRaidData && currentRaidData.isDefeated)) {
-    // 今のレイドが終わっている場合
-    targetDataForReward = currentRaidData;
-  } else if (currentRaidData && currentRaidData.lastRaidData) {
-    // 今は新しいレイドが始まっているが、前回の報酬が残っている場合
+  let isFromLastRaid = false;
+
+  // まず「前回」のデータで未受け取りがないか確認
+  if (currentRaidData?.lastRaidData?.participants?.[playerRef.name] && !currentRaidData.lastRaidData.participants[playerRef.name].claimed) {
     targetDataForReward = currentRaidData.lastRaidData;
+    isFromLastRaid = true;
+  } 
+  // 次に「今回」のデータで（レイドが終わっている場合）未受け取りがないか確認
+  else if ((!sched.isRaidTime || currentRaidData?.isDefeated) && currentRaidData?.participants?.[playerRef.name] && !currentRaidData.participants[playerRef.name].claimed) {
+    targetDataForReward = currentRaidData;
   }
 
-  const myData = targetDataForReward?.participants?.[playerRef.name];
-  const canClaim = myData && !myData.claimed;
-
-  if (canClaim) {
+  if (targetDataForReward) {
+    const myData = targetDataForReward.participants[playerRef.name];
     const levelMult = targetDataForReward.isDefeated ? Math.max(1, targetDataForReward.level) : targetDataForReward.level;
     const baseTickets = 150;
     const damagePercent = 1 - (targetDataForReward.currentHp / targetDataForReward.maxHp);
@@ -170,109 +162,202 @@ async function checkAndRenderRaid() {
 
     panel.style.background = 'radial-gradient(circle at center, #2b2511, #141108)';
     panel.style.borderColor = '#d4af37';
+    panel.style.boxShadow = '0 0 15px rgba(212, 175, 55, 0.2)';
+    panel.style.marginTop = '30px';
     title.style.display = 'block';
     title.textContent = '🎁 レイド報酬';
     title.style.color = '#d4af37';
+    title.style.borderBottomColor = '#d4af37';
 
-    container.innerHTML = `
-      <div style="font-size: 14px; color: #ccc; margin-bottom: 10px;">前回参加したレイドの報酬が届いています！</div>
-      ${rankText}
-      <div style="font-size: 24px; font-weight: bold; color: #ffd166; margin-bottom: 15px;">ガチャチケ x${formatNumber(rewardTickets)}</div>
-      <button id="btn-claim-raid" class="btn-fantasy" style="width:100%; padding:10px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">報酬を受け取る</button>
-    `;
+    // 既に描画されているなら上書きしない（ボタンイベントの重複防止）
+    if (container.dataset.state !== 'reward') {
+      container.dataset.state = 'reward';
+      container.innerHTML = `
+        <div style="font-size: 14px; color: #ccc; margin-bottom: 10px;">参加したレイドの報酬が届いています！</div>
+        ${rankText}
+        <div style="font-size: 24px; font-weight: bold; color: #ffd166; margin-bottom: 15px;">ガチャチケ x${formatNumber(rewardTickets)}</div>
+        <button id="btn-claim-raid" class="btn-fantasy" style="width:100%; padding:10px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">報酬を受け取る</button>
+      `;
 
-    document.getElementById('btn-claim-raid').addEventListener('click', async (e) => {
-      e.target.disabled = true;
-      e.target.textContent = "受け取り中...";
-      
-      // ★ 修正：現在のレイドか前回のレイドか、フラグを渡して受け取り処理を行う
-      const isFromLastRaid = targetDataForReward === currentRaidData.lastRaidData;
-      const success = await claimRaidReward(playerRef.name, rewardTickets, isFromLastRaid);
-      
-      if(success) {
-        playSound('win');
-        if (!playerRef.inventory) playerRef.inventory = {};
-        playerRef.inventory["装備ガチャチケット"] = (playerRef.inventory["装備ガチャチケット"] || 0) + rewardTickets;
-
-        // 手元のデータが更新されたので、UIを書き換える
-        updateTicketCount();
-        checkAndRenderRaid(); 
-      } else {
-        e.target.disabled = false;
-        e.target.textContent = "エラー。再試行";
-      }
-    });
+      document.getElementById('btn-claim-raid').addEventListener('click', async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = "受け取り中...";
+        
+        const success = await claimRaidReward(playerRef.name, rewardTickets, isFromLastRaid);
+        
+        if(success) {
+          playSound('win');
+          if (!playerRef.inventory) playerRef.inventory = {};
+          playerRef.inventory["装備ガチャチケット"] = (playerRef.inventory["装備ガチャチケット"] || 0) + rewardTickets;
+          updateTicketCount();
+          
+          container.dataset.state = ''; // 状態リセット
+          checkAndRenderRaid(); // 再描画
+        } else {
+          e.target.disabled = false;
+          e.target.textContent = "エラー。再試行";
+        }
+      });
+    }
     return;
   }
 
-  // --- 時間外 ---
+  // --- 3. 時間外 ---
   if (!sched.isRaidTime) {
     panel.style.background = 'transparent';
     panel.style.borderColor = 'transparent';
     panel.style.boxShadow = 'none';
+    panel.style.marginTop = '15px';
     title.style.display = 'none';
-    container.innerHTML = `
-      <div style="font-size: 12px; color: #888; text-align:center;">次回のレイドボス襲来まで: <span style="font-family:monospace; color:#ccc;">${sched.timeStr}</span></div>
-    `;
+
+    // タイマー部分だけを更新する（DOM全体を作らない）
+    if (container.dataset.state !== 'offline') {
+      container.dataset.state = 'offline';
+      container.innerHTML = `
+        <div style="font-size: 12px; color: #888; text-align:center;">次回のレイドボス襲来まで: <span id="raid-offline-timer" style="font-family:monospace; color:#ccc;">${sched.timeStr}</span></div>
+      `;
+    } else {
+      document.getElementById('raid-offline-timer').textContent = sched.timeStr;
+    }
     return;
   }
 
-  // --- 討伐済み (受取済) ---
+  // --- 4. 討伐済み ---
   if (currentRaidData.isDefeated) {
-    title.style.display = 'block';
-    title.textContent = '🐉 ワールドレイド';
-    title.style.color = '#ff6b6b';
-    container.innerHTML = `
-      <div style="font-size: 16px; color: #ffd166; font-weight: bold; margin-bottom: 5px;">🎉 レイドボスは討伐されました！</div>
-      <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(残り時間: ${sched.timeStr})</div>
-    `;
-    return;
-  }
-
-  // --- ゲート待機中 ---
-  if (!currentRaidData.isOpen) {
-    // ... (前回の待機中UIとボタン処理をそのまま配置)
-    const waiters = currentRaidData.waitingPlayers ||[];
-    const isMeWaiting = waiters.includes(playerRef.name);
     panel.style.background = 'radial-gradient(circle at center, #2b0808, #110000)';
     panel.style.borderColor = '#ff3333';
     panel.style.boxShadow = '0 0 15px rgba(255,0,0,0.2)';
+    panel.style.marginTop = '30px';
     title.style.display = 'block';
     title.textContent = '🐉 ワールドレイド';
     title.style.color = '#ff6b6b';
-    
-    let html = `
-      <div style="font-size: 14px; color: #ffeb85; margin-bottom: 10px; animation: blink 1.5s infinite;">⚠️ ゲート解放貢献中... (${waiters.length}/2人)</div>
-      <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">画面を開いたまま、他のプレイヤーを待ってください。<br>終了まで: ${sched.timeStr}</div>
-    `;
-    if (isMeWaiting) html += `<button id="btn-raid-cancel" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:#333; border-color:#555; display:block; margin:0 auto;">貢献をキャンセル</button>`;
-    else html += `<button id="btn-raid-wait" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:linear-gradient(to bottom, #7a2020, #4a0d0d); border-color:#ff6b6b; display:block; margin:0 auto;">ゲート解放に貢献する</button>`;
-    container.innerHTML = html;
-    
-    if (isMeWaiting) document.getElementById('btn-raid-cancel').addEventListener('click', () => { playSound('click'); toggleRaidWaiting(playerRef.name, false); });
-    else document.getElementById('btn-raid-wait').addEventListener('click', () => { playSound('hit'); toggleRaidWaiting(playerRef.name, true); });
+    title.style.borderBottomColor = '#ff3333';
+
+    if (container.dataset.state !== 'defeated') {
+      container.dataset.state = 'defeated';
+      container.innerHTML = `
+        <div style="font-size: 16px; color: #ffd166; font-weight: bold; margin-bottom: 5px;">🎉 レイドボスは討伐されました！</div>
+        <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(残り時間: <span id="raid-defeated-timer">${sched.timeStr}</span>)</div>
+      `;
+    } else {
+      document.getElementById('raid-defeated-timer').textContent = sched.timeStr;
+    }
     return;
   }
 
-  // --- ゲート解放済み (戦闘可能) ---
-  const remainingTries = Math.max(0, 5 - (myData?.tries || 0));
+  // --- 5. ゲート待機中 ---
+  if (!currentRaidData.isOpen) {
+    panel.style.background = 'radial-gradient(circle at center, #2b0808, #110000)';
+    panel.style.borderColor = '#ff3333';
+    panel.style.boxShadow = '0 0 15px rgba(255,0,0,0.2)';
+    panel.style.marginTop = '30px';
+    title.style.display = 'block';
+    title.textContent = '🐉 ワールドレイド';
+    title.style.color = '#ff6b6b';
+    title.style.borderBottomColor = '#ff3333';
+
+    const waiters = currentRaidData.waitingPlayers ||[];
+    const isMeWaiting = waiters.includes(playerRef.name);
+    
+    // 状態が変わった時だけ全体を再描画
+    const currentStateStr = `wait_${isMeWaiting}_${waiters.length}`;
+    if (container.dataset.state !== currentStateStr) {
+      container.dataset.state = currentStateStr;
+      
+      let html = `
+        <div style="font-size: 14px; color: #ffeb85; margin-bottom: 10px; animation: blink 1.5s infinite;">⚠️ ゲート解放貢献中... (${waiters.length}/2人)</div>
+        <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">画面を開いたまま、他のプレイヤーを待ってください。<br>終了まで: <span id="raid-wait-timer">${sched.timeStr}</span></div>
+      `;
+      if (isMeWaiting) html += `<button id="btn-raid-cancel" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:#333; border-color:#555; display:block; margin:0 auto;">やっぱ貢献やめる</button>`;
+      else html += `<button id="btn-raid-wait" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:linear-gradient(to bottom, #7a2020, #4a0d0d); border-color:#ff6b6b; display:block; margin:0 auto;">ゲート解放に貢献する</button>`;
+      container.innerHTML = html;
+      
+      if (isMeWaiting) document.getElementById('btn-raid-cancel').addEventListener('click', () => { playSound('click'); toggleRaidWaiting(playerRef.name, false); });
+      else document.getElementById('btn-raid-wait').addEventListener('click', () => { playSound('hit'); toggleRaidWaiting(playerRef.name, true); });
+    } else {
+      document.getElementById('raid-wait-timer').textContent = sched.timeStr;
+    }
+    return;
+  }
+
+  // --- 6. ゲート解放済み (戦闘可能) ---
+  panel.style.background = 'radial-gradient(circle at center, #2b0808, #110000)';
+  panel.style.borderColor = '#ff3333';
+  panel.style.boxShadow = '0 0 15px rgba(255,0,0,0.2)';
+  panel.style.marginTop = '30px';
+  title.style.display = 'block';
+  title.textContent = '🐉 ワールドレイド';
+  title.style.color = '#ff6b6b';
+  title.style.borderBottomColor = '#ff3333';
+
+  const myCurrentData = (currentRaidData.participants && currentRaidData.participants[playerRef.name]) || { damage: 0, tries: 0 };
+  const remainingTries = Math.max(0, 5 - myCurrentData.tries);
   const hpPercent = (currentRaidData.currentHp / currentRaidData.maxHp) * 100;
 
-  // ★与ダメランキングの生成
   const participantsList = Object.entries(currentRaidData.participants || {})
     .map(([name, data]) => ({ name, damage: data.damage }))
     .sort((a, b) => b.damage - a.damage);
 
-  let rankHtml = '<div style="margin-top:15px; border-top:1px dashed #555; padding-top:10px; font-size:12px; text-align:left;">';
-  rankHtml += '<div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 現在の与ダメージ順位</div>';
-  
-  // スクロール用コンテナ
-  rankHtml += '<div style="max-height: 100px; overflow-y: auto; padding-right: 5px;">';
-  
+  // 初回だけDOMの骨組みを作り、以降は中身のテキストや幅だけを更新する
+  if (container.dataset.state !== 'battle') {
+    container.dataset.state = 'battle';
+    
+    container.innerHTML = `
+      <div style="font-size: 16px; color: #ff6b6b; font-weight: bold; margin-bottom: 5px;">😈 絶望の化身 Lv.<span id="raid-live-lv">${currentRaidData.level}</span></div>
+      <div style="width:100%; background:#111; border:1px solid #ff3333; height:12px; border-radius:6px; margin-bottom:5px; position:relative; overflow:hidden;">
+        <div id="raid-live-hp-bar" style="width:${hpPercent}%; background:linear-gradient(to right, #cc0000, #ff6b6b); height:100%; transition:width 0.3s;"></div>
+        <div id="raid-live-hp-text" style="position:absolute; top:0; left:0; width:100%; font-size:10px; font-weight:bold; color:#fff; line-height:12px;">
+          ${formatNumber(Math.max(0, currentRaidData.currentHp))} / ${formatNumber(currentRaidData.maxHp)}
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc; margin-bottom: 10px;">
+        <span>終了まで: <span id="raid-live-timer">${sched.timeStr}</span></span>
+        <span style="color:#5ce6e6;">あなたの与ダメ: <span id="raid-live-my-dmg">${formatNumber(myCurrentData.damage)}</span></span>
+      </div>
+      <button id="btn-raid-battle" class="btn-fantasy" ${remainingTries <= 0 ? 'disabled' : ''} 
+        style="width:100%; padding:10px; font-size:18px; margin:0 auto; display:block; ${remainingTries <= 0 ? 'opacity:0.5; cursor:not-allowed;' : 'background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;'}">
+        レイドに挑戦！ (残り <span id="raid-live-tries">${remainingTries}</span> 回)
+      </button>
+      
+      <div style="margin-top:15px; border-top:1px dashed #555; padding-top:10px; font-size:12px; text-align:left;">
+        <div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 現在の与ダメージ順位</div>
+        <div id="raid-rank-scroll" style="max-height: 100px; overflow-y: auto; padding-right: 5px;">
+          <div id="raid-live-ranking"></div>
+        </div>
+      </div>
+    `;
+
+    const btnBattle = document.getElementById('btn-raid-battle');
+    if (btnBattle && remainingTries > 0) {
+      btnBattle.addEventListener('click', () => {
+        playSound('win');
+        startRaidBattleAnimation(playerRef, currentRaidData, myCurrentData);
+      });
+    }
+  } else {
+    // 骨組みが既にある場合は、必要な要素だけを更新する（これでスクロールが戻らない！）
+    document.getElementById('raid-live-lv').textContent = currentRaidData.level;
+    document.getElementById('raid-live-hp-bar').style.width = `${hpPercent}%`;
+    document.getElementById('raid-live-hp-text').textContent = `${formatNumber(Math.max(0, currentRaidData.currentHp))} / ${formatNumber(currentRaidData.maxHp)}`;
+    document.getElementById('raid-live-timer').textContent = sched.timeStr;
+    document.getElementById('raid-live-my-dmg').textContent = formatNumber(myCurrentData.damage);
+    
+    // ボタンの更新
+    const btnBattle = document.getElementById('btn-raid-battle');
+    document.getElementById('raid-live-tries').textContent = remainingTries;
+    if (remainingTries <= 0) {
+      btnBattle.disabled = true;
+      btnBattle.style.opacity = '0.5';
+      btnBattle.style.cursor = 'not-allowed';
+      btnBattle.style.background = '';
+    }
+  }
+
+  // ★ ランキングの中身だけを生成して挿入
+  let rankHtml = '';
   participantsList.forEach((p, i) => { 
     const colors =["#ffd700", "#c0c0c0", "#cd7f32"];
     const c = i < 3 ? colors[i] : "#fff";
-    // 自分の名前だけ背景を薄く光らせる
     const bg = p.name === playerRef.name ? 'rgba(92, 230, 230, 0.2)' : 'transparent';
     
     rankHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:2px; background:${bg}; padding: 2px 4px; border-radius: 3px;">
@@ -280,38 +365,11 @@ async function checkAndRenderRaid() {
       <span style="color:#fff; font-family:monospace;">${formatNumber(p.damage)}</span>
     </div>`;
   });
-  if (participantsList.length === 0) rankHtml += '<div style="text-align:center; color:#777;">まだ攻撃したプレイヤーがいません</div>';
-  rankHtml += '</div></div>'; // コンテナ閉じる
-
-  container.innerHTML = `
-    <div style="font-size: 16px; color: #ff6b6b; font-weight: bold; margin-bottom: 5px;">😈 絶望の化身 Lv.${currentRaidData.level}</div>
-    <div style="width:100%; background:#111; border:1px solid #ff3333; height:12px; border-radius:6px; margin-bottom:5px; position:relative; overflow:hidden;">
-      <div style="width:${hpPercent}%; background:linear-gradient(to right, #cc0000, #ff6b6b); height:100%; transition:width 0.3s;"></div>
-      <div style="position:absolute; top:0; left:0; width:100%; font-size:10px; font-weight:bold; color:#fff; line-height:12px;">
-        ${formatNumber(Math.max(0, currentRaidData.currentHp))} / ${formatNumber(currentRaidData.maxHp)}
-      </div>
-    </div>
-    <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc; margin-bottom: 10px;">
-      <span>終了まで: ${sched.timeStr}</span>
-      <span style="color:#5ce6e6;">あなたの与ダメ: ${formatNumber(myData?.damage || 0)}</span>
-    </div>
-    <button id="btn-raid-battle" class="btn-fantasy" ${remainingTries <= 0 ? 'disabled' : ''} 
-      style="width:100%; padding:10px; font-size:18px; margin:0 auto; display:block; ${remainingTries <= 0 ? 'opacity:0.5; cursor:not-allowed;' : 'background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;'}">
-      レイドに挑戦！ (残り ${remainingTries} 回)
-    </button>
-    ${rankHtml}
-  `;
-
-  const newRankContainer = document.getElementById('raid-rank-scroll');
-  if (newRankContainer) {
-    newRankContainer.scrollTop = lastScrollTop;
-  }
-
-  const btnBattle = document.getElementById('btn-raid-battle');
-  if (btnBattle && remainingTries > 0) {
-    btnBattle.addEventListener('click', () => {
-      playSound('win');
-      startRaidBattleAnimation(playerRef, currentRaidData, myData);
-    });
+  if (participantsList.length === 0) rankHtml = '<div style="text-align:center; color:#777;">まだ攻撃したプレイヤーがいません</div>';
+  
+  // スクロールコンテナの中身だけを書き換える
+  const rankContainer = document.getElementById('raid-live-ranking');
+  if (rankContainer && rankContainer.innerHTML !== rankHtml) {
+     rankContainer.innerHTML = rankHtml;
   }
 }

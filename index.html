@@ -490,6 +490,40 @@
     </div>
   </div>
 
+  <!-- 🐉 レイド専用バトルモーダル -->
+  <div id="raid-modal-overlay" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 500; justify-content: center; align-items: center; flex-direction: column;">
+    <div class="modal-content-battle" style="width: 90%; max-width: 400px; background: radial-gradient(circle at center, #330000, #000); border: 2px solid #ff3333; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; max-height: 85vh; overflow-y:auto; box-shadow: 0 0 30px rgba(255,0,0,0.5);">
+      <h3 style="margin-top:0; color:#ff6b6b; text-align:center; border-bottom:1px dashed #ff3333; padding-bottom:5px;">WORLD RAID BATTLE</h3>
+      
+      <div id="raid-timer-text" style="text-align: center; font-size: 16px; margin-bottom: 10px; color: #ffeb85; font-family: monospace;">Time: 0.00s</div>
+      
+      <div id="raid-gui-container" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; background: rgba(0,0,0,0.7); border: 1px solid #ff3333; border-radius: 8px; margin-bottom: 15px; padding: 15px; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+          <!-- プレイヤー -->
+          <div class="b-char player-char" style="width:45%;">
+            <div class="b-name" id="ru-p-name">あなた</div>
+            <div class="b-hp-box"><div class="b-hp-fill" id="ru-p-hp"></div><div class="b-hp-text" id="ru-p-hp-txt">-- / --</div></div>
+            <div class="b-gauge-box"><div class="b-gauge-fill" id="ru-p-gauge"></div></div>
+          </div>
+          <div class="b-vs" style="width:10%; text-align:center; color:#ff3333; font-style:italic; font-weight:bold; margin-top:10px;">VS</div>
+          <!-- ボス -->
+          <div class="b-char enemy-char" style="width:45%;">
+            <div class="b-name" style="color:#ff6b6b;">絶望の化身</div>
+            <div class="b-hp-box" style="border-color:#ff3333;"><div class="b-hp-fill enemy-hp-color" id="ru-e-hp"></div><div class="b-hp-text" id="ru-e-hp-txt" style="font-size:9px;">-- / --</div></div>
+            <div class="b-gauge-box"><div class="b-gauge-fill" id="ru-e-gauge" style="background:#ff3333;"></div></div>
+          </div>
+        </div>
+        
+        <div style="text-align:center; margin-top: 20px; font-size:12px; color:#aaa;">
+          ボスの攻撃力＆速度: <span id="ru-e-power" style="color:#ff6b6b; font-weight:bold; font-size:16px;">1.00x</span>
+        </div>
+      </div>
+      
+      <div id="raid-result-text" style="text-align:center; font-size: 22px; font-weight:bold; margin-bottom: 15px; height:30px;"></div>
+      <button id="btn-close-raid" class="btn-fantasy" style="display:none; margin: 0; width: 100%; font-size: 16px; padding: 10px; background:linear-gradient(to bottom, #7a2020, #4a0d0d); border-color:#ff3333;">結果を送信して戻る</button>
+    </div>
+  </div>
+
 <!-- 💡 確率表示モーダル (bodyの下部に追加) -->
 <div id="modal-gacha-prob" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
   <div style="width: 90%; max-width: 450px; background: #0a0a0a; border: 2px solid #c49a45; border-radius: 8px; padding: 15px; color: #f2e4c9; max-height: 75vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,1);">

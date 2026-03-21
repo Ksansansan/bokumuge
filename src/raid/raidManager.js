@@ -2,6 +2,7 @@
 import { subscribeRaidData, updateRaidState, toggleRaidWaiting } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
+import { startRaidBattleAnimation } from './raidBattle.js';
 
 let playerRef = null;
 let currentRaidData = null;
@@ -22,6 +23,13 @@ export function initRaidManager(playerObj) {
 
   // 1秒ごとにタイマーを回す
   countdownInterval = setInterval(checkAndRenderRaid, 1000);
+}
+
+// ★追加：タブ切り替え時などに自動でキャンセルする関数
+export function cancelRaidWaitingIfActive() {
+  if (currentRaidData && !currentRaidData.isOpen && currentRaidData.waitingPlayers?.includes(playerRef.name)) {
+    toggleRaidWaiting(playerRef.name, false);
+  }
 }
 
 // 現在がレイド時間内かどうかを判定し、残り時間を返す
@@ -110,9 +118,9 @@ async function checkAndRenderRaid() {
     `;
     
     if (isMeWaiting) {
-      html += `<button id="btn-raid-cancel" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:#333; border-color:#555;">待機をキャンセル</button>`;
+      html += `<button id="btn-raid-cancel" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:#333; border-color:#555; display:block; margin:0 auto;">待機をキャンセル</button>`;
     } else {
-      html += `<button id="btn-raid-wait" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:linear-gradient(to bottom, #7a2020, #4a0d0d); border-color:#ff6b6b;">ゲート待機列に並ぶ</button>`;
+      html += `<button id="btn-raid-wait" class="btn-fantasy" style="width:80%; padding:8px; font-size:14px; background:linear-gradient(to bottom, #7a2020, #4a0d0d); border-color:#ff6b6b; display:block; margin:0 auto;">ゲート待機列に並ぶ</button>`;
     }
     
     container.innerHTML = html;
@@ -154,12 +162,12 @@ async function checkAndRenderRaid() {
     </button>
   `;
 
-  // 次回：このボタンを押して戦闘画面へ遷移する処理を実装します
+  // ★ 修正：挑戦ボタンでバトルアニメーションを開始
   const btnBattle = document.getElementById('btn-raid-battle');
   if (btnBattle && remainingTries > 0) {
     btnBattle.addEventListener('click', () => {
       playSound('win');
-      alert('次回（第2回）でレイド専用戦闘画面を実装します！お楽しみに！');
+      startRaidBattleAnimation(playerRef, currentRaidData, myData);
     });
   }
 }

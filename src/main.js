@@ -17,7 +17,7 @@ import { initClover, openCloverModal } from './minigame/clover.js';
 import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound } from './audio.js';
 import { openProfileModal } from './profile.js';
-import { initRaidManager } from './raid/raidManager.js';
+import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -522,12 +522,19 @@ function setupTabNavigation() {
 
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      
       navBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       const targetId = btn.getAttribute('data-target');
       document.getElementById(targetId).classList.add('active');
 
+
+      // ★追加：バトルタブ以外に切り替えたらレイド待機を自動キャンセル
+      if (targetId !== 'tab-battle') {
+        cancelRaidWaitingIfActive();
+      }
+      
       if (targetId === 'tab-training') updateTrainingUI();
       // ★ 装備タブを開いたときにチケット枚数を同期する
       if (targetId === 'tab-equip') updateTicketCount();

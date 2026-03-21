@@ -260,3 +260,44 @@ export async function getRankingData(rankId, isTotal = false) {
   
   return rankings.slice(0, 10);
 }
+
+// ==========================================
+// 🐉 レイドボス同期機能
+// ==========================================
+export function subscribeRaidData(callback) {
+  const raidRef = doc(db, "global", "raidState");
+  return onSnapshot(raidRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data());
+    } else {
+      callback(null);
+    }
+  });
+}
+
+export async function updateRaidState(updates) {
+  const raidRef = doc(db, "global", "raidState");
+  await setDoc(raidRef, updates, { merge: true });
+}
+
+// ゲート待機列に参加/離脱する
+export async function toggleRaidWaiting(playerName, isWaiting) {
+  const raidRef = doc(db, "global", "raidState");
+  const snap = await getDoc(raidRef);
+  if (!snap.exists()) return;
+
+  let waiters = snap.data().waitingPlayers ||[];
+  if (isWaiting && !waiters.includes(playerName)) {
+    waiters.push(playerName);
+  } else if (!isWaiting) {
+    waiters = waiters.filter(n => n !== playerName);
+  }
+  
+  const updates = { waitingPlayers: waiters };
+  // 2人揃ったらゲート解放！
+  if (waiters.length >= 2 && !snap.data().isOpen) {
+    updates.isOpen = true;
+    addGlobalNews(`🚨 【警報】ゲートが解放され、レイドボスが姿を現しました！！`, 1);
+  }
+  await updateRaidState(updates);
+}

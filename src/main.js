@@ -17,6 +17,7 @@ import { initClover, openCloverModal } from './minigame/clover.js';
 import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound } from './audio.js';
 import { openProfileModal } from './profile.js';
+import { initRaidManager } from './raid/raidManager.js';
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -221,6 +222,7 @@ function init() {
   initCommand(player, updateTrainingUI);
   initClover(player, updateTrainingUI);
   initSlot(player, updateTrainingUI);
+  initRaidManager(player); 
   // ◀ ▶ ボタン
   document.getElementById('btn-prev').addEventListener('click', () => {
     if (player.floor > 1) {

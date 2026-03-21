@@ -106,14 +106,31 @@ export function startRaidBattleAnimation(player, bossData, myData) {
   let pMaxHp = 1, pHp = 1, eMaxHp = 1, eHp = 1;
   let pGaugeVal = 0, eGaugeVal = 0;
   
+  // プレイヤーのステータス描画
+  let pStr = Math.max(1, Math.floor(Math.pow(player.battleStats.str, 0.25))); // 攻撃用のデフレSTR
+  document.getElementById('ru-p-stat-str').textContent = formatNumber(pStr);
+  document.getElementById('ru-p-stat-vit').textContent = formatNumber(player.battleStats.vit);
+  document.getElementById('ru-p-stat-agi').textContent = formatNumber(player.battleStats.agi);
+
+  let bBaseStr = 50 * Math.pow(1.5, bossData.level - 1);
+  let bBaseVit = 10000 * Math.pow(1.5, bossData.level - 1); // VITはHP/10
+  let bBaseAgi = 20 * Math.pow(1.5, bossData.level - 1);
+  
   function renderLoop() {
-    const speed = 1; // レイドは1倍速固定で演出を味わう
+    const speed = 1; 
     currentFrame += speed;
     let s = currentFrame / 60;
     
     document.getElementById('raid-timer-text').textContent = `Time: ${s.toFixed(2)}s`;
-    // ボスのインフレ率をリアルタイム表示
-    document.getElementById('ru-e-power').textContent = `${Math.pow(1.6, s).toFixed(2)}x`;
+    
+    // ★ 毎フレーム、インフレしていくボスのステータスを計算してUIに反映
+    let currentBStr = bBaseStr * Math.pow(1.6, s);
+    let currentBVit = bBaseVit;
+    let currentBAgi = bBaseAgi * Math.pow(1.6, s);
+
+    document.getElementById('ru-e-stat-str').textContent = formatNumber(currentBStr);
+    document.getElementById('ru-e-stat-vit').textContent = formatNumber(currentBVit);
+    document.getElementById('ru-e-stat-agi').textContent = formatNumber(currentBAgi);
 
     while (eventIndex < result.events.length && result.events[eventIndex].frame <= currentFrame) {
       const ev = result.events[eventIndex];
@@ -136,10 +153,17 @@ export function startRaidBattleAnimation(player, bossData, myData) {
       eventIndex++;
     }
 
-    // ゲージ上昇（描画用）
-    pGaugeVal += 1000/60 * speed; // 仮の描画速度
-    eGaugeVal += 1000/60 * speed * Math.pow(1.6, s);
-    if(pGaugeVal>1000) pGaugeVal=1000; if(eGaugeVal>1000) eGaugeVal=1000;
+   // ★ ゲージ上昇（描画用）を通常バトルと同じ相対速度計算にする
+    const BASE_SPEED = 1000 / 60;
+    let visualPAgi = Math.max(1, Math.min(player.battleStats.agi, currentBAgi * 10));
+    let visualEAgi = Math.max(1, Math.min(currentBAgi, player.battleStats.agi * 10));
+    const minVisualAgi = Math.min(visualPAgi, visualEAgi);
+
+    pGaugeVal += (visualPAgi / minVisualAgi) * BASE_SPEED * speed;
+    eGaugeVal += (visualEAgi / minVisualAgi) * BASE_SPEED * speed;
+
+    if(pGaugeVal>1000) pGaugeVal=1000; 
+    if(eGaugeVal>1000) eGaugeVal=1000;
 
     document.getElementById('ru-p-hp').style.width = `${Math.max(0, (pHp / pMaxHp) * 100)}%`;
     document.getElementById('ru-p-hp-txt').textContent = `${formatNumber(Math.max(0, pHp))} / ${formatNumber(pMaxHp)}`;
@@ -160,16 +184,21 @@ export function startRaidBattleAnimation(player, bossData, myData) {
         resultText.style.color = '#ff6b6b';
       }
       
-      // ボタンが押されたら結果をFirebaseへ送る
+       // ★ 修正：Firebaseへの保存処理（ネストエラーの回避）
       btnClose.onclick = async () => {
         btnClose.textContent = "送信中...";
         myData.damage += result.totalDamage;
         myData.tries += 1;
         const newHp = Math.max(0, bossData.currentHp - result.totalDamage);
         
+        // 対象のparticipantsオブジェクト全体をコピーして、自分の分だけ更新する
+        const participantsUpdate = { ...(bossData.participants || {}) };
+        participantsUpdate[player.name] = myData;
+
         await updateRaidState({
           currentHp: newHp,
-          isDefeated: newHp <= 0,[`participants.${player.name}`]: myData
+          isDefeated: newHp <= 0,
+          participants: participantsUpdate // オブジェクト丸ごと上書き
         });
         
         modal.style.display = 'none';

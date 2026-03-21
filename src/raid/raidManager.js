@@ -66,23 +66,36 @@ function getRaidSchedule() {
 // レイドの状態をUIに描画する
 async function checkAndRenderRaid() {
   const container = document.getElementById('raid-content');
-  if (!container) return;
+  const panel = document.getElementById('raid-panel');
+  const title = document.getElementById('raid-title');
+  if (!container || !panel || !title) return;
 
   const sched = getRaidSchedule();
 
-  // --- 1. レイド時間外 ---
+  // --- 1. レイド時間外 (控えめな表示) ---
   if (!sched.isRaidTime) {
+    panel.style.background = 'transparent';
+    panel.style.borderColor = 'transparent';
+    panel.style.boxShadow = 'none';
+    panel.style.marginTop = '15px';
+    title.style.display = 'none'; // タイトルも隠す
+
     container.innerHTML = `
-      <div style="font-size: 13px; color: #ccc; margin-bottom: 5px;">次回のレイドボス襲来まで</div>
-      <div style="font-size: 24px; font-weight: bold; color: #aaa; font-family: monospace;">${sched.timeStr}</div>
+      <div style="font-size: 12px; color: #888; text-align:center;">次回のレイドボス襲来まで: <span style="font-family:monospace; color:#ccc;">${sched.timeStr}</span></div>
     `;
     
-    // 時間外なのにデータがアクティブならクローズ処理（最初の1人が実行）
     if (currentRaidData && currentRaidData.isActive) {
       await updateRaidState({ isActive: false, isOpen: false, waitingPlayers:[], isDefeated: false });
     }
     return;
   }
+
+  // --- 2. レイド時間内 (派手な表示) ---
+  panel.style.background = 'radial-gradient(circle at center, #2b0808, #110000)';
+  panel.style.borderColor = '#ff3333';
+  panel.style.boxShadow = '0 0 15px rgba(255,0,0,0.2)';
+  panel.style.marginTop = '30px';
+  title.style.display = 'block'; // タイトルを出す
 
   // --- 2. レイド時間内だが、まだデータが作成されていない場合（最初の1人が初期化） ---
   if (!currentRaidData || !currentRaidData.isActive) {

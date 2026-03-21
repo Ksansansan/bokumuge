@@ -199,10 +199,9 @@
     </div>
 
      <!-- 🐉 レイドボス パネル -->
-      <div id="raid-panel" class="panel" style="margin-top: 30px; border-color: #ff3333; background: radial-gradient(circle at center, #2b0808, #110000); box-shadow: 0 0 15px rgba(255,0,0,0.2);">
-        <div style="color:#ff6b6b; font-weight:bold; font-size:18px; text-align:center; border-bottom:1px solid #ff3333; padding-bottom:5px;">🐉 ワールドレイド</div>
+      <div id="raid-panel" class="panel" style="margin-top: 30px; border: 1px solid transparent; background: transparent; transition: all 0.5s;">
+        <div id="raid-title" style="color:#ff6b6b; font-weight:bold; font-size:18px; text-align:center; border-bottom:1px solid #ff3333; padding-bottom:5px; display:none;">🐉 ワールドレイド</div>
         
-        <!-- 状態によってJSで表示を切り替えるコンテナ -->
         <div id="raid-content" style="padding-top: 10px; text-align: center;">
           <p style="font-size:12px; color:#aaa;">読み込み中...</p>
         </div>
@@ -514,9 +513,26 @@
           </div>
         </div>
         
-        <div style="text-align:center; margin-top: 20px; font-size:12px; color:#aaa;">
+        <div style="text-align:center; margin-top: 15px; font-size:10px; color:#aaa;">
           ボスの攻撃力＆速度: <span id="ru-e-power" style="color:#ff6b6b; font-weight:bold; font-size:16px;">1.00x</span>
         </div>
+
+        <!-- ★追加：下部ステータス表示（通常バトルと同じ構造） -->
+        <div style="display: flex; justify-content: space-between; width: 100%; border-top: 1px dashed #ff3333; padding-top: 10px; margin-top: 15px;">
+          <!-- プレイヤー側のステータス -->
+          <div style="width: 45%; font-size: 13px; line-height: 1.5; color: #ccc;">
+            <div style="display:flex; justify-content:space-between;"><span>STR</span><span id="ru-p-stat-str" style="color:#ff6b6b; font-weight:bold;">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>VIT</span><span id="ru-p-stat-vit" style="color:#6be6ff; font-weight:bold;">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>AGI</span><span id="ru-p-stat-agi" style="color:#94ff6b; font-weight:bold;">0</span></div>
+          </div>
+          <!-- 敵側のステータス -->
+          <div style="width: 45%; font-size: 13px; line-height: 1.5; color: #ccc;">
+            <div style="display:flex; justify-content:space-between;"><span id="ru-e-stat-str" style="color:#ff6b6b; font-weight:bold;">0</span><span>STR</span></div>
+            <div style="display:flex; justify-content:space-between;"><span id="ru-e-stat-vit" style="color:#6be6ff; font-weight:bold;">0</span><span>VIT</span></div>
+            <div style="display:flex; justify-content:space-between;"><span id="ru-e-stat-agi" style="color:#94ff6b; font-weight:bold;">0</span><span>AGI</span></div>
+          </div>
+        </div>
+      </div>
       </div>
       
       <div id="raid-result-text" style="text-align:center; font-size: 22px; font-weight:bold; margin-bottom: 15px; height:30px;"></div>

@@ -9,7 +9,7 @@ let currentRaidData = null;
 let countdownInterval = null;
 
 // 3時間ごとのスケジュール設定
-const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
+const RAID_HOURS =[0, 3, 6, 9, 12,14, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {

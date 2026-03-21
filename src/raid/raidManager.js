@@ -11,7 +11,7 @@ let currentRaidData = null;
 let countdownInterval = null;
 
 const RAID_HOURS =[0, 3, 6, 9, 12, 15,16, 18, 21];
-const RAID_DURATION_MINUTES = 44;
+const RAID_DURATION_MINUTES = 50;
 
 export function initRaidManager(playerObj) {
   playerRef = playerObj;

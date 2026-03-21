@@ -9,9 +9,9 @@ import { updateTicketCount } from '../gacha/gachaUI.js';
 let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
-
+let lastScrollTop = 0;
 const RAID_HOURS =[0, 3, 6, 9, 12, 15,17, 18, 21];
-const RAID_DURATION_MINUTES = 10;
+const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {
   playerRef = playerObj;
@@ -97,36 +97,63 @@ async function checkAndRenderRaid() {
 
   const sched = getRaidSchedule();
 
-  // ★新しいレイド時間の開始時に初期化する
+  // ★ 追加：書き換え前に、現在のスクロール位置を保存しておく
+  const rankContainer = document.getElementById('raid-rank-scroll');
+  if (rankContainer) {
+    lastScrollTop = rankContainer.scrollTop;
+  }
+
+  // --- 新しいレイド時間の開始時に初期化する ---
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
-    const baseHp = Math.floor(2700 * Math.pow(3, nextLv - 1));
+    const baseHp = Math.floor(50000 * Math.pow(1.5, nextLv - 1));
+    
+    // ★ 修正：現在のデータを「前回の結果（lastRaidData）」として退避させてから初期化！
+    let prevData = null;
+    if (currentRaidData && currentRaidData.participants) {
+      prevData = {
+        level: currentRaidData.level,
+        maxHp: currentRaidData.maxHp,
+        currentHp: currentRaidData.currentHp,
+        isDefeated: currentRaidData.isDefeated,
+        participants: currentRaidData.participants
+      };
+    }
+
     await updateRaidState({
       raidId: sched.currentRaidId,
       level: nextLv, maxHp: baseHp, currentHp: baseHp,
       isActive: true, isOpen: false, isDefeated: false,
-      waitingPlayers:[], participants: {}
+      waitingPlayers:[], participants: {},
+      lastRaidData: prevData // ★ 退避したデータを保存
     });
     return;
   }
 
   // --- 報酬受け取り判定 ---
-  const myData = currentRaidData?.participants?.[playerRef.name];
-  const isFinished = !sched.isRaidTime || currentRaidData?.isDefeated;
-  const canClaim = isFinished && myData && !myData.claimed;
+  // ★ 修正：現在終わったレイドか、前回終わったレイド（lastRaidData）のどちらかから自分のデータを探す
+  let targetDataForReward = null;
+  
+  if (!sched.isRaidTime || (currentRaidData && currentRaidData.isDefeated)) {
+    // 今のレイドが終わっている場合
+    targetDataForReward = currentRaidData;
+  } else if (currentRaidData && currentRaidData.lastRaidData) {
+    // 今は新しいレイドが始まっているが、前回の報酬が残っている場合
+    targetDataForReward = currentRaidData.lastRaidData;
+  }
 
-   if (canClaim) {
-    // ★修正：討伐済みの場合は「現在のレベル - 1」が倒したボスのレベルになる
-    const levelMult = currentRaidData.isDefeated ? Math.max(1, currentRaidData.level - 1) : currentRaidData.level;
-    
+  const myData = targetDataForReward?.participants?.[playerRef.name];
+  const canClaim = myData && !myData.claimed;
+
+  if (canClaim) {
+    const levelMult = targetDataForReward.isDefeated ? Math.max(1, targetDataForReward.level) : targetDataForReward.level;
     const baseTickets = 150;
-    const damagePercent = 1 - (currentRaidData.currentHp / currentRaidData.maxHp);
+    const damagePercent = 1 - (targetDataForReward.currentHp / targetDataForReward.maxHp);
     let rewardTickets = Math.floor(baseTickets * levelMult * damagePercent);
     let rankText = "";
 
-    // 討伐成功時の順位報酬
-    if (currentRaidData.isDefeated) {
-      const participants = Object.entries(currentRaidData.participants)
+    if (targetDataForReward.isDefeated) {
+      const participants = Object.entries(targetDataForReward.participants)
         .map(([name, data]) => ({ name, damage: data.damage }))
         .sort((a, b) => b.damage - a.damage);
       
@@ -135,10 +162,10 @@ async function checkAndRenderRaid() {
       if (myRank === 1) rankBonus = 100 * levelMult;
       else if (myRank === 2) rankBonus = 70 * levelMult;
       else if (myRank === 3) rankBonus = 50 * levelMult;
-      else rankBonus = 20 * levelMult; // 参加賞
+      else rankBonus = 25 * levelMult; 
       
       rewardTickets += rankBonus;
-      rankText = `<div style="color:#5ce6e6; font-size:14px; margin-bottom:10px;">与ダメージ順位: ${myRank}位 </div>`;
+      rankText = `<div style="color:#5ce6e6; font-size:14px; margin-bottom:10px;">与ダメージ順位: ${myRank}位 (順位ボーナス獲得！)</div>`;
     }
 
     panel.style.background = 'radial-gradient(circle at center, #2b2511, #141108)';
@@ -146,7 +173,6 @@ async function checkAndRenderRaid() {
     title.style.display = 'block';
     title.textContent = '🎁 レイド報酬';
     title.style.color = '#d4af37';
-    title.style.borderBottomColor = '#d4af37';
 
     container.innerHTML = `
       <div style="font-size: 14px; color: #ccc; margin-bottom: 10px;">前回参加したレイドの報酬が届いています！</div>
@@ -158,10 +184,19 @@ async function checkAndRenderRaid() {
     document.getElementById('btn-claim-raid').addEventListener('click', async (e) => {
       e.target.disabled = true;
       e.target.textContent = "受け取り中...";
-      const success = await claimRaidReward(playerRef.name, rewardTickets);
+      
+      // ★ 修正：現在のレイドか前回のレイドか、フラグを渡して受け取り処理を行う
+      const isFromLastRaid = targetDataForReward === currentRaidData.lastRaidData;
+      const success = await claimRaidReward(playerRef.name, rewardTickets, isFromLastRaid);
+      
       if(success) {
         playSound('win');
+        if (!playerRef.inventory) playerRef.inventory = {};
+        playerRef.inventory["装備ガチャチケット"] = (playerRef.inventory["装備ガチャチケット"] || 0) + rewardTickets;
+
+        // 手元のデータが更新されたので、UIを書き換える
         updateTicketCount();
+        checkAndRenderRaid(); 
       } else {
         e.target.disabled = false;
         e.target.textContent = "エラー。再試行";
@@ -266,6 +301,11 @@ async function checkAndRenderRaid() {
     </button>
     ${rankHtml}
   `;
+
+  const newRankContainer = document.getElementById('raid-rank-scroll');
+  if (newRankContainer) {
+    newRankContainer.scrollTop = lastScrollTop;
+  }
 
   const btnBattle = document.getElementById('btn-raid-battle');
   if (btnBattle && remainingTries > 0) {

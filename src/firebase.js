@@ -398,29 +398,38 @@ export async function submitRaidDamage(playerName, newDamage, maxTries = 5) {
 }
 
 // ★追加：レイド報酬の受け取り処理
-export async function claimRaidReward(playerName, ticketAmount) {
+export async function claimRaidReward(playerName, ticketAmount, isFromLastRaid = false) {
   const raidRef = doc(db, "global", "raidState");
   const userRef = doc(db, "users", playerName);
   
   try {
     await runTransaction(db, async (t) => {
        const raidDoc = await t.get(raidRef);
-       const userDoc = await t.get(userRef);
-       
        if(raidDoc.exists()) {
           const data = raidDoc.data();
-          if(data.participants && data.participants[playerName]) {
-             // ★修正：participants全体をコピーして安全に更新
-             let newParticipants = { ...data.participants };
-             newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
-             t.update(raidRef, { participants: newParticipants });
+          
+          if (isFromLastRaid) {
+            // ★ 前回のレイド (lastRaidData) の報酬を受け取る場合
+            if(data.lastRaidData && data.lastRaidData.participants && data.lastRaidData.participants[playerName]) {
+               let newParticipants = { ...data.lastRaidData.participants };
+               newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
+               // lastRaidData の中身だけを更新
+               let newLastRaidData = { ...data.lastRaidData, participants: newParticipants };
+               t.update(raidRef, { lastRaidData: newLastRaidData });
+            }
+          } else {
+            // ★ 現在のレイドの報酬を受け取る場合
+            if(data.participants && data.participants[playerName]) {
+               let newParticipants = { ...data.participants };
+               newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
+               t.update(raidRef, { participants: newParticipants });
+            }
           }
        }
        
-       
+       const userDoc = await t.get(userRef);
        if(userDoc.exists()) {
           const uData = userDoc.data();
-          // ★修正：inventory全体をコピーして安全に更新
           let newInventory = { ...(uData.inventory || {}) };
           newInventory["装備ガチャチケット"] = (newInventory["装備ガチャチケット"] || 0) + ticketAmount;
           t.update(userRef, { inventory: newInventory });

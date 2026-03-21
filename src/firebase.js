@@ -405,6 +405,8 @@ export async function claimRaidReward(playerName, ticketAmount, isFromLastRaid =
   try {
     await runTransaction(db, async (t) => {
        const raidDoc = await t.get(raidRef);
+       const userDoc = await t.get(userRef);
+       
        if(raidDoc.exists()) {
           const data = raidDoc.data();
           
@@ -427,7 +429,7 @@ export async function claimRaidReward(playerName, ticketAmount, isFromLastRaid =
           }
        }
        
-       const userDoc = await t.get(userRef);
+       
        if(userDoc.exists()) {
           const uData = userDoc.data();
           let newInventory = { ...(uData.inventory || {}) };

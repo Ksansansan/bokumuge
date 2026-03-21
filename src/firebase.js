@@ -405,6 +405,8 @@ export async function claimRaidReward(playerName, ticketAmount) {
   try {
     await runTransaction(db, async (t) => {
        const raidDoc = await t.get(raidRef);
+       const userDoc = await t.get(userRef);
+       
        if(raidDoc.exists()) {
           const data = raidDoc.data();
           if(data.participants && data.participants[playerName]) {
@@ -415,7 +417,7 @@ export async function claimRaidReward(playerName, ticketAmount) {
           }
        }
        
-       const userDoc = await t.get(userRef);
+       
        if(userDoc.exists()) {
           const uData = userDoc.data();
           // ★修正：inventory全体をコピーして安全に更新

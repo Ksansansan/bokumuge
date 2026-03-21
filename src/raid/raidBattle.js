@@ -99,7 +99,7 @@ export function startRaidBattleAnimation(player, bossData, myData) {
   btnClose.style.display = 'none';
   resultText.textContent = '';
   document.getElementById('ru-p-name').textContent = player.name;
-
+  document.getElementById('ru-e-name').textContent = `絶望の化身 Lv.${bossData.level}`;
   const result = simulateRaidBattle(player.battleStats, bossData);
 
   let currentFrame = 0, eventIndex = 0;

@@ -396,3 +396,35 @@ export async function submitRaidDamage(playerName, newDamage, maxTries = 5) {
     return false;
   }
 }
+
+// ★追加：レイド報酬の受け取り処理
+export async function claimRaidReward(playerName, ticketAmount) {
+  const raidRef = doc(db, "global", "raidState");
+  const userRef = doc(db, "users", playerName);
+  
+  try {
+    await runTransaction(db, async (t) => {
+       const raidDoc = await t.get(raidRef);
+       if(raidDoc.exists()) {
+          const data = raidDoc.data();
+          if(data.participants && data.participants[playerName]) {
+             let pData = data.participants[playerName];
+             pData.claimed = true; // 受け取り済みにする
+             t.update(raidRef, { [`participants.${playerName}`]: pData });
+          }
+       }
+       
+       const userDoc = await t.get(userRef);
+       if(userDoc.exists()) {
+          const uData = userDoc.data();
+          if(!uData.inventory) uData.inventory = {};
+          uData.inventory["装備ガチャチケット"] = (uData.inventory["装備ガチャチケット"] || 0) + ticketAmount;
+          t.update(userRef, { inventory: uData.inventory });
+       }
+    });
+    return true;
+  } catch(e) {
+    console.error("報酬受け取りエラー:", e);
+    return false;
+  }
+}

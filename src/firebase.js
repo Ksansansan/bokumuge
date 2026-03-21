@@ -25,34 +25,58 @@ export function getReliableTime() {
 // ==========================================
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
-  const userSnap = await getDoc(userRef);
-   await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
-  if (userSnap.exists()) {
-    const serverTime = userSnap.data().lastLoginTime.toMillis();
-    serverTimeOffset = serverTime - Date.now();
+  
+  // 1. まず現在のデータが存在するか（pinが設定されているか）確認
+  let userSnap = await getDoc(userRef);
+
+  if (userSnap.exists() && userSnap.data().pin) {
+    // --- 既存ユーザー（ログイン） ---
     const data = userSnap.data();
     if (data.pin === pin) {
-      if (!data.timestamps) data.timestamps = {}; // 古いデータ互換
-      if (!data.meditation) {
-        data.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
+      // パスワードが合っていればログイン時間を更新
+      await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
+      
+      // サーバー時間を取得してオフセット計算
+      userSnap = await getDoc(userRef);
+      const updatedData = userSnap.data();
+      const serverTime = updatedData.lastLoginTime.toMillis();
+      serverTimeOffset = serverTime - Date.now();
+      
+      if (!updatedData.timestamps) updatedData.timestamps = {}; 
+      if (!updatedData.meditation) {
+        updatedData.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
       } 
-      lastSavedPlayerState = JSON.parse(JSON.stringify(data)); // キャッシュに保存
-      return { success: true, data: data };
+      
+      lastSavedPlayerState = JSON.parse(JSON.stringify(updatedData));
+      return { success: true, data: updatedData };
     } else {
       return { success: false, message: "パスワード(4桁)が違います" };
     }
   } else {
+    // --- 新規登録 ---
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount:0, firstClearCount:0, inventory: {},
+      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, firstClearCount: 0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: serverTimestamp(),
-      timestamps: {}, // ★項目ごとの更新日時を保存する枠
-      meditation: { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime }
+      lastLoginTime: serverTimestamp(),
+      timestamps: {}, 
     };
+    
+    // 一度保存してサーバー時間を確定させる
     await setDoc(userRef, initialData);
-    lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
-    return { success: true, data: initialData };
+    
+    // サーバー時間を取得してオフセットと瞑想初期値を設定
+    userSnap = await getDoc(userRef);
+    const savedData = userSnap.data();
+    const serverTime = savedData.lastLoginTime.toMillis();
+    serverTimeOffset = serverTime - Date.now();
+    
+    savedData.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
+    await setDoc(userRef, { meditation: savedData.meditation }, { merge: true });
+    
+    lastSavedPlayerState = JSON.parse(JSON.stringify(savedData));
+    return { success: true, data: savedData };
   }
 }
 

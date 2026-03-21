@@ -1,5 +1,4 @@
 // src/audio.js を以下で上書き
-
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let ctx;
 

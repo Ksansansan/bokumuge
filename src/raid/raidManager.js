@@ -11,7 +11,7 @@ let currentRaidData = null;
 let countdownInterval = null;
 
 const RAID_HOURS =[0, 3, 6, 9, 12, 15,17, 18, 21];
-const RAID_DURATION_MINUTES = 30;
+const RAID_DURATION_MINUTES = 10;
 
 export function initRaidManager(playerObj) {
   playerRef = playerObj;
@@ -100,7 +100,7 @@ async function checkAndRenderRaid() {
   // ★新しいレイド時間の開始時に初期化する
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
-    const baseHp = Math.floor(50000 * Math.pow(1.5, nextLv - 1));
+    const baseHp = Math.floor(2700 * Math.pow(3, nextLv - 1));
     await updateRaidState({
       raidId: sched.currentRaidId,
       level: nextLv, maxHp: baseHp, currentHp: baseHp,

@@ -113,7 +113,7 @@ export function startRaidBattleAnimation(player, bossData, myData) {
   document.getElementById('ru-p-stat-agi').textContent = formatNumber(player.battleStats.agi);
 
   let bBaseStr = 50 * Math.pow(1.5, bossData.level - 1);
-  let bBaseVit = 10000 * Math.pow(1.5, bossData.level - 1); // VITはHP/10
+  let bBaseVit = 270 * Math.pow(3, bossData.level - 1); // VITはHP/10
   let bBaseAgi = 50 * Math.pow(1.5, bossData.level - 1);
   
   function renderLoop() {

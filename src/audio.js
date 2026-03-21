@@ -3,7 +3,8 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 let ctx;
 
 // ★ 追加：音量管理
-let masterVolume = parseFloat(localStorage.getItem('se_volume')) ?? 0.5; // 初期値50%
+let masterVolume = Number(localStorage.getItem('se_volume'));
+if (!Number.isFinite(masterVolume)) masterVolume = 0.5;
 let isMuted = localStorage.getItem('se_muted') === 'true';
 
 export function setVolume(val) {

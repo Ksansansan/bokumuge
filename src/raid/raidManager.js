@@ -106,7 +106,7 @@ async function checkAndRenderRaid() {
   // --- 新しいレイド時間の開始時に初期化する ---
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
-    const baseHp = Math.floor(50000 * Math.pow(1.5, nextLv - 1));
+    const baseHp = Math.floor(2700 * Math.pow(1.5, nextLv - 1));
     
     // ★ 修正：現在のデータを「前回の結果（lastRaidData）」として退避させてから初期化！
     let prevData = null;

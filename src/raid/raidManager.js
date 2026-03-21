@@ -140,10 +140,10 @@ async function checkAndRenderRaid() {
     const myData = targetDataForReward.participants[playerRef.name];
     const levelMult = targetDataForReward.isDefeated ? Math.max(1, targetDataForReward.level) : targetDataForReward.level;
     
-    const baseTickets = 100;
+    const baseTickets = 80;
     const damagePercent = 1 - (targetDataForReward.currentHp / targetDataForReward.maxHp);
     let rewardTickets = Math.floor(baseTickets * levelMult * damagePercent);
-    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 100 * levelMult);
+    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 80 * levelMult);
     rewardTickets += contributionTickets;
     let rankText = "";
 
@@ -236,14 +236,33 @@ async function checkAndRenderRaid() {
     title.style.color = '#ff6b6b';
     title.style.borderBottomColor = '#ff3333';
 
+    // ★ 修正：次回の開始時間を計算して表示する
+    const now = new Date();
+    let nextH = RAID_HOURS.find(hour => hour > now.getHours());
+    let nextTime = new Date(now);
+    if (nextH === undefined) {
+      nextH = RAID_HOURS[0];
+      nextTime.setDate(now.getDate() + 1);
+    }
+    nextTime.setHours(nextH, 0, 0, 0);
+    const diff = nextTime - now;
+    const mm = Math.floor(diff / 60000);
+    const ss = Math.floor((diff % 60000) / 1000);
+    const nextTimeStr = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
     if (container.dataset.state !== 'defeated') {
       container.dataset.state = 'defeated';
+      const buffLv = currentRaidData.defeatedCount || 0;
       container.innerHTML = `
         <div style="font-size: 16px; color: #ffd166; font-weight: bold; margin-bottom: 5px;">🎉 レイドボスは討伐されました！</div>
-        <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(残り時間: <span id="raid-defeated-timer">${sched.timeStr}</span>)</div>
+        <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(次回まで: <span id="raid-defeated-timer" style="font-family:monospace; color:#fff;">${nextTimeStr}</span>)</div>
+        <div style="margin-top:10px; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:8px; border-radius:4px;">
+          <span style="color:#ffd700; font-weight:bold; font-size:14px;">現在のアクティブバフ (Lv.${buffLv})</span><br>
+          <span style="font-size:12px; color:#fff;">すべてのプレイヤーに永続効果が発動中！</span>
+        </div>
       `;
     } else {
-      document.getElementById('raid-defeated-timer').textContent = sched.timeStr;
+      document.getElementById('raid-defeated-timer').textContent = nextTimeStr;
     }
     return;
   }
@@ -356,7 +375,8 @@ async function checkAndRenderRaid() {
     }
   }
 
-  // ★ ランキングの中身だけを生成して挿入
+  // --- 6. ゲート解放済み (戦闘可能) のランキング生成部分 ---
+  // ★ 修正：名前に clickable-name クラスと data-name 属性を追加
   let rankHtml = '';
   participantsList.forEach((p, i) => { 
     const colors =["#ffd700", "#c0c0c0", "#cd7f32"];
@@ -364,7 +384,10 @@ async function checkAndRenderRaid() {
     const bg = p.name === playerRef.name ? 'rgba(92, 230, 230, 0.2)' : 'transparent';
     
     rankHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:2px; background:${bg}; padding: 2px 4px; border-radius: 3px;">
-      <span style="color:${c}; font-weight:bold;">${i+1}位. ${p.name}</span>
+      <div>
+        <span style="color:${c}; font-weight:bold; margin-right:5px;">${i+1}位.</span>
+        <span class="clickable-name" data-name="${p.name}" style="color:${c}; font-weight:bold;">${p.name}</span>
+      </div>
       <span style="color:#fff; font-family:monospace;">${formatNumber(p.damage)}</span>
     </div>`;
   });

@@ -15,7 +15,7 @@ import { init1to20, open1to20Modal } from './minigame/1to20.js';
 import { initCommand, openCommandModal } from './minigame/command.js'; 
 import { initClover, openCloverModal } from './minigame/clover.js';
 import { initSlot, openSlotModal } from './minigame/slot.js';
-import { playSound } from './audio.js';
+import { playSound, setVolume, toggleMute, getAudioSettings } from './audio.js'; // 追加
 import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
 
@@ -198,6 +198,27 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     errorEl.innerHTML = "通信エラーが発生しました。";
     btnLogin.textContent = "ゲームスタート";
   }
+});
+
+// 音量UIの初期化
+const btnMute = document.getElementById('btn-mute');
+const sliderVol = document.getElementById('volume-slider');
+const initialAudio = getAudioSettings();
+
+sliderVol.value = initialAudio.volume;
+btnMute.textContent = initialAudio.muted ? '🔇' : '🔊';
+
+sliderVol.addEventListener('input', (e) => {
+  setVolume(parseFloat(e.target.value));
+  if (getAudioSettings().muted) { // スライダーを動かしたらミュート解除
+    toggleMute();
+    btnMute.textContent = '🔊';
+  }
+});
+
+btnMute.addEventListener('click', () => {
+  const isMuted = toggleMute();
+  btnMute.textContent = isMuted ? '🔇' : '🔊';
 });
 
 // ==========================================

@@ -408,18 +408,20 @@ export async function claimRaidReward(playerName, ticketAmount) {
        if(raidDoc.exists()) {
           const data = raidDoc.data();
           if(data.participants && data.participants[playerName]) {
-             let pData = data.participants[playerName];
-             pData.claimed = true; // 受け取り済みにする
-             t.update(raidRef, { [`participants.${playerName}`]: pData });
+             // ★修正：participants全体をコピーして安全に更新
+             let newParticipants = { ...data.participants };
+             newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
+             t.update(raidRef, { participants: newParticipants });
           }
        }
        
        const userDoc = await t.get(userRef);
        if(userDoc.exists()) {
           const uData = userDoc.data();
-          if(!uData.inventory) uData.inventory = {};
-          uData.inventory["装備ガチャチケット"] = (uData.inventory["装備ガチャチケット"] || 0) + ticketAmount;
-          t.update(userRef, { inventory: uData.inventory });
+          // ★修正：inventory全体をコピーして安全に更新
+          let newInventory = { ...(uData.inventory || {}) };
+          newInventory["装備ガチャチケット"] = (newInventory["装備ガチャチケット"] || 0) + ticketAmount;
+          t.update(userRef, { inventory: newInventory });
        }
     });
     return true;

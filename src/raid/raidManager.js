@@ -10,8 +10,8 @@ let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
 
-const RAID_HOURS =[0, 3, 6, 9, 12, 15,16, 18, 21];
-const RAID_DURATION_MINUTES = 50;
+const RAID_HOURS =[0, 3, 6, 9, 12, 15,17, 18, 21];
+const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {
   playerRef = playerObj;
@@ -115,10 +115,11 @@ async function checkAndRenderRaid() {
   const isFinished = !sched.isRaidTime || currentRaidData?.isDefeated;
   const canClaim = isFinished && myData && !myData.claimed;
 
-  if (canClaim) {
-    // 報酬計算
-    const baseTickets = 150; // ベース
-    const levelMult = currentRaidData.level;
+   if (canClaim) {
+    // ★修正：討伐済みの場合は「現在のレベル - 1」が倒したボスのレベルになる
+    const levelMult = currentRaidData.isDefeated ? Math.max(1, currentRaidData.level - 1) : currentRaidData.level;
+    
+    const baseTickets = 150;
     const damagePercent = 1 - (currentRaidData.currentHp / currentRaidData.maxHp);
     let rewardTickets = Math.floor(baseTickets * levelMult * damagePercent);
     let rankText = "";
@@ -137,7 +138,7 @@ async function checkAndRenderRaid() {
       else rankBonus = 20 * levelMult; // 参加賞
       
       rewardTickets += rankBonus;
-      rankText = `<div style="color:#5ce6e6; font-size:14px; margin-bottom:10px;">与ダメージ順位: ${myRank}位 (順位ボーナス獲得！)</div>`;
+      rankText = `<div style="color:#5ce6e6; font-size:14px; margin-bottom:10px;">与ダメージ順位: ${myRank}位 </div>`;
     }
 
     panel.style.background = 'radial-gradient(circle at center, #2b2511, #141108)';
@@ -229,12 +230,23 @@ async function checkAndRenderRaid() {
 
   let rankHtml = '<div style="margin-top:15px; border-top:1px dashed #555; padding-top:10px; font-size:12px; text-align:left;">';
   rankHtml += '<div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 現在の与ダメージ順位</div>';
-  participantsList.slice(0, 3).forEach((p, i) => { // Top 3
+  
+  // スクロール用コンテナ
+  rankHtml += '<div style="max-height: 100px; overflow-y: auto; padding-right: 5px;">';
+  
+  participantsList.forEach((p, i) => { 
     const colors =["#ffd700", "#c0c0c0", "#cd7f32"];
-    rankHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span style="color:${colors[i]}; font-weight:bold;">${i+1}位. ${p.name}</span><span style="color:#fff;">${formatNumber(p.damage)}</span></div>`;
+    const c = i < 3 ? colors[i] : "#fff";
+    // 自分の名前だけ背景を薄く光らせる
+    const bg = p.name === playerRef.name ? 'rgba(92, 230, 230, 0.2)' : 'transparent';
+    
+    rankHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:2px; background:${bg}; padding: 2px 4px; border-radius: 3px;">
+      <span style="color:${c}; font-weight:bold;">${i+1}位. ${p.name}</span>
+      <span style="color:#fff; font-family:monospace;">${formatNumber(p.damage)}</span>
+    </div>`;
   });
   if (participantsList.length === 0) rankHtml += '<div style="text-align:center; color:#777;">まだ攻撃したプレイヤーがいません</div>';
-  rankHtml += '</div>';
+  rankHtml += '</div></div>'; // コンテナ閉じる
 
   container.innerHTML = `
     <div style="font-size: 16px; color: #ff6b6b; font-weight: bold; margin-bottom: 5px;">😈 絶望の化身 Lv.${currentRaidData.level}</div>

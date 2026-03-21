@@ -113,9 +113,14 @@ async function checkAndRenderRaid() {
 
   // --- 3. ボス討伐済み ---
   if (currentRaidData.isDefeated) {
+    const buffLv = currentRaidData.defeatedCount || 0;
     container.innerHTML = `
       <div style="font-size: 16px; color: #ffd166; font-weight: bold; margin-bottom: 5px;">🎉 レイドボスは討伐されました！</div>
       <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(残り時間: ${sched.timeStr})</div>
+      <div style="margin-top:10px; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:8px; border-radius:4px;">
+        <span style="color:#ffd700; font-weight:bold; font-size:14px;">現在のアクティブバフ (Lv.${buffLv})</span><br>
+        <span style="font-size:12px; color:#fff;">すべてのプレイヤーに永続効果が発動中！</span>
+      </div>
     `;
     return;
   }

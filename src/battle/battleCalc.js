@@ -1,5 +1,6 @@
 // src/battle/battleCalc.js
 import { getLckBonusMultiplier } from '../gacha/equipment.js';
+import { getCachedBuffLevel } from '../firebase.js';
 
 export function simulateBattle(player, floorData) {
   const enemies = floorData.enemies;
@@ -77,6 +78,11 @@ export function simulateBattle(player, floorData) {
         const lckMult = getLckBonusMultiplier(currentLck);
 
         let ticketCount = 1;
+        // 【グローバルバフ】戦神の加護
+        const buffLv = getCachedBuffLevel();
+        if (buffLv >= 6) ticketCount += 3; // 戦神の超加護
+        else if (buffLv >= 2) ticketCount += 1; // 戦神の加護
+        
         if (currentLck >= 100) {
           ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
         }

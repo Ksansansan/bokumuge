@@ -1,6 +1,6 @@
 // src/gacha/gachaUI.js
 import { RARITY_DATA, STAT_TYPES, EQUIP_NAMES, getLckBonusMultiplier, getActualProbabilities, pullGacha, calcEquipLevel, getEquipStats } from './equipment.js';
-import { savePlayerData, addGlobalNews } from '../firebase.js';
+import { savePlayerData, addGlobalNews, getCachedBuffLevel } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 
@@ -121,6 +121,10 @@ function startAutoGacha(stopRarityIndex) {
   const logArea = document.getElementById('gacha-log-area');
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const probs = getActualProbabilities(currentLck);
+  
+  const buffLv = getCachedBuffLevel();
+  const intervalMs = (buffLv >= 8) ? 66 : 100; // 神速の抽選
+  
   autoInterval = setInterval(async () => {
     if ((playerRef.inventory?.["装備ガチャチケット"] || 0) <= 0) {
       stopAutoGacha(); return;
@@ -150,7 +154,7 @@ function startAutoGacha(stopRarityIndex) {
     } else {
       playSound('click');
     }
-  }, 100); // 0.1秒に1回引く
+  }, intervalMs); // 0.1秒に1回引く
 }
 
 async function stopAutoGacha() {

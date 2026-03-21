@@ -1,7 +1,7 @@
 // src/firebase.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp, query, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp, query, orderBy, limit, onSnapshot, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuXSWPC0PFNeRQbPPrA-eUBLx5yTiNvv8",
@@ -261,18 +261,54 @@ export async function getRankingData(rankId, isTotal = false) {
   return rankings.slice(0, 10);
 }
 
+
 // ==========================================
 // 🐉 レイドボス同期機能
 // ==========================================
+// ==========================================
+// 🌟 グローバルバフ定義と取得
+// ==========================================
+export const GLOBAL_BUFFS = {
+  1: { name: "魂の休息", desc: "瞑想の蓄積上限時間が 12時間 → 18時間 に延長" },
+  2: { name: "戦神の加護", desc: "バトル勝利時のガチャチケット獲得枚数 +1枚" },
+  3: { name: "瞑想の極意", desc: "瞑想の報酬発生間隔が 10%短縮" },
+  4: { name: "魂の超休息", desc: "瞑想の蓄積上限時間が 18時間 → 24時間 に延長" },
+  5: { name: "深淵の記憶", desc: "「魔の激動」のドロップ率が 1.5倍に" },
+  6: { name: "戦神の超加護", desc: "バトル勝利時のガチャチケット獲得枚数 +2枚" },
+  7: { name: "瞑想の真極意", desc: "瞑想の報酬発生間隔が 25%短縮" },
+  8: { name: "神速の抽選", desc: "AUTOガチャの間隔が 0.1秒 → 0.066秒に" },
+  9: { name: "真深淵の記憶", desc: "「魔の激動」のドロップ率が 2.0倍に" }
+};
+
+let currentGlobalBuffLevel = 0; // キャッシュ用
+
+// 現在解放されているバフレベルを取得する関数
+export async function getGlobalBuffLevel() {
+  const docRef = doc(db, "global", "raidState");
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    currentGlobalBuffLevel = snap.data().defeatedCount || 0;
+  }
+  return currentGlobalBuffLevel;
+}
+
+// リアルタイム同期用の変数も更新しておく
 export function subscribeRaidData(callback) {
   const raidRef = doc(db, "global", "raidState");
   return onSnapshot(raidRef, (docSnap) => {
     if (docSnap.exists()) {
-      callback(docSnap.data());
+      const data = docSnap.data();
+      currentGlobalBuffLevel = data.defeatedCount || 0;
+      callback(data);
     } else {
       callback(null);
     }
   });
+}
+
+// 他のファイルから即座にバフレベルを読めるようにエクスポート
+export function getCachedBuffLevel() {
+  return currentGlobalBuffLevel;
 }
 
 export async function updateRaidState(updates) {
@@ -300,4 +336,63 @@ export async function toggleRaidWaiting(playerName, isWaiting) {
     addGlobalNews(`🚨 【警報】ゲートが解放され、レイドボスが姿を現しました！！`, 1);
   }
   await updateRaidState(updates);
+}
+
+// ==========================================
+// ⚔️ レイドのトランザクション処理（ロールバック対策）
+// ==========================================
+export async function submitRaidDamage(playerName, newDamage, maxTries = 5) {
+  const raidRef = doc(db, "global", "raidState");
+
+  try {
+    const isDefeatedNow = await runTransaction(db, async (transaction) => {
+      const raidDoc = await transaction.get(raidRef);
+      if (!raidDoc.exists()) throw "レイドデータが存在しません！";
+      
+      const data = raidDoc.data();
+      
+      // 既に討伐済みならダメージは加算しないが、挑戦回数は消費する
+      if (data.isDefeated) {
+        let pData = data.participants?.[playerName] || { damage: 0, tries: 0 };
+        pData.tries += 1;
+        transaction.update(raidRef, {[`participants.${playerName}`]: pData });
+        return false;
+      }
+
+      // 新しいHPと参加者データの計算
+      let newHp = Math.max(0, data.currentHp - newDamage);
+      let pData = data.participants?.[playerName] || { damage: 0, tries: 0 };
+      pData.damage += newDamage;
+      pData.tries += 1;
+      
+      const updates = {
+        currentHp: newHp,
+        [`participants.${playerName}`]: pData
+      };
+
+      // 今回の攻撃でHPが0になった（＝トドメを刺した）場合の処理
+      let justDefeated = false;
+      if (newHp <= 0) {
+        updates.isDefeated = true;
+        // 討伐数を増やし、次回レベルを上げる
+        updates.defeatedCount = (data.defeatedCount || 0) + 1;
+        updates.level = data.level + 1;
+        justDefeated = true;
+      }
+
+      transaction.update(raidRef, updates);
+      return justDefeated;
+    });
+
+    // トランザクション成功後、トドメを刺した張本人ならニュースを流す
+    if (isDefeatedNow) {
+      const currentCount = (currentGlobalBuffLevel || 0) + 1; // 討伐後のレベル
+      const buffName = GLOBAL_BUFFS[currentCount] ? `【${GLOBAL_BUFFS[currentCount].name}】が解放されました！` : "報酬を獲得しました！";
+      addGlobalNews(`🎉 【討伐成功】<span style="color:#5ce6e6; font-weight:bold;">${playerName}</span> がトドメを刺し、レイドボスを撃破！ ${buffName}`, 1);
+    }
+    return true;
+  } catch (e) {
+    console.error("レイドダメージ送信エラー:", e);
+    return false;
+  }
 }

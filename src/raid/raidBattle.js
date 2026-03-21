@@ -1,5 +1,5 @@
 // src/raid/raidBattle.js
-import { updateRaidState } from '../firebase.js';
+import { submitRaidDamage } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 
@@ -18,7 +18,7 @@ function simulateRaidBattle(playerStats, bossData) {
   
   // ボス初期ステータス (Lvで初期値が増加)
   let bBaseStr = 50 * Math.pow(1.5, bossData.level - 1);
-  let bBaseAgi = 20 * Math.pow(1.5, bossData.level - 1);
+  let bBaseAgi = 50 * Math.pow(1.5, bossData.level - 1);
   
   let pGauge = 0, bGauge = 0;
   let pConsecutive = 0, bConsecutive = 0;
@@ -114,7 +114,7 @@ export function startRaidBattleAnimation(player, bossData, myData) {
 
   let bBaseStr = 50 * Math.pow(1.5, bossData.level - 1);
   let bBaseVit = 10000 * Math.pow(1.5, bossData.level - 1); // VITはHP/10
-  let bBaseAgi = 20 * Math.pow(1.5, bossData.level - 1);
+  let bBaseAgi = 50 * Math.pow(1.5, bossData.level - 1);
   
   function renderLoop() {
     const speed = 1; 
@@ -176,33 +176,29 @@ export function startRaidBattleAnimation(player, bossData, myData) {
       btnClose.style.display = 'block';
       if (result.isDefeated) {
         playSound('win');
-        resultText.textContent = `🎉 討伐成功！！ (${result.totalDamage} Dmg)`;
+        resultText.textContent = `🎉 討伐成功！！ (${formatNumber(result.totalDamage)} Dmg)`; // ★ フォーマット
         resultText.style.color = '#ffeb85';
       } else {
         playSound('error');
-        resultText.textContent = `💀 敗北... (${result.totalDamage} Dmg)`;
+        resultText.textContent = `💀 敗北... (${formatNumber(result.totalDamage)} Dmg)`; // ★ フォーマット
         resultText.style.color = '#ff6b6b';
       }
       
-       // ★ 修正：Firebaseへの保存処理（ネストエラーの回避）
+      // ★ 修正：ロールバック対策されたトランザクション関数を呼ぶ
       btnClose.onclick = async () => {
         btnClose.textContent = "送信中...";
-        myData.damage += result.totalDamage;
-        myData.tries += 1;
-        const newHp = Math.max(0, bossData.currentHp - result.totalDamage);
+        btnClose.style.pointerEvents = 'none'; // 2回押し防止
         
-        // 対象のparticipantsオブジェクト全体をコピーして、自分の分だけ更新する
-        const participantsUpdate = { ...(bossData.participants || {}) };
-        participantsUpdate[player.name] = myData;
-
-        await updateRaidState({
-          currentHp: newHp,
-          isDefeated: newHp <= 0,
-          participants: participantsUpdate // オブジェクト丸ごと上書き
-        });
+        const success = await submitRaidDamage(player.name, result.totalDamage);
         
-        modal.style.display = 'none';
-        btnClose.textContent = "結果を送信して戻る";
+        if (success) {
+          modal.style.display = 'none';
+          btnClose.textContent = "結果を送信して戻る";
+          btnClose.style.pointerEvents = 'auto';
+        } else {
+          btnClose.textContent = "エラー。再試行してください";
+          btnClose.style.pointerEvents = 'auto';
+        }
       };
       
       cancelAnimationFrame(animationId);

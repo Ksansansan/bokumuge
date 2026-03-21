@@ -1,4 +1,5 @@
 // src/battle/enemyGen.js
+import { getCachedBuffLevel } from '../firebase.js';
 
 // mobName と bossName を追加
 export const BIOMES =[
@@ -182,6 +183,11 @@ export function generateFloorData(targetFloor) {
     }
   }
 
+  const buffLv = getCachedBuffLevel();
+  let gekidoProb = 0.01;
+  if (buffLv >= 9) gekidoProb *= 2.0;      // 真深淵の記憶
+  else if (buffLv >= 5) gekidoProb *= 1.5; // 深淵の記憶
+
   return {
     floor, isMaxFloor: floor >= MAX_FLOOR, stageName,
     biome: { ...biome, mobDrop: mobDropName, bossDrop: bossDropName },
@@ -191,7 +197,7 @@ export function generateFloorData(targetFloor) {
     drops:[
       { name: "装備ガチャチケット", prob: 100, isCollection: false },
       { name: subLevel === 5 ? bossDropName : mobDropName, prob: subLevel === 5 ? 30 : 20, isCollection: true },
-      { name: gekidoName, prob: 0.01, isCollection: true, isGekido: true } 
+      { name: gekidoName, prob: gekidoProb, isCollection: true, isGekido: true } 
     ]
   };
 }

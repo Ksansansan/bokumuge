@@ -18,7 +18,6 @@ import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound, setVolume, toggleMute, getAudioSettings } from './audio.js'; // 追加
 import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
-import { IS_TOURNAMENT_MODE } from './main.js'; // 自分自身からフラグを参照
 import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
 
 export const IS_TOURNAMENT_MODE = true;

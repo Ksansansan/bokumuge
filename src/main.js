@@ -237,7 +237,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     errorEl.textContent = "まだ塔の扉は開かれていません...";
     return;
   }
-  
+
   btnLogin.textContent = "通信中...";
   errorEl.textContent = "";
 
@@ -1069,8 +1069,6 @@ document.addEventListener('click', (e) => {
   try {
     // 1. サーバーと時間を同期
     await syncServerTime();
-    // 2. リリースチェック開始
-    await initReleaseCheck();
   } catch (e) {
     console.error("Initialization failed", e);
     // オフライン等のエラー時はエラーメッセージをティザーに出す

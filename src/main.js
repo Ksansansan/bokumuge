@@ -1064,13 +1064,3 @@ document.addEventListener('click', (e) => {
     }
   }
 });
-
-(async () => {
-  try {
-    // 1. サーバーと時間を同期
-    await syncServerTime();
-  } catch (e) {
-    console.error("Initialization failed", e);
-    // オフライン等のエラー時はエラーメッセージをティザーに出す
-  }
-})();

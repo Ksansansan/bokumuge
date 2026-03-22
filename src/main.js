@@ -25,7 +25,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 // ==========================================
 export const IS_TOURNAMENT_MODE = false;
 export const IS_PRE_RELEASE = true;
-export const RELEASE_DATE = new Date('2026-03-22T14:52:00+09:00').getTime();
+export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 
 // ==========================================
 // ⏳ ティザー（カウントダウン）画面の制御

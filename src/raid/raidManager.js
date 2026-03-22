@@ -10,7 +10,7 @@ let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
 
-const RAID_HOURS =[0, 3, 6, 9,10, 12, 15, 18, 21];
+const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {
@@ -142,8 +142,8 @@ async function checkAndRenderRaid() {
     
     const baseTickets = 80;
     const damagePercent = 1 - (targetDataForReward.currentHp / targetDataForReward.maxHp);
-    let rewardTickets = Math.floor(baseTickets * levelMult * damagePercent);
-    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 80 * levelMult);
+    let rewardTickets = Math.floor(baseTickets * (levelMult - 1) * damagePercent);
+    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 80 * (levelMult - 1));
     rewardTickets += contributionTickets;
     let rankText = "";
 
@@ -154,10 +154,10 @@ async function checkAndRenderRaid() {
       
       const myRank = participants.findIndex(p => p.name === playerRef.name) + 1;
       let rankBonus = 0;
-      if (myRank === 1) rankBonus = 100 * levelMult;
-      else if (myRank === 2) rankBonus = 70 * levelMult;
-      else if (myRank === 3) rankBonus = 50 * levelMult;
-      else rankBonus = 25 * levelMult; 
+      if (myRank === 1) rankBonus = 100 * (levelMult - 1);
+      else if (myRank === 2) rankBonus = 70 * (levelMult - 1);
+      else if (myRank === 3) rankBonus = 50 * (levelMult - 1);
+      else rankBonus = 25 * (levelMult - 1); 
       
       rewardTickets += rankBonus;
       rankText = `<div style="color:#5ce6e6; font-size:14px; margin-bottom:10px;">与ダメージ順位: ${myRank}位 (順位ボーナス獲得！)</div>`;

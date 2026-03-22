@@ -1,7 +1,7 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
-import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js';
 import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';

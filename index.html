@@ -139,6 +139,35 @@
 </style>
 </head>
 <body>
+
+  <!-- ⏳ リリース前カウントダウン画面 -->
+  <div id="modal-teaser" style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, #1a0b1c, #050505); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    
+    <h1 style="color:#c49a45; font-family:serif; font-size: 40px; margin-bottom: 5px; text-shadow: 0 0 20px rgba(196,154,69,0.8), 0 0 40px rgba(196,154,69,0.4); letter-spacing: 4px;">ぼくらの無限塔</h1>
+    <div style="color:#aaa; font-size: 14px; letter-spacing: 8px; margin-bottom: 40px; text-transform: uppercase;">The Infinite Tower</div>
+    
+    <div style="background: rgba(0,0,0,0.6); border: 1px solid #4a3b26; border-radius: 12px; padding: 30px; text-align: center; box-shadow: inset 0 0 30px rgba(0,0,0,1);">
+      <div style="color: #5ce6e6; font-size: 14px; margin-bottom: 15px; font-weight: bold; letter-spacing: 2px;">ーー 塔の扉が開くまで ーー</div>
+      
+      <div id="teaser-timer" style="display: flex; gap: 15px; justify-content: center;">
+        <div class="time-box"><span id="t-days" class="t-val">00</span><span class="t-lbl">DAYS</span></div>
+        <div class="time-box"><span id="t-hours" class="t-val">00</span><span class="t-lbl">HOURS</span></div>
+        <div class="time-box"><span id="t-mins" class="t-val">00</span><span class="t-lbl">MINS</span></div>
+        <div class="time-box"><span id="t-secs" class="t-val" style="color:#ff6b6b;">00</span><span class="t-lbl">SECS</span></div>
+      </div>
+    </div>
+    
+    <div style="margin-top: 30px; font-size: 12px; color: #888; text-align: center;">
+      ※時間になると自動でログイン画面へ移行します
+    </div>
+  </div>
+
+  <style>
+    .time-box { display: flex; flex-direction: column; align-items: center; }
+    .t-val { font-family: monospace; font-size: 48px; font-weight: bold; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+    .t-lbl { font-size: 10px; color: #aaa; letter-spacing: 2px; margin-top: -5px; }
+  </style>
+  
 <!-- 🚪 ログイン画面モーダル -->
   <div id="modal-login" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     <h1 style="color:#c49a45; font-family:serif; font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(196,154,69,0.5);">ぼくらの無限塔</h1>
@@ -435,7 +464,7 @@
         <button id="btn-tournament-rank" class="btn-fantasy btn-show-ranking" data-rank-id="tournament" style="display:none; width:100%; margin-top:15px; font-size:16px; padding:12px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; border-color:#fff; box-shadow: 0 0 10px rgba(212,175,55,0.5);">
           🏆 大会獲得賞金 (3/28〜4/4)
         </button>
-        
+
       </div>
     </section>
   </main>

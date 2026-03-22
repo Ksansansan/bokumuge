@@ -22,6 +22,45 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 
 export const IS_TOURNAMENT_MODE = false;
 
+// ==========================================
+// ⏳ リリース・カウントダウン制御
+// ==========================================
+// ★ ここに大会開始（リリース）時刻を設定してください（日本時間）
+// 例: 2026年3月28日 15時00分00秒
+const RELEASE_DATE = new Date('2026-03-22T11:22:00+09:00').getTime();
+
+const teaserModal = document.getElementById('modal-teaser');
+let teaserInterval = null;
+
+function checkReleaseTime() {
+  const now = Date.now(); // ※クライアント時間ベース（厳密にする場合はfirebaseのserverTimeOffset等を使用）
+  const diff = RELEASE_DATE - now;
+
+  if (diff <= 0) {
+    // リリース時刻を過ぎていればティザー画面を消してログイン画面へ
+    teaserModal.style.display = 'none';
+    clearInterval(teaserInterval);
+    return;
+  }
+
+  // 残り時間の計算
+  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+  // UIに反映
+  document.getElementById('t-days').textContent = String(d).padStart(2, '0');
+  document.getElementById('t-hours').textContent = String(h).padStart(2, '0');
+  document.getElementById('t-mins').textContent = String(m).padStart(2, '0');
+  document.getElementById('t-secs').textContent = String(s).padStart(2, '0');
+}
+
+// スクリプト読み込み時に即実行し、まだなら1秒ごとにチェック
+checkReleaseTime();
+if (teaserModal.style.display !== 'none') {
+  teaserInterval = setInterval(checkReleaseTime, 1000);
+}
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');

@@ -711,7 +711,7 @@ async function renderRanking() {
       if (isMe && index < 10) iAmInTop10 = true; // 上位10人に入っているか
 
       // 表示を10位で打ち切る（大会賞金ランキングは全員表示してもOKだが、ここでは10位までとする）
-      if (index >= 10) return;
+      if (currentRankId !== 'tournament' && index >= 10) return;
 
       const color = index < 3 ? colors[index] : colors[3];
       const bg = isMe ? 'rgba(92, 230, 230, 0.2)' : (index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.1)` : 'rgba(0,0,0,0.3)');
@@ -733,9 +733,14 @@ async function renderRanking() {
       // ★大会モードがON ＆ 賞金対象の順位なら「(+〇円)」を追記
       let prizeHtml = '';
       if (IS_TOURNAMENT_MODE && currentRankId !== 'tournament') {
-        const yen = getPrizeForRank(currentRankId, index);
-        if (yen > 0) {
-          prizeHtml = `<span style="color:#ffd166; font-size:12px; margin-left:8px;">(+${yen}円)</span>`;
+        const isStatusTotal = (["str", "vit", "agi", "lck"].includes(currentRankId) && isTotalMode);
+        
+        if (!isStatusTotal) {
+          // ★修正：歩合計算のため、生スコア(item.score)も渡す
+          const yen = getPrizeForRank(currentRankId, index, item.score);
+          if (yen > 0) {
+            prizeHtml = `<span style="color:#ffd166; font-size:12px; margin-left:8px;">(+${yen}円)</span>`;
+          }
         }
       }
 
@@ -743,7 +748,7 @@ async function renderRanking() {
         <div class="${selfClass}" style="display:flex; justify-content:space-between; padding:10px; margin-bottom:8px; border-bottom:1px solid #4a3b26; background:${bg}; border-left:${borderLeftStyle};">
           <div style="display:flex; align-items:center;">
             <span style="font-weight:bold; color:${color}; font-size:16px; margin-right:8px;">${index + 1}位.</span>
-            <span class="clickable-name" data-name="${item.name}" style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(YOU)</span>' : ''}</span>
+            <span class="clickable-name" data-name="${item.name}" style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(あなた)</span>' : ''}</span>
           </div>
           <span style="font-weight:bold; color:#fff; font-family:monospace;">${displayScore} ${prizeHtml}</span>
         </div>

@@ -3,7 +3,7 @@ import { getRankingData } from './firebase.js';
 
 // --- 賞金定義 ---
 const PRIZES = {
-  floor:[300, 200, 150, 80, 80, 40, 40, 40, 40, 40], // 1位〜10位
+  floor:[300, 200, 150, 100, 80, 50, 40, 30, 20, 10], // 1位〜10位
   firstClearCount:[111, 77, 51],
   collectionCount: [51, 40, 25],
   winCount: [51, 40, 25],
@@ -66,9 +66,54 @@ export async function calculateTournamentPrizes() {
 }
 
 // 特定のランキングで特定の順位を取ったらいくらもらえるかを返す
-export function getPrizeForRank(rankId, index) {
+// ★修正：スコア(score)も引数に受け取り、歩合報酬を加算する
+export function getPrizeForRank(rankId, index, score = 0) {
+  let yen = 0;
+  
+  // 順位報酬
   if (PRIZES[rankId] && index < PRIZES[rankId].length) {
-    return PRIZES[rankId][index];
+    yen += PRIZES[rankId][index];
   }
-  return 0;
+
+  // 歩合報酬
+  if (rankId === 'floor') {
+    yen += score; // 1層につき1円
+    if (score >= 25) yen += 20;
+    if (score >= 51) yen += 30;
+  }
+  if (rankId === 'totalLv') {
+    yen += Math.floor(score / 2); // 特訓Lv2につき1円
+  }
+  
+  return yen;
+}
+
+export async function calculateTournamentPrizes() {
+  const playerPrizes = {};
+  const initPlayer = (name) => { 
+    if (!name || name === "undefined") return false; 
+    if (!playerPrizes[name]) playerPrizes[name] = 0; 
+    return true;
+  };
+
+  // 全対象ランキングをループ
+  const allRanks = Object.keys(PRIZES);
+  if (!allRanks.includes('totalLv')) allRanks.push('totalLv'); // 歩合のみのtotalLvも追加
+
+  for (const rankId of allRanks) {
+    const data = await getRankingData(rankId, false); // 基礎値で計算
+    data.forEach((item, index) => {
+      if (initPlayer(item.name)) {
+        playerPrizes[item.name] += getPrizeForRank(rankId, index, item.score);
+      }
+    });
+  }
+
+  const result = Object.keys(playerPrizes).map(name => ({
+    name: name,
+    score: playerPrizes[name]
+  }));
+  
+  result.sort((a, b) => b.score - a.score);
+  return result;
 }

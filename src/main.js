@@ -20,7 +20,7 @@ import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
 import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
 
-export const IS_TOURNAMENT_MODE = true;
+export const IS_TOURNAMENT_MODE = false;
 
 
 const elStr = document.getElementById('val-str');
@@ -653,7 +653,7 @@ btnRankTotal.addEventListener('click', () => { isTotalMode = true; renderRanking
 document.querySelectorAll('.btn-show-ranking').forEach(btn => {
   btn.addEventListener('click', (e) => {
     currentRankId = e.currentTarget.getAttribute('data-rank-id');
-    currentRankTitle = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖]/g, '').trim(); 
+    currentRankTitle = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖🎰🏆]/g, '').trim(); 
     isTotalMode = false; // デフォルトは基礎値
     
     // ステータス系ならタブを表示

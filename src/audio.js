@@ -40,7 +40,7 @@ export function playSound(type) {
   const now = ctx.currentTime;
   
   // 各音の「基本音量」に masterVolume を掛ける
-  const v = (baseVol) => baseVol * masterVolume;
+  const v = (baseVol) => baseVol * masterVolume * 2;
 
   switch(type) {
     case 'click':

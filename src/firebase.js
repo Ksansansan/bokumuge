@@ -412,7 +412,7 @@ export async function submitRaidDamage(playerName, newDamage, maxTries = 5) {
     if (isDefeatedNow) {
       const currentCount = (currentGlobalBuffLevel || 0) + 1; // 討伐後のレベル
       const buffName = GLOBAL_BUFFS[currentCount] ? `【${GLOBAL_BUFFS[currentCount].name}】が解放されました！` : "報酬を獲得しました！";
-      addGlobalNews(`🎉 【討伐成功】<span style="color:#5ce6e6; font-weight:bold;">${playerName}</span> がトドメを刺し、レイドボスを撃破！ ${buffName}`, 1);
+      addGlobalNews(`🎉 【討伐成功】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span>がトドメを刺し、レイドボスを撃破！ ${buffName}`, 1);
     }
     return true;
   } catch (e) {

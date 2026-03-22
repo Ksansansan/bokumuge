@@ -19,27 +19,46 @@ import { playSound, setVolume, toggleMute, getAudioSettings } from './audio.js';
 import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
 import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
+import { getGlobalConfig, getReliableTime, loginOrRegister } from './firebase.js';
 
 export const IS_TOURNAMENT_MODE = false;
 
-// ==========================================
-// ⏳ リリース・カウントダウン制御
-// ==========================================
-// ★ ここに大会開始（リリース）時刻を設定してください（日本時間）
-// 例: 2026年3月28日 15時00分00秒
-const RELEASE_DATE = new Date('2026-03-22T11:22:00+09:00').getTime();
 
+// ==========================================
+// ⏳ Firebaseベースのリリース制御
+// ==========================================
+let releaseTime = null;
 const teaserModal = document.getElementById('modal-teaser');
-let teaserInterval = null;
 
-function checkReleaseTime() {
-  const now = Date.now(); // ※クライアント時間ベース（厳密にする場合はfirebaseのserverTimeOffset等を使用）
-  const diff = RELEASE_DATE - now;
+async function initReleaseCheck() {
+  // 1. サーバーからリリース設定を取得
+  const config = await getGlobalConfig();
+  
+  if (!config || !config.releaseTime) {
+    // 設定がない場合はとりあえずティザーを消さない（安全策）
+    console.error("Release config not found.");
+    document.getElementById('t-days').textContent = "??";
+    return;
+  }
+
+  releaseTime = config.releaseTime; // FirestoreのTimestamp型なら config.releaseTime.toMillis()
+  
+  // 2. カウントダウン開始
+  runTeaserLoop();
+}
+
+function runTeaserLoop() {
+  // getReliableTime() は firebase.js で実装した「サーバー時刻補正済み」の現在時刻
+  const now = getReliableTime();
+  const diff = releaseTime - now;
 
   if (diff <= 0) {
-    // リリース時刻を過ぎていればティザー画面を消してログイン画面へ
-    teaserModal.style.display = 'none';
-    clearInterval(teaserInterval);
+    // 祝・解禁！
+    teaserModal.style.transition = 'opacity 1s ease';
+    teaserModal.style.opacity = '0';
+    setTimeout(() => {
+      teaserModal.style.display = 'none';
+    }, 1000);
     return;
   }
 
@@ -49,17 +68,12 @@ function checkReleaseTime() {
   const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-  // UIに反映
   document.getElementById('t-days').textContent = String(d).padStart(2, '0');
   document.getElementById('t-hours').textContent = String(h).padStart(2, '0');
   document.getElementById('t-mins').textContent = String(m).padStart(2, '0');
   document.getElementById('t-secs').textContent = String(s).padStart(2, '0');
-}
 
-// スクリプト読み込み時に即実行し、まだなら1秒ごとにチェック
-checkReleaseTime();
-if (teaserModal.style.display !== 'none') {
-  teaserInterval = setInterval(checkReleaseTime, 1000);
+  requestAnimationFrame(runTeaserLoop); // 1秒間隔のsetIntervalより滑らか
 }
 
 const elStr = document.getElementById('val-str');
@@ -1047,3 +1061,15 @@ document.addEventListener('click', (e) => {
     }
   }
 });
+
+(async () => {
+  try {
+    // 1. サーバーと時間を同期
+    await syncServerTime();
+    // 2. リリースチェック開始
+    await initReleaseCheck();
+  } catch (e) {
+    console.error("Initialization failed", e);
+    // オフライン等のエラー時はエラーメッセージをティザーに出す
+  }
+})();

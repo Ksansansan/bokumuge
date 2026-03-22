@@ -17,9 +17,31 @@ let lastSavedPlayerState = null;
 // ★追加：サーバーとクライアントの時間のズレを保持する変数
 let serverTimeOffset = 0;
 
+// 起動時に呼び出す初期同期関数
+export async function syncServerTime() {
+  const userRef = doc(db, "global", "timecheck"); // ダミーの場所
+  // サーバー時刻を書き込む
+  await setDoc(userRef, { lastCheck: serverTimestamp() });
+  const snap = await getDoc(userRef);
+  const serverTime = snap.data().lastCheck.toMillis();
+  serverTimeOffset = serverTime - Date.now();
+  console.log("Server time synced. Offset:", serverTimeOffset);
+}
+
 export function getReliableTime() {
   return Date.now() + serverTimeOffset;
 }
+
+// リリース設定などのグローバル設定を取得
+export async function getGlobalConfig() {
+  const docRef = doc(db, "global", "config");
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    return snap.data();
+  }
+  return null;
+}
+
 // ==========================================
 // 簡易ログイン ＆ 新規登録
 // ==========================================

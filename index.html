@@ -141,7 +141,7 @@
 <body>
 
   <!-- ⏳ リリース前カウントダウン画面 -->
-  <div id="modal-teaser" style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, #1a0b1c, #050505); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+  <div id="modal-teaser" style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, #1a0b1c, #050505); z-index: 99999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     
     <h1 style="color:#c49a45; font-family:serif; font-size: 40px; margin-bottom: 5px; text-shadow: 0 0 20px rgba(196,154,69,0.8), 0 0 40px rgba(196,154,69,0.4); letter-spacing: 4px;">ぼくらの無限塔</h1>
     <div style="color:#aaa; font-size: 14px; letter-spacing: 8px; margin-bottom: 40px; text-transform: uppercase;">The Infinite Tower</div>
@@ -166,8 +166,18 @@
     .time-box { display: flex; flex-direction: column; align-items: center; }
     .t-val { font-family: monospace; font-size: 48px; font-weight: bold; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
     .t-lbl { font-size: 10px; color: #aaa; letter-spacing: 2px; margin-top: -5px; }
-  </style>
   
+      @keyframes bg-glow {
+    0% { background: radial-gradient(circle at center, #1a0b1c, #050505); }
+    50% { background: radial-gradient(circle at center, #2b1230, #050505); }
+    100% { background: radial-gradient(circle at center, #1a0b1c, #050505); }
+  }
+  #modal-teaser {
+    animation: bg-glow 5s infinite;
+  }
+
+  </style>
+
 <!-- 🚪 ログイン画面モーダル -->
   <div id="modal-login" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     <h1 style="color:#c49a45; font-family:serif; font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(196,154,69,0.5);">ぼくらの無限塔</h1>

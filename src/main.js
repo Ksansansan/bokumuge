@@ -20,60 +20,58 @@ import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
 import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
 
+// ==========================================
+// リリース設定
+// ==========================================
 export const IS_TOURNAMENT_MODE = false;
-
+export const IS_PRE_RELEASE = true;
+export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 
 // ==========================================
-// ⏳ Firebaseベースのリリース制御
+// ⏳ ティザー（カウントダウン）画面の制御
 // ==========================================
-let releaseTime = null;
 const teaserModal = document.getElementById('modal-teaser');
 
-async function initReleaseCheck() {
-  // 1. サーバーからリリース設定を取得
-  const config = await getGlobalConfig();
-  
-  if (!config || !config.releaseTime) {
-    // 設定がない場合はとりあえずティザーを消さない（安全策）
-    console.error("Release config not found.");
-    document.getElementById('t-days').textContent = "??";
+async function initTeaser() {
+  if (!IS_PRE_RELEASE) {
+    // リリース済みならティザーを完全に消去して終了
+    if (teaserModal) teaserModal.style.display = 'none';
     return;
   }
 
-  releaseTime = config.releaseTime; // FirestoreのTimestamp型なら config.releaseTime.toMillis()
+  // サーバーと時間を同期（チート対策）
+  await syncServerTime();
   
-  // 2. カウントダウン開始
-  runTeaserLoop();
-}
+  function updateTeaser() {
+    const now = getReliableTime();
+    const diff = RELEASE_DATE - now;
 
-function runTeaserLoop() {
-  // getReliableTime() は firebase.js で実装した「サーバー時刻補正済み」の現在時刻
-  const now = getReliableTime();
-  const diff = releaseTime - now;
+    if (diff <= 0) {
+      teaserModal.style.transition = 'opacity 1s ease';
+      teaserModal.style.opacity = '0';
+      setTimeout(() => teaserModal.style.display = 'none', 1000);
+      return; // ループ終了
+    }
 
-  if (diff <= 0) {
-    // 祝・解禁！
-    teaserModal.style.transition = 'opacity 1s ease';
-    teaserModal.style.opacity = '0';
-    setTimeout(() => {
-      teaserModal.style.display = 'none';
-    }, 1000);
-    return;
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+    document.getElementById('t-days').textContent = String(d).padStart(2, '0');
+    document.getElementById('t-hours').textContent = String(h).padStart(2, '0');
+    document.getElementById('t-mins').textContent = String(m).padStart(2, '0');
+    document.getElementById('t-secs').textContent = String(s).padStart(2, '0');
+
+    requestAnimationFrame(updateTeaser);
   }
-
-  // 残り時間の計算
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-  document.getElementById('t-days').textContent = String(d).padStart(2, '0');
-  document.getElementById('t-hours').textContent = String(h).padStart(2, '0');
-  document.getElementById('t-mins').textContent = String(m).padStart(2, '0');
-  document.getElementById('t-secs').textContent = String(s).padStart(2, '0');
-
-  requestAnimationFrame(runTeaserLoop); // 1秒間隔のsetIntervalより滑らか
+  
+  updateTeaser();
 }
+
+// スクリプト読み込み時に即実行
+initTeaser();
+
 
 const elStr = document.getElementById('val-str');
 const elVit = document.getElementById('val-vit');
@@ -234,6 +232,12 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     return;
   }
 
+   // ★追加：フロントエンド側でのフライング防止
+  if (IS_PRE_RELEASE && getReliableTime() < RELEASE_DATE) {
+    errorEl.textContent = "まだ塔の扉は開かれていません...";
+    return;
+  }
+  
   btnLogin.textContent = "通信中...";
   errorEl.textContent = "";
 

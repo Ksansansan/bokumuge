@@ -98,7 +98,7 @@ async function checkAndRenderRaid() {
   // --- 1. 新しいレイドの初期化 ---
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
-    const baseHp = 2700;
+    let baseHp = 2700;
     for (let i = 2; i <= nextLv; i++) {
       // 倍率を計算（3.0から開始し、Lvが上がるごとに0.25ずつ減る。下限1.5）
       let multiplier = Math.max(1.5, 3.0 - (i - 2) * 0.25);

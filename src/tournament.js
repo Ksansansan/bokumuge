@@ -1,5 +1,5 @@
 // src/tournament.js
-import { getRankingData } from './firebase.js';
+import { getRankingData, getAllUsersForPrize, getFirstGenesisRecord } from './firebase.js';
 
 // --- 賞金定義 ---
 const PRIZES = {
@@ -13,7 +13,14 @@ const PRIZES = {
   '1to20': [25, 15, 10], command:[25, 15, 10], clover: [25, 15, 10], slot:[25, 15, 10]
 };
 
-// 全プレイヤーの現在の賞金を計算してランキング配列で返す
+// 順位報酬のみを計算（歩合は別途ユーザーデータから計算する）
+export function getPrizeForRank(rankId, index) {
+  if (PRIZES[rankId] && index < PRIZES[rankId].length) {
+    return PRIZES[rankId][index];
+  }
+  return 0;
+}
+
 export async function calculateTournamentPrizes() {
   const playerPrizes = {};
   const initPlayer = (name) => { 
@@ -22,17 +29,43 @@ export async function calculateTournamentPrizes() {
     return true;
   };
 
-  // 全対象ランキングをループ
-  const allRanks = Object.keys(PRIZES);
-  if (!allRanks.includes('totalLv')) allRanks.push('totalLv'); // 歩合のみのtotalLvも追加
-
-  for (const rankId of allRanks) {
-    const data = await getRankingData(rankId, false); // 基礎値で計算
+  // 1. 各ランキングの順位報酬を加算
+  for (const rankId of Object.keys(PRIZES)) {
+    const data = await getRankingData(rankId, false);
     data.forEach((item, index) => {
       if (initPlayer(item.name)) {
-        playerPrizes[item.name] += getPrizeForRank(rankId, index, item.score);
+        playerPrizes[item.name] += getPrizeForRank(rankId, index);
       }
     });
+  }
+
+  // 2. Firebaseから全ユーザーデータを取得して歩合報酬 ＆ バウンティを計算
+  const allUsers = await getAllUsersForPrize();
+  
+  allUsers.forEach(u => {
+    if (initPlayer(u.name)) {
+      // 階層歩合 (1層につき1円, 25層で+20円, 51層で+30円)
+      let floorScore = u.floor || 1;
+      let floorYen = floorScore; 
+      if (floorScore > 25) floorYen += 20;
+      if (floorScore >= 51) floorYen += 30;
+      playerPrizes[u.name] += floorYen;
+
+      // 特訓Lv歩合 (Lv 2 につき 1円)
+      let lvYen = Math.floor((u.totalLv || 4) / 2);
+      playerPrizes[u.name] += lvYen;
+
+      // 🐛 バグ報告バウンティ (1件につき 10円)
+      // 主催者がFirebaseから手動で u.bugReports という数値フィールドを追加する想定
+      let bugBountyYen = (u.bugReports || 0) * 10;
+      playerPrizes[u.name] += bugBountyYen;
+    }
+  });
+
+  // 3. ✨ ファースト・ジェネシス賞 (+100円)
+  const firstGen = await getFirstGenesisRecord();
+  if (firstGen && initPlayer(firstGen.name)) {
+    playerPrizes[firstGen.name] += 100;
   }
 
   const result = Object.keys(playerPrizes).map(name => ({
@@ -42,26 +75,4 @@ export async function calculateTournamentPrizes() {
   
   result.sort((a, b) => b.score - a.score);
   return result;
-}
-
-// 特定のランキングで特定の順位を取ったらいくらもらえるかを返す
-export function getPrizeForRank(rankId, index, score = 0) {
-  let yen = 0;
-  
-  // 順位報酬
-  if (PRIZES[rankId] && index < PRIZES[rankId].length) {
-    yen += PRIZES[rankId][index];
-  }
-
-  // 歩合報酬
-  if (rankId === 'floor') {
-    yen += score; // 1層につき1円
-    if (score >= 25) yen += 20;
-    if (score >= 51) yen += 30;
-  }
-  if (rankId === 'totalLv') {
-    yen += Math.floor(score / 2); // 特訓Lv2につき1円
-  }
-  
-  return yen;
 }

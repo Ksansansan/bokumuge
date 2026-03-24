@@ -489,3 +489,42 @@ export async function claimRaidReward(playerName, ticketAmount, isFromLastRaid =
     return false;
   }
 }
+
+// ==========================================
+// ✨ ファースト・ジェネシス賞の管理
+// ==========================================
+export async function getFirstGenesisRecord() {
+  const docRef = doc(db, "global", "firstGenesis");
+  const snap = await getDoc(docRef);
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function checkAndSaveFirstGenesis(playerName, probStr) {
+  const docRef = doc(db, "global", "firstGenesis");
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) {
+    await setDoc(docRef, {
+      name: playerName,
+      probability: probStr,
+      timestamp: serverTimestamp() // または Date.now()
+    });
+    return true; // あなたが世界で初めて引きました
+  }
+  return false; // すでに誰かが引いています
+}
+
+// ==========================================
+// 🏆 大会賞金計算用：全ユーザーデータの一括取得
+// ==========================================
+export async function getAllUsersForPrize() {
+  const users =[];
+  const querySnapshot = await getDocs(collection(db, "users"));
+  querySnapshot.forEach((doc) => {
+    const d = doc.data();
+    if (d.name && d.name !== "undefined") {
+      users.push(d);
+    }
+  });
+  return users;
+}

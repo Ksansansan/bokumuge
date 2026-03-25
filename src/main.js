@@ -23,7 +23,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 // ==========================================
 // リリース設定
 // ==========================================
-export const IS_TOURNAMENT_MODE = true;
+export const IS_TOURNAMENT_MODE = false;
 export const IS_PRE_RELEASE = false;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 
@@ -41,7 +41,9 @@ async function initTeaser() {
 
   // サーバーと時間を同期（チート対策）
   await syncServerTime();
-  
+  if (teaserModal) {
+    teaserModal.style.display = 'flex';
+  }
   function updateTeaser() {
     const now = getReliableTime();
     const diff = RELEASE_DATE - now;
@@ -1034,7 +1036,7 @@ function playNextNews(htmlText) {
         // テキストの長さを取得し、移動距離と速度を計算
         const textWidth = el.offsetWidth;
         const totalDist = containerWidth + textWidth;
-        const speed = 70; // 1秒間に70px進む (長文ほど表示時間が長くなる)
+        const speed = 80; // 1秒間に70px進む (長文ほど表示時間が長くなる)
         const duration = totalDist / speed;
         
         // 移動開始

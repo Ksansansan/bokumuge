@@ -117,6 +117,7 @@ async function doGacha() {
 
   renderInventory();
   renderCurrentEquips();
+  if (onEquipUpdate) onEquipUpdate(); 
   await savePlayerData(playerRef);
 }
 
@@ -176,6 +177,7 @@ async function stopAutoGacha() {
   
   renderInventory();
   renderCurrentEquips();
+  if (onEquipUpdate) onEquipUpdate(); 
   await savePlayerData(playerRef);
 }
 

@@ -385,7 +385,7 @@ async function updateFloorUI(floorNum) {
     ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
   }
   const lckMult = getLckBonusMultiplier(currentLck);
-  const gekidoProb = (0.01 * lckMult).toFixed(4);
+  const gekidoProb = (0.005 * lckMult).toFixed(4);
 
   document.getElementById('drop-list').innerHTML = `
     <li style="color:#fff;">装備ガチャチケット <span style="font-weight:bold;">x${ticketCount}</span> (ボス100%)</li>
@@ -948,7 +948,7 @@ function updateCollectionUI() {
           <strong style="font-size: 16px; color:${rankInfo.color};">${fd.gekido.name} [${rankInfo.name}]</strong>
           <span style="color:#fff; font-size:12px; font-family:monospace;">所持: ${count}個</span>
         </div>
-        <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: 第${f}〜${f+49}層 (全敵 0.01%)</div>
+        <div style="font-size: 11px; color: #aaa; margin: 2px 0;">ドロップ: 第${f}〜${f+49}層 (全敵 0.005%)</div>
         <div style="font-size: 13px; color: #b16bff; font-weight: bold; margin: 4px 0;">
           効果: 累計特訓経験値 +${buffValue}%
         </div>

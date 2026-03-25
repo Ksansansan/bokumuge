@@ -144,7 +144,7 @@ function startAutoGacha(stopRarityIndex) {
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1; 
      // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
-  if (result.rarityId === "GEN") {
+  if (res.rarityId === "GEN") {
     const isFirst = await checkAndSaveFirstGenesis(playerRef.name, probStr);
     if (isFirst) {
       addGlobalNews(`✨✨ 【世界初】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${probStr} を引き当て、${TYPE_NAMES[result.type]}[GEN] ${result.name} を世界で初めて獲得しました！！`, 1);

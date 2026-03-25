@@ -175,9 +175,11 @@ export async function checkAndSaveFirstClear(player, floor, time) {
 export async function savePlayerData(player) {
   player.totalLv = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
   player.winCount = player.winCount || 0;
-   player.collectionCount = Object.values(player.inventory || {}).reduce((sum, count) => {
+   player.collectionCount = Object.entries(player.inventory || {}).reduce((sum, [name, count]) => {
+    if (name === "装備ガチャチケット") return sum;
     return sum + Math.min(count, 81);
   }, 0);
+  
   player.gachaCount = player.gachaCount || 0;
   if (!player.timestamps) player.timestamps = {};
   

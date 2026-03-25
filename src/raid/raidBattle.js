@@ -113,11 +113,11 @@ export function startRaidBattleAnimation(player, bossData, myData) {
   document.getElementById('ru-p-stat-agi').textContent = formatNumber(player.battleStats.agi);
 
   let bBaseStr = 50 * Math.pow(1.5, bossData.level - 1);
-  let baseVit = 270;
+  let bBaseVit = 270;
     for (let i = 2; i <= bossData.level; i++) {
       // 倍率を計算（3.0から開始し、Lvが上がるごとに0.25ずつ減る。下限1.5）
       let multiplier = Math.max(1.5, 3.0 - (i - 2) * 0.25);
-      baseVit = Math.floor(baseVit * multiplier);
+      bBaseVit = Math.floor(bBaseVit * multiplier);
     }
   
   let bBaseAgi = 50 * Math.pow(1.5, bossData.level - 1);

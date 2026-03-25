@@ -24,7 +24,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 // リリース設定
 // ==========================================
 export const IS_TOURNAMENT_MODE = false;
-export const IS_PRE_RELEASE = false;
+export const IS_PRE_RELEASE = true;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 
 // ==========================================
@@ -711,7 +711,7 @@ btnRankTotal.addEventListener('click', () => { isTotalMode = true; renderRanking
 document.querySelectorAll('.btn-show-ranking').forEach(btn => {
   btn.addEventListener('click', (e) => {
     currentRankId = e.currentTarget.getAttribute('data-rank-id');
-    currentRankTitle = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖🎰🏆]/g, '').trim(); 
+    currentRankTitle = e.currentTarget.textContent.replace(/[👑💪🛡️⚡🍀🪨🪵⚔️📖🎰🏆✨🐛]/g, '').trim(); 
     isTotalMode = false; // デフォルトは基礎値
     
     // ステータス系ならタブを表示

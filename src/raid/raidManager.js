@@ -10,7 +10,7 @@ let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
 
-const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
+const RAID_HOURS =[0, 3, 6, 9, 12,13, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
 export function initRaidManager(playerObj) {
@@ -325,6 +325,15 @@ async function checkAndRenderRaid() {
     .map(([name, data]) => ({ name, damage: data.damage }))
     .sort((a, b) => b.damage - a.damage);
 
+    // ★ 追加：次回のバフ情報を取得
+  const nextBuff = GLOBAL_BUFFS[currentRaidData.level];
+  const buffInfoHtml = nextBuff ? `
+    <div style="margin-bottom:10px; background:rgba(255,215,0,0.1); border:1px solid #ffd700; padding:8px; border-radius:4px; text-align:left;">
+      <div style="color:#ffd700; font-weight:bold; font-size:11px; margin-bottom:3px; text-align:center;">🌟 初回討伐報酬 (Lv.${currentRaidData.level})</div>
+      <div style="font-size:11px; color:#fff;"><span style="color:#ffeb85; font-weight:bold;">${nextBuff.name}</span>: ${nextBuff.desc}</div>
+    </div>
+  ` : '';
+
   // 初回だけDOMの骨組みを作り、以降は中身のテキストや幅だけを更新する
   if (container.dataset.state !== 'battle') {
     container.dataset.state = 'battle';
@@ -347,7 +356,8 @@ async function checkAndRenderRaid() {
       </button>
       
       <div style="margin-top:15px; border-top:1px dashed #555; padding-top:10px; font-size:12px; text-align:left;">
-        <div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 現在の与ダメージ順位</div>
+      ${buffInfoHtml}  
+      <div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 現在の与ダメージ順位</div>
         <div id="raid-rank-scroll" style="max-height: 100px; overflow-y: auto; padding-right: 5px;">
           <div id="raid-live-ranking"></div>
         </div>

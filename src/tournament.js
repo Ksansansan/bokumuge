@@ -8,6 +8,7 @@ const PRIZES = {
   collectionCount: [51, 40, 25],
   winCount: [51, 40, 25],
   gachaCount:[51, 40, 25],
+  firstGenesis: [100],
   str:[40, 25, 15], vit: [40, 25, 15], agi:[40, 25, 15], lck: [40, 25, 15],
   rockPush: [25, 15, 10], daruma:[25, 15, 10], chicken: [25, 15, 10], guard:[25, 15, 10],
   '1to20': [25, 15, 10], command:[25, 15, 10], clover: [25, 15, 10], slot:[25, 15, 10]

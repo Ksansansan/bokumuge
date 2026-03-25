@@ -23,8 +23,8 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 // ==========================================
 // リリース設定
 // ==========================================
-export const IS_TOURNAMENT_MODE = false;
-export const IS_PRE_RELEASE = true;
+export const IS_TOURNAMENT_MODE = true;
+export const IS_PRE_RELEASE = false;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 
 // ==========================================
@@ -782,6 +782,8 @@ async function renderRanking() {
       else if(currentRankId === 'winCount' || currentRankId === 'firstClearCount') displayScore += ' 勝';
       else if(currentRankId === 'gachaCount') displayScore += ' 回';
       else if(currentRankId === 'collectionCount') displayScore += ' 個';
+      else if(currentRankId === 'bugReports') displayScore += ' 件'; // ★追加
+      else if(currentRankId === 'firstGenesis') displayScore = item.score; // ★(xx%)のまま出す
       else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
       else if(currentRankId === 'chicken') displayScore = item.score.toFixed(2) + ' m';
       else if(currentRankId === 'guard' || currentRankId === 'slot') displayScore = formatNumber(item.score) + ' pt';

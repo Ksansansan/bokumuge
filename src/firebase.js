@@ -286,6 +286,26 @@ export async function getRankingData(rankId, isTotal = false) {
     });
 
   } 
+  // ★追加：初ジェネシス
+  else if (rankId === 'firstGenesis') {
+    const docRef = doc(db, "global", "firstGenesis");
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const d = snap.data();
+      rankings.push({ name: d.name, score: d.probability || "100万分の1" });
+    }
+  } 
+  // ★追加：バグ報告ランキング
+  else if (rankId === 'bugReports') {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach((doc) => {
+      const d = doc.data();
+      if (d.bugReports && d.bugReports > 0 && d.name && d.name !== "undefined") {
+        rankings.push({ name: d.name, score: d.bugReports });
+      }
+    });
+    rankings.sort((a, b) => b.score - a.score);
+  }
    else {
     // ミニゲーム系
     const querySnapshot = await getDocs(collection(db, "minigames", rankId, "scores"));

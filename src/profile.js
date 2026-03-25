@@ -1,13 +1,14 @@
 // src/profile.js
+
 import { getUserProfile, getRankingData } from './firebase.js';
-import { formatNumber } from './main.js';
+import { formatNumber, IS_TOURNAMENT_MODE } from './main.js';
 import { EQUIP_NAMES, RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { playSound } from './audio.js';
 import { generateFloorData, getDropStatType } from './battle/enemyGen.js';
+import { getPrizeForRank } from './tournament.js'; // ★インポート
 
 const RARITY_INDEX = { "C":0, "UC":1, "R":2, "HR":3, "SR":4, "SSR":5, "ER":6, "UR":7, "LR":8, "MR":9, "GR":10, "XR":11, "GEN":12 };
 
-// ★追加：図鑑ランク計算用の関数
 function getCollectionRank(count) {
   if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b", mult: 8 }; 
   if (count >= 27) return { rank: 4, name: "金", color: "#ffd700", mult: 5 }; 
@@ -20,8 +21,9 @@ function getCollectionRank(count) {
 export async function openProfileModal(username) {
   playSound('click');
   const modal = document.getElementById('modal-profile');
-  const modalInner = modal.querySelector('div');
+  const modalInner = modal.querySelector('div'); 
   modal.style.display = 'flex';
+  
   document.getElementById('prof-name').textContent = username;
   document.getElementById('prof-equips').innerHTML = '<span style="color:#aaa;">取得中...</span>';
   document.getElementById('prof-ranks').innerHTML = '<span style="color:#aaa;">データ取得中...</span>';
@@ -33,39 +35,19 @@ export async function openProfileModal(username) {
     return;
   }
 
-  
-  // ★ 修正：基礎ステータスを表示
-  document.getElementById('prof-str').textContent = formatNumber(u.str || 0);
-  document.getElementById('prof-vit').textContent = formatNumber(u.vit || 0);
-  document.getElementById('prof-agi').textContent = formatNumber(u.agi || 0);
-  document.getElementById('prof-lck').textContent = formatNumber(u.lck || 0);
-
-   // --- ★追加：図鑑バフの合計値計算 ---
+  // --- 1. すべてのバフ・装備を計算して「本当の最強ステータス」を特定する ---
   let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
   const maxFloor = u.maxClearedFloor || 1;
-  
   for (let f = 1; f <= maxFloor; f += 5) {
     const floorData = generateFloorData(f);
     const g = Math.ceil(f / 20);
     const statType = getDropStatType(f, false);
-    
-    const mobCount = u.inventory?.[floorData.biome.mobDrop] || 0;
-    const bossCount = u.inventory?.[floorData.biome.bossDrop] || 0;
-    
-    totalBonuses[statType] += g * getCollectionRank(mobCount).mult;
-    totalBonuses['ALL'] += g * getCollectionRank(bossCount).mult;
+    totalBonuses[statType] += g * getCollectionRank(u.inventory?.[floorData.biome.mobDrop] || 0).mult;
+    totalBonuses['ALL'] += g * getCollectionRank(u.inventory?.[floorData.biome.bossDrop] || 0).mult;
   }
-  
-  document.getElementById('prof-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
-  document.getElementById('prof-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
-  document.getElementById('prof-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
-  document.getElementById('prof-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
 
-  const finalValues = {};
-  ['str', 'vit', 'agi', 'lck'].forEach(s => {
-    // 基礎値 × 図鑑バフ
+  const finalValues = {};['str', 'vit', 'agi', 'lck'].forEach(s => {
     let val = (u[s] || 0) * (1 + (totalBonuses[s.toUpperCase()] + totalBonuses.ALL) / 100);
-    // ＋ 装備補正
     const eqId = u.equips?.[s];
     if (eqId) {
       const rarityIdx = RARITY_INDEX[eqId];
@@ -75,22 +57,31 @@ export async function openProfileModal(username) {
     finalValues[s] = val;
   });
 
-  // 一番高いステータスを判定
   const statColors = { str: "#ff6b6b", vit: "#6be6ff", agi: "#94ff6b", lck: "#ffd166" };
   let mainStat = 'str';
   if (finalValues.vit > finalValues[mainStat]) mainStat = 'vit';
   if (finalValues.agi > finalValues[mainStat]) mainStat = 'agi';
   if (finalValues.lck > finalValues[mainStat]) mainStat = 'lck';
 
-  // --- 2. プロフィールのテーマカラーを変更 ---
   const themeColor = statColors[mainStat];
   modalInner.style.borderColor = themeColor;
-  modalInner.style.boxShadow = `0 0 20px ${themeColor}80`; // 色付きの光
+  modalInner.style.boxShadow = `0 0 20px ${themeColor}80`; 
   const nameEl = document.getElementById('prof-name');
   nameEl.style.color = themeColor;
   nameEl.style.borderColor = themeColor;
 
-  // ★ 修正：装備の詳細表示（武器・防具など記載）
+  // --- 2. 基礎ステータスと図鑑バフの表示 ---
+  document.getElementById('prof-str').textContent = formatNumber(u.str || 0);
+  document.getElementById('prof-vit').textContent = formatNumber(u.vit || 0);
+  document.getElementById('prof-agi').textContent = formatNumber(u.agi || 0);
+  document.getElementById('prof-lck').textContent = formatNumber(u.lck || 0);
+
+  document.getElementById('prof-buff-str').textContent = `+${totalBonuses.STR + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
+  document.getElementById('prof-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
+
+  // --- 3. 装備の詳細表示 ---
   let eqHtml = '';
   const types =[{k:'str', c:'#ff6b6b', n:'武器'}, {k:'vit', c:'#6be6ff', n:'防具'}, {k:'agi', c:'#94ff6b', n:' 靴 '}, {k:'lck', c:'#ffd166', n:'飾品'}];
   
@@ -123,8 +114,11 @@ export async function openProfileModal(username) {
   });
   document.getElementById('prof-equips').innerHTML = eqHtml;
 
-  // ★ 修正：全ランキングを順位タブと同じ順番で定義
+  // --- 4. ランキングと賞金の計算・表示 ---
   const rankTargets =[
+    { id: 'tournament', name: '大会獲得賞金', isTotal: false },
+    { id: 'firstGenesis', name: '初ジェネシス賞', isTotal: false },
+    { id: 'bugReports', name: 'バグ報告数', isTotal: false },
     { id: 'floor', name: '最高到達層', isTotal: false },
     { id: 'firstClearCount', name: '初クリア数', isTotal: false },
     { id: 'str', name: 'STRランキング', isTotal: true },
@@ -147,16 +141,26 @@ export async function openProfileModal(username) {
 
   let results =[];
   
-  // 並列で全ランキングを取得して自分の順位を探す
   for (let i = 0; i < rankTargets.length; i++) {
     const rt = rankTargets[i];
-    const data = await getRankingData(rt.id, rt.isTotal);
+    
+    // 大会獲得賞金は Firebase の rankings にはないため特殊処理
+    let data =[];
+    if (rt.id === 'tournament') {
+      // tournament.js の calculateTournamentPrizes をインポートして使用しても良いですが、
+      // ここではプロフィールのロードを軽くするため、データ取得をスキップして後で表示調整します。
+    } else {
+      data = await getRankingData(rt.id, rt.isTotal);
+    }
+    
     const myRankIdx = data.findIndex(d => d.name === username);
     
     let rankNum = 999999;
     let rankText = "圏外";
     let scoreText = "-";
     let rankColor = "#555";
+    let prizeYen = 0;
+    let score = null;
 
     if (myRankIdx !== -1) {
       rankNum = myRankIdx + 1;
@@ -165,24 +169,65 @@ export async function openProfileModal(username) {
       else if (rankNum === 2) rankColor = "#c0c0c0";
       else if (rankNum === 3) rankColor = "#cd7f32";
       else rankColor = "#fff";
-
-      let score = data[myRankIdx].score;
-      if (['str','vit','agi','lck'].includes(rt.id)) score = formatNumber(score);
-      else if (rt.id === 'floor') score += ' 層';
-      else if (rt.id === 'winCount' || rt.id === 'firstClearCount') score += ' 勝';
-      else if (rt.id === 'gachaCount') score += ' 回';
-      else if (rt.id === 'totalLv') score = 'Lv.' + score;
-      else if (['rockPush','daruma','1to20','command','clover'].includes(rt.id)) score = score.toFixed(2) + ' 秒';
-      else if (rt.id === 'chicken') score = score.toFixed(2) + ' m';
-      else if (rt.id === 'guard' || rt.id === 'slot') score = formatNumber(score) + ' pt';
-      
-      scoreText = score;
+      score = data[myRankIdx].score;
+    } else {
+      // 圏外の場合でも、歩合計算や表示のためにユーザーデータ(u)からスコアを取得する
+      if (['str','vit','agi','lck'].includes(rt.id)) score = rt.isTotal ? (u.battleStats?.[rt.id] || u[rt.id] || 0) : (u[rt.id] || 0);
+      else if (rt.id === 'floor') score = u.floor || 1;
+      else if (rt.id === 'totalLv') score = u.totalLv || 4;
+      else if (rt.id === 'winCount') score = u.winCount || 0;
+      else if (rt.id === 'gachaCount') score = u.gachaCount || 0;
+      else if (rt.id === 'firstClearCount') score = u.firstClearCount || 0;
+      else if (rt.id === 'collectionCount') score = u.collectionCount || 0;
+      else if (rt.id === 'bugReports') score = u.bugReports || 0;
+      // ミニゲームとジェネシスは圏外なら null (表示しない)
     }
-    
-    results.push({ ...rt, originalIndex: i, rankNum, rankText, scoreText, rankColor });
+
+    // ★ 賞金の計算 (tournament.js の仕様に合わせる)
+    if (IS_TOURNAMENT_MODE && rt.id !== 'tournament') {
+      // 順位報酬
+      if (myRankIdx !== -1) {
+        prizeYen += getPrizeForRank(rt.id, myRankIdx);
+      }
+      
+      // 歩合報酬 (圏外でももらえる！)
+      if (rt.id === 'floor') {
+        let floorScore = u.floor || 1;
+        prizeYen += floorScore;
+        if (floorScore > 25) prizeYen += 20;
+        if (floorScore >= 51) prizeYen += 30;
+      } else if (rt.id === 'totalLv') {
+        let lvScore = u.totalLv || 4;
+        prizeYen += Math.floor(lvScore / 2);
+      } else if (rt.id === 'bugReports') {
+        let bugScore = u.bugReports || 0;
+        prizeYen += bugScore * 10;
+      }
+    }
+
+    // 表示テキストのフォーマット
+    if (score !== null && score !== undefined && (score !== 0 || rt.id === 'floor' || rt.id === 'bugReports')) {
+      if (['str','vit','agi','lck'].includes(rt.id)) scoreText = formatNumber(score);
+      else if (rt.id === 'floor') scoreText = score + ' 層';
+      else if (rt.id === 'winCount' || rt.id === 'firstClearCount') scoreText = score + ' 勝';
+      else if (rt.id === 'gachaCount') scoreText = score + ' 回';
+      else if (rt.id === 'collectionCount') scoreText = score + ' 個';
+      else if (rt.id === 'bugReports') scoreText = score + ' 件';
+      else if (rt.id === 'firstGenesis') scoreText = score; 
+      else if (rt.id === 'totalLv') scoreText = 'Lv.' + score;
+      else if (['rockPush','daruma','1to20','command'].includes(rt.id)) scoreText = score.toFixed(2) + ' 秒';
+      else if (rt.id === 'chicken') scoreText = score.toFixed(2) + ' m';
+      else if (rt.id === 'guard' || rt.id === 'slot') scoreText = formatNumber(score) + ' pt';
+    }
+
+    // 大会総賞金と初ジェネシス(未取得)のスキップ処理
+    if (rt.id === 'tournament') continue; 
+    if (rt.id === 'firstGenesis' && rankNum === 999999) continue;
+
+    results.push({ ...rt, originalIndex: i, rankNum, rankText, scoreText, rankColor, prizeYen });
   }
 
-  // ★ 修正：順位が高い順 -> 同じなら元のボタンの並び順でソート
+  // 順位が高い順 -> 同じなら元の定義順
   results.sort((a, b) => {
     if (a.rankNum !== b.rankNum) return a.rankNum - b.rankNum;
     return a.originalIndex - b.originalIndex;
@@ -190,10 +235,15 @@ export async function openProfileModal(username) {
 
   let ranksHtml = '';
   results.forEach(r => {
+    let prizeHtml = (IS_TOURNAMENT_MODE && r.prizeYen > 0) ? `<span style="color:#ffd166; font-size:11px; margin-left:5px;">(+${r.prizeYen}円)</span>` : '';
+    
     ranksHtml += `
       <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:6px 0;">
         <span style="color:#ccc;">${r.name}</span>
-        <span><span style="color:${r.rankColor}; font-weight:bold; margin-right:8px;">${r.rankText}</span> <span style="color:#fff; font-family:monospace;">${r.scoreText}</span></span>
+        <span>
+          <span style="color:${r.rankColor}; font-weight:bold; margin-right:8px;">${r.rankText}</span> 
+          <span style="color:#fff; font-family:monospace;">${r.scoreText}${prizeHtml}</span>
+        </span>
       </div>
     `;
   });

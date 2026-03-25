@@ -80,6 +80,7 @@ export async function loginOrRegister(username, pin) {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
       floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, firstClearCount: 0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
+      bugReports: 0,
       createdAt: serverTimestamp(),
       lastLoginTime: serverTimestamp(),
       timestamps: {}, 

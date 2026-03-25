@@ -69,5 +69,5 @@ export function getLevelMultiplier(level, totalLevel) {
  */
 export function getRequiredExp(level) {
   // 急激すぎると心が折れるので、1.15乗くらいの緩やかなカーブにするのがおすすめ
-  return Math.floor(100 * Math.pow(1.15, (level - 1)) + (level - 1) * 20);
+  return Math.floor(100 * Math.pow(1.12, (level - 1)) + (level - 1) * 25);
 }

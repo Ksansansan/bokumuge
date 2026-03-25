@@ -896,7 +896,7 @@ function updateCollectionUI() {
 
     items.forEach(item => {
       const count = player.inventory?.[item.name] || 0;
-      totalCollectedCount += count;
+      totalCollectedCount += Math.min(count, 81);
       const rankInfo = getCollectionRank(count);
       const buffValue = g * rankInfo.mult;
 

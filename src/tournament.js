@@ -15,11 +15,26 @@ const PRIZES = {
 };
 
 // 順位報酬のみを計算（歩合は別途ユーザーデータから計算する）
-export function getPrizeForRank(rankId, index) {
+export function getPrizeForRank(rankId, index, score = 0) {
+  let yen = 0;
+  
   if (PRIZES[rankId] && index < PRIZES[rankId].length) {
-    return PRIZES[rankId][index];
+    yen += PRIZES[rankId][index];
   }
-  return 0;
+
+  if (rankId === 'floor') {
+    yen += score; 
+    if (score >= 25) yen += 20;
+    if (score >= 51) yen += 30;
+  }
+  if (rankId === 'totalLv') {
+    yen += Math.floor(score / 2); // 特訓Lv 2 につき 1円
+  }
+  if (rankId === 'bugReports') {
+    yen += score * 10; // バグ報告 1件につき 10円
+  }
+  
+  return yen;
 }
 
 export async function calculateTournamentPrizes() {

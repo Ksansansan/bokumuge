@@ -973,44 +973,92 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 📰 ニューステロップ制御 (割り込み機能の強化)
+// 📰 ニューステロップ制御 (流れるアニメーション完全版)
 // ==========================================
 let currentNewsQueue =[];
 let currentNewsIndex = 0;
 let currentPlayingId = null;
+let isNewsPlaying = false;
 
 function initNewsTicker() {
   subscribeNews((newsList) => {
     currentNewsQueue = newsList;
     updateNewsDisplay();
   });
-  setInterval(() => {
-    if (currentNewsQueue.length > 0) {
-      currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
-      displayNewsText(currentNewsQueue[currentNewsIndex].text);
-    }
-  }, 12000);
 }
 
 function updateNewsDisplay() {
-  if (currentNewsQueue.length === 0) return;
+  if (currentNewsQueue.length === 0) {
+    if (!isNewsPlaying) playNextNews("🔔 ぼくらの無限塔へようこそ！");
+    return;
+  }
+  
   const topNews = currentNewsQueue[0];
-  // ★より新しい/優先度が高いニュースが来たら、アニメーションをぶった切って即表示
+  
+  // 新規ニュース（割り込み）
   if (currentPlayingId !== topNews.id) {
     currentPlayingId = topNews.id;
     playSound('win');
     currentNewsIndex = 0;
-    displayNewsText(topNews.text);
+    
+    // 今流れているものを強制キャンセルして上書き
+    const el = document.querySelector('.news-text');
+    el.removeEventListener('transitionend', onNewsEnd);
+    playNextNews(topNews.text);
+  } 
+  // 停止中なら再生
+  else if (!isNewsPlaying) {
+    playNextNews(currentNewsQueue[currentNewsIndex].text);
   }
 }
 
-function displayNewsText(htmlText) {
+// 右端から流して左に消えるロジック
+function playNextNews(htmlText) {
+  isNewsPlaying = true;
   const el = document.querySelector('.news-text');
-  el.innerHTML = htmlText; // ★タグを解釈させるため innerHTML に変更
+  const container = document.querySelector('.news-ticker');
+  
+  // CSSアニメーションを無効化し、HTMLをセット
+  el.style.transition = 'none';
   el.style.animation = 'none';
-  el.offsetHeight; 
-  el.style.animation = 'marquee 15s linear infinite';
+  el.innerHTML = htmlText;
+  
+  // 画面の描画を待つ
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 初期位置をコンテナの右端ギリギリ見えない場所にセット
+      const containerWidth = container.offsetWidth;
+      el.style.transform = `translateX(${containerWidth}px)`;
+      
+      requestAnimationFrame(() => {
+        // テキストの長さを取得し、移動距離と速度を計算
+        const textWidth = el.offsetWidth;
+        const totalDist = containerWidth + textWidth;
+        const speed = 70; // 1秒間に70px進む (長文ほど表示時間が長くなる)
+        const duration = totalDist / speed;
+        
+        // 移動開始
+        el.style.transition = `transform ${duration}s linear`;
+        el.style.transform = `translateX(-${textWidth}px)`;
+        
+        el.removeEventListener('transitionend', onNewsEnd);
+        el.addEventListener('transitionend', onNewsEnd, { once: true });
+      });
+    });
+  });
 }
+
+// 流れ終わったら次を呼ぶ
+function onNewsEnd() {
+  isNewsPlaying = false;
+  if (currentNewsQueue.length > 0) {
+    currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
+    playNextNews(currentNewsQueue[currentNewsIndex].text);
+  } else {
+    playNextNews("🔔 ぼくらの無限塔へようこそ！");
+  }
+}
+
 
 // --- 魔の激動バフの計算関数 ---
 function getTotalGekidoBuff(p) {

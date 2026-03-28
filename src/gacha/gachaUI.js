@@ -22,7 +22,7 @@ export function initGachaUI(playerObj, equipUpdateFn) {
   // AUTO停止プルダウンの生成 (UC以上〜GENまで)
   const stopSelect = document.getElementById('eq-auto-stop');
   stopSelect.innerHTML = '<option value="-1">ストップしない</option>';
-  for (let i = 1; i < RARITY_DATA.length; i++) {
+  for (let i = 1; i < RARITY_DATA.length -1; i++) {
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = `${RARITY_DATA[i].id} 以上`;
@@ -347,7 +347,7 @@ function renderProbList(isAfter) {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const actualProbs = isAfter ? getActualProbabilities(currentLck) : null;
 
-  for (let i = RARITY_DATA.length - 1; i >= 0; i--) {
+  for (let i = RARITY_DATA.length - 2; i >= 0; i--) {
     const r = RARITY_DATA[i];
     const probValue = isAfter ? actualProbs[i] : r.prob;
     const probStr = probValue < 0.0001 ? "< 0.0001" : probValue.toFixed(4);

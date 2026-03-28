@@ -4,7 +4,7 @@ import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js'; import { getCachedBuffLevel } from './firebase.js';
 import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
-import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';f+1
+import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { initMeditation } from './minigame/meditation.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';

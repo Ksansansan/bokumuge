@@ -102,10 +102,10 @@ async function doGacha() {
     // SECの基本確率にLCK倍率を掛ける
     const lckMult = getLckBonusMultiplier(currentLck);
     probValue = RARITY_DATA[result.rarityIndex].prob * lckMult;
-    probStr = `(${probVal.toFixed(4)}%)`;
+    probStr = `(${probValue.toFixed(4)}%)`;
   } else {
     probValue = probs[result.rarityIndex];
-    probStr = `(${probVal.toFixed(4)}%)`;
+    probStr = `(${probValue.toFixed(4)}%)`;
   }
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
@@ -159,10 +159,10 @@ function startAutoGacha(stopRarityIndex) {
     // SECの基本確率にLCK倍率を掛ける
     const lckMult = getLckBonusMultiplier(currentLck);
     probValue = RARITY_DATA[result.rarityIndex].prob * lckMult;
-    probStr = `(${probVal.toFixed(4)}%)`;
+    probStr = `(${probValue.toFixed(4)}%)`;
   } else {
     probValue = probs[result.rarityIndex];
-    probStr = `(${probVal.toFixed(4)}%)`;
+    probStr = `(${probValue.toFixed(4)}%)`;
   }
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;

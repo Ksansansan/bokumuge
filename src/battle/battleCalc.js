@@ -92,7 +92,7 @@ export function simulateBattle(player, floorData) {
           if (raidBuffLv >= 2) {
             ticketCount += 1; // チケット枚数を+1
           }
-          if (raidBuffLv >= 6) {
+          if (raidBuffLv >= 5) {
             ticketCount += 2;
           }
         

@@ -9,7 +9,7 @@ import { updateTicketCount } from '../gacha/gachaUI.js';
 let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
-
+f
 const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
@@ -231,6 +231,7 @@ async function checkAndRenderRaid() {
   }
 
   // --- 4. 討伐済み ---
+  // --- 4. 討伐済み ---
   if (currentRaidData.isDefeated) {
     panel.style.background = 'radial-gradient(circle at center, #2b0808, #110000)';
     panel.style.borderColor = '#ff3333';
@@ -241,8 +242,8 @@ async function checkAndRenderRaid() {
     title.style.color = '#ff6b6b';
     title.style.borderBottomColor = '#ff3333';
 
-    // ★ 修正：次回の開始時間を計算して表示する
-    const now = new Date();
+    // 次回の開始時間を計算
+    const now = new Date(getReliableTime()); // ★ここもサーバー時間基準にする
     let nextH = RAID_HOURS.find(hour => hour > now.getHours());
     let nextTime = new Date(now);
     if (nextH === undefined) {
@@ -255,19 +256,57 @@ async function checkAndRenderRaid() {
     const ss = Math.floor((diff % 60000) / 1000);
     const nextTimeStr = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
 
+    // ★追加：最終ランキングの生成
+    const participantsList = Object.entries(currentRaidData.participants || {})
+      .map(([name, data]) => ({ name, damage: data.damage }))
+      .sort((a, b) => b.damage - a.damage);
+
+    let rankHtml = '';
+    participantsList.forEach((p, i) => { 
+      const colors = ["#ffd700", "#c0c0c0", "#cd7f32"];
+      const c = i < 3 ? colors[i] : "#fff";
+      const bg = p.name === playerRef.name ? 'rgba(92, 230, 230, 0.2)' : 'transparent';
+      
+      rankHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:2px; background:${bg}; padding: 2px 4px; border-radius: 3px;">
+        <div>
+          <span style="color:${c}; font-weight:bold; margin-right:5px;">${i+1}位.</span>
+          <span class="clickable-name" data-name="${p.name}" style="color:${c}; font-weight:bold;">${p.name}</span>
+        </div>
+        <span style="color:#fff; font-family:monospace;">${formatNumber(p.damage)}</span>
+      </div>`;
+    });
+    if (participantsList.length === 0) rankHtml = '<div style="text-align:center; color:#777;">まだ攻撃したプレイヤーがいません</div>';
+
+    // UIへの反映
     if (container.dataset.state !== 'defeated') {
       container.dataset.state = 'defeated';
-      const buffLv = currentRaidData.defeatedCount || 0;
+      // 討伐されたボスのLvではなく、現在発動しているバフLv(= ボスLv - 1)を表示
+      const activeBuffLv = Math.max(1, (currentRaidData.level || 1) - 1); 
+      
       container.innerHTML = `
         <div style="font-size: 16px; color: #ffd166; font-weight: bold; margin-bottom: 5px;">🎉 レイドボスは討伐されました！</div>
         <div style="font-size: 12px; color: #aaa;">次回の襲来まで待機してください。<br>(次回まで: <span id="raid-defeated-timer" style="font-family:monospace; color:#fff;">${nextTimeStr}</span>)</div>
-        <div style="margin-top:10px; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:8px; border-radius:4px;">
-          <span style="color:#ffd700; font-weight:bold; font-size:14px;">現在のアクティブバフ (Lv.${buffLv})</span><br>
+        
+        <div style="margin-top:10px; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:8px; border-radius:4px; margin-bottom: 10px;">
+          <span style="color:#ffd700; font-weight:bold; font-size:14px;">現在のアクティブバフ (Lv.${activeBuffLv})</span><br>
           <span style="font-size:12px; color:#fff;">すべてのプレイヤーに永続効果が発動中！</span>
+        </div>
+
+        <!-- ★追加：討伐後のランキング表示枠 -->
+        <div style="border-top:1px dashed #555; padding-top:10px; font-size:12px; text-align:left;">
+          <div style="color:#aaa; margin-bottom:5px; text-align:center;">🏆 最終与ダメージ順位</div>
+          <div id="raid-rank-scroll" style="max-height: 100px; overflow-y: auto; padding-right: 5px;">
+            <div id="raid-defeated-ranking">${rankHtml}</div>
+          </div>
         </div>
       `;
     } else {
       document.getElementById('raid-defeated-timer').textContent = nextTimeStr;
+      // ランキングが更新された場合（遅延して誰かのダメージが反映された場合など）に備えて更新
+      const rankContainer = document.getElementById('raid-defeated-ranking');
+      if (rankContainer && rankContainer.innerHTML !== rankHtml) {
+        rankContainer.innerHTML = rankHtml;
+      }
     }
     return;
   }

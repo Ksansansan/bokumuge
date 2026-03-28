@@ -584,7 +584,7 @@ btnChallenge.addEventListener('click', () => {
           dropListEl.appendChild(li);
 
           if (d.type !== 'gacha' && currentCount < 81 && newCount >= 81) {
-            addGlobalNews(`👑 【マスター到達】<span class="clickable-name" data-name="${player.name}">${player.name}</span> が ${itemName} をマスター(MAX)にしました！`, 4);
+            addGlobalNews(`👑 【マスター到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が ${itemName} をマスター(MAX)にしました！`, 4);
           }
           if (itemName.includes("魔の激動")) hasGekidoUpdate = true;
         });

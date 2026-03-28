@@ -88,7 +88,7 @@ export function simulateBattle(player, floorData) {
           if (currentLck >= 100) {
             ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
           }
-          const raidBuffLv = player.raidBuffLevel || 0;
+          const raidBuffLv = getCachedBuffLevel();
           if (raidBuffLv >= 2) {
             ticketCount += 1; // チケット枚数を+1
           }

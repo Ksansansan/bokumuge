@@ -665,6 +665,12 @@ function setupTabNavigation() {
       if (targetId === 'tab-training') updateTrainingUI();
       // ★ 装備タブを開いたときにチケット枚数を同期する
       if (targetId === 'tab-equip') updateTicketCount();
+      if (targetId === 'tab-collection') {
+        const container = document.getElementById('collection-list-container');
+        if (container) {
+          container.scrollTop = collectionScrollPosition;
+        }
+      }
     });
   });
 }
@@ -909,11 +915,14 @@ async function handleVictory(result, floorNum) {
     console.error(err);
   }
 }
-
+let collectionScrollPosition = 0;
 // --- 📖 図鑑UIの更新 (魔の激動と未取得表示の追加) ---
 function updateCollectionUI() {
   const container = document.getElementById('collection-list-container');
   if (!container) return;
+  if (container.offsetParent !== null) {
+    collectionScrollPosition = container.scrollTop;
+  }
   container.innerHTML = '';
 
   let totalBonuses = { STR: 0, VIT: 0, AGI: 0, LCK: 0, ALL: 0 };
@@ -1002,7 +1011,9 @@ function updateCollectionUI() {
   document.getElementById('total-buff-vit').textContent = `+${totalBonuses.VIT + totalBonuses.ALL}%`;
   document.getElementById('total-buff-agi').textContent = `+${totalBonuses.AGI + totalBonuses.ALL}%`;
   document.getElementById('total-buff-lck').textContent = `+${totalBonuses.LCK + totalBonuses.ALL}%`;
-
+ requestAnimationFrame(() => {
+    container.scrollTop = collectionScrollPosition;
+  });
   player.collectionCount = totalCollectedCount;
 }
   // ★追加：画面内のボタンを押したら勝手に「ポッ」と鳴るようにする（全体適用）

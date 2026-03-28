@@ -117,8 +117,6 @@ export async function openProfileModal(username) {
   // --- 4. ランキングと賞金の計算・表示 ---
   const rankTargets =[
     { id: 'tournament', name: '大会獲得賞金', isTotal: false },
-    { id: 'firstGenesis', name: '初ジェネシス賞', isTotal: false },
-    { id: 'bugReports', name: 'バグ報告数', isTotal: false },
     { id: 'floor', name: '最高到達層', isTotal: false },
     { id: 'firstClearCount', name: '初クリア数', isTotal: false },
     { id: 'str', name: 'STRランキング', isTotal: true },
@@ -137,6 +135,8 @@ export async function openProfileModal(username) {
     { id: 'command', name: 'コマンド入力王', isTotal: false },
     { id: 'clover', name: '四つ葉探し王', isTotal: false },
     { id: 'slot', name: 'スロット王', isTotal: false }
+    { id: 'bugReports', name: 'バグ報告数', isTotal: false },
+    { id: 'firstGenesis', name: '初ジェネシス賞', isTotal: false },
   ];
 
   let results =[];

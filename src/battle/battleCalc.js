@@ -88,6 +88,14 @@ export function simulateBattle(player, floorData) {
           if (currentLck >= 100) {
             ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
           }
+          const raidBuffLv = player.raidBuffLevel || 0;
+          if (raidBuffLv >= 2) {
+            ticketCount += 1; // チケット枚数を+1
+          }
+          if (raidBuffLv >= 6) {
+            ticketCount += 2;
+          }
+        
           enemyDrops.push({ name: "装備ガチャチケット", type: 'gacha', count: ticketCount });
           if (Math.random() < 0.30) enemyDrops.push({ name: floorData.biome.bossDrop, type: 'boss', count: 1 });
           // 魔の激動 (0.01% * LCK倍率)

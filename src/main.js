@@ -493,7 +493,9 @@ btnChallenge.addEventListener('click', () => {
   const timerText = document.getElementById('battle-timer-text');
 
   function renderLoop() {
-    const speed = 1; 
+    let speed = 1;
+    const raidBuffLv = getCachedBuffLevel();
+    if(raidBuffLv >= 6) speed = 1.25;
     currentFrame += speed;
 
     // ★追加：降参フラグが立ったら即座に敗北処理へ飛ばす

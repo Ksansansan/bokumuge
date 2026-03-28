@@ -215,7 +215,7 @@ export async function openProfileModal(username) {
       else if (rt.id === 'bugReports') scoreText = score + ' 件';
       else if (rt.id === 'firstGenesis') scoreText = score; 
       else if (rt.id === 'totalLv') scoreText = 'Lv.' + score;
-      else if (['rockPush','daruma','1to20','command'].includes(rt.id)) scoreText = score.toFixed(2) + ' 秒';
+      else if (['rockPush','daruma','1to20','command','clover'].includes(rt.id)) scoreText = score.toFixed(2) + ' 秒';
       else if (rt.id === 'chicken') scoreText = score.toFixed(2) + ' m';
       else if (rt.id === 'guard' || rt.id === 'slot') scoreText = formatNumber(score) + ' pt';
     }

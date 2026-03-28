@@ -4,7 +4,7 @@ import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js
 import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js'; import { getCachedBuffLevel } from './firebase.js';
 import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
-import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
+import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';f+1
 import { RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { initMeditation } from './minigame/meditation.js';
 import { initRockPush, openRockPushModal } from './minigame/rockPush.js';
@@ -945,7 +945,7 @@ function updateCollectionUI() {
 
     const items =[
       { name: floorData.biome.mobDrop, type: 'mob', stat: statType, color: '#5ce6e6', dropText: `第${f}〜${f+4}層 (雑魚)` },
-      { name: floorData.biome.bossDrop, type: 'boss', stat: 'ALL', color: '#ffd166', dropText: `第${f+4}層 (ボス)` }
+      { name: floorData.biome.bossDrop, type: 'boss', stat: 'ALL', color: '#ffd166', dropText: `第${f}～${f+4}層 (ボス)` }
     ];
 
     items.forEach(item => {

@@ -153,20 +153,20 @@ function startAutoGacha(stopRarityIndex) {
     updateTicketCount();
     autoPullCount++;
      const res = pullGacha(currentLck); 
-     let probValue;
+     let probVal;
   let probStr;
   if (res.rarityId === "SEC") {
     // SECの基本確率にLCK倍率を掛ける
     const lckMult = getLckBonusMultiplier(currentLck);
-    probValue = RARITY_DATA[res.rarityIndex].prob * lckMult;
-    probStr = `(${probValue.toFixed(4)}%)`;
+    probVal = RARITY_DATA[res.rarityIndex].prob * lckMult;
+    probStr = `(${probVal.toFixed(4)}%)`;
   } else {
-    probValue = probs[res.rarityIndex];
-    probStr = `(${probValue.toFixed(4)}%)`;
+    probVal = probs[res.rarityIndex];
+    probStr = `(${probVal.toFixed(4)}%)`;
   }
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
-    if (res.rarityId === "SEC" && probValue <= 0.2) {
+    if (res.rarityId === "SEC" && probVal <= 0.2) {
       playSound('win');
       stopAutoGacha();
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);

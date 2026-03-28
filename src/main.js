@@ -1,7 +1,7 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
-import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js'; import { getCachedBuffLevel } from './firebase.js';
 import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
@@ -384,7 +384,6 @@ async function updateFloorUI(floorNum) {
   if (currentLck >= 100) {
     ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
   }
-   import { getCachedBuffLevel } from './firebase.js'; // 関数がインポートされているか確認
   const raidBuffLv = getCachedBuffLevel();
   if (raidBuffLv >= 2) {
     ticketCount += 1;

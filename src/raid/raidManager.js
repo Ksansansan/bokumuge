@@ -9,7 +9,6 @@ import { updateTicketCount } from '../gacha/gachaUI.js';
 let playerRef = null;
 let currentRaidData = null;
 let countdownInterval = null;
-f
 const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 

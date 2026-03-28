@@ -145,10 +145,10 @@ async function checkAndRenderRaid() {
     const myData = targetDataForReward.participants[playerRef.name];
     const levelMult = targetDataForReward.isDefeated ? Math.max(1, targetDataForReward.level) : targetDataForReward.level;
     
-    const baseTickets = 80;
+    const baseTickets = 125;
     const damagePercent = 1 - (targetDataForReward.currentHp / targetDataForReward.maxHp);
     let rewardTickets = Math.floor(baseTickets * (levelMult - 1) * damagePercent);
-    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 80 * (levelMult - 1));
+    const contributionTickets = Math.floor((myData.damage / targetDataForReward.maxHp) * 100 * (levelMult - 1));
     rewardTickets += contributionTickets;
     let rankText = "";
 

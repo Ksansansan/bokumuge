@@ -14,10 +14,8 @@ if (buffLv >= 4) MAX_OFFLINE_MS = 24 * 60 * 60 * 1000; // 魂の超休息
 else if (buffLv >= 1) MAX_OFFLINE_MS = 18 * 60 * 60 * 1000; // 魂の休息
 let STAT_TICK_MS = 20 * 60 * 1000; // 20分
 let TICKET_TICK_MS = 10 * 60 * 1000; // 10分
-if (buffLv >= 7) { // 瞑想の真極意 (-25%)
+if (buffLv >= 3) { // 瞑想の真極意 (-25%)
     STAT_TICK_MS *= 0.75; TICKET_TICK_MS *= 0.75;
-  } else if (buffLv >= 3) { // 瞑想の極意 (-10%)
-    STAT_TICK_MS *= 0.9; TICKET_TICK_MS *= 0.9;
 }
 
 export function initMeditation(playerObj, updateUIFn) {

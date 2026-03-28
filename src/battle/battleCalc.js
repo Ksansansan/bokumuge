@@ -71,38 +71,41 @@ export function simulateBattle(player, floorData) {
       
       if (currentEnemy.currentHp <= 0) {
         const isLastEnemy = (currentEnemyIndex === enemies.length - 1);
-        events.push({ frame: timeFrames, type: 'defeat', isLast: isLastEnemy });
-
-        // ★ ガチャチケのドロップ枚数計算 (LCKボーナス)
+        
+        // --- ★ 修正：この敵専用のドロップをここで抽選する ---
+        let enemyDrops = [];
         const currentLck = player.battleStats?.lck || player.lck || 0;
-        const lckMult = getLckBonusMultiplier(currentLck);
-
-        let ticketCount = 1;
-        // 【グローバルバフ】戦神の加護
-        const buffLv = getCachedBuffLevel();
-        if (buffLv >= 6) ticketCount += 3; // 戦神の超加護
-        else if (buffLv >= 2) ticketCount += 1; // 戦神の加護
-        
-        if (currentLck >= 100) {
-          ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
-        }
-        
-        if (Math.random() < (0.0001 * lckMult)) {
-          drops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
-        }
+        const lckMult = 1.0 + Math.pow(currentLck / 100, 0.4); // ガチャと同じLCK倍率
 
         if (currentEnemyIndex < 3) {
-          if (Math.random() < 0.20) drops.push({ name: floorData.biome.mobDrop, type: 'mob', count: 1 }); // ★ countを追加
+          // 雑魚の抽選
+          if (Math.random() < 0.20) enemyDrops.push({ name: floorData.biome.mobDrop, type: 'mob', count: 1 });
+          // 魔の激動 (0.01% * LCK倍率)
+          if (Math.random() < (0.0001 * lckMult)) enemyDrops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
         } else {
-          drops.push({ name: "装備ガチャチケット", type: 'gacha', count: ticketCount }); // ★ countを適用
-          if (Math.random() < 0.30) drops.push({ name: floorData.biome.bossDrop, type: 'boss', count: 1 });
+          // ボスの抽選
+          let ticketCount = 1;
+          if (currentLck >= 100) {
+            ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
+          }
+          enemyDrops.push({ name: "装備ガチャチケット", type: 'gacha', count: ticketCount });
+          if (Math.random() < 0.30) enemyDrops.push({ name: floorData.biome.bossDrop, type: 'boss', count: 1 });
+          // 魔の激動 (0.01% * LCK倍率)
+          if (Math.random() < (0.00005 * lckMult)) enemyDrops.push({ name: floorData.gekido.name, type: 'gekido', count: 1 });
         }
-        
-        // 最後の敵でなければインターバルを挟む
+
+        // ★ 修正：defeatイベントに drops を持たせる
+        events.push({ 
+          frame: timeFrames, 
+          type: 'defeat', 
+          isLast: isLastEnemy, 
+          drops: enemyDrops // この敵が落としたアイテム
+        });
+
         if (!isLastEnemy) {
           transitionTimer = 30;
         } else {
-          currentEnemyIndex++; // 勝利判定のために進める
+          currentEnemyIndex++;
         }
         continue;
       }

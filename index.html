@@ -42,8 +42,8 @@
   .btn-fantasy { background: linear-gradient(to bottom, #8a2020, #4a0d0d); border: 2px solid #c49a45; border-radius: 8px; color: #f2e4c9; font-size: 18px; font-weight: bold; font-family: serif; padding: 12px; text-align: center; cursor: pointer; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.6); }
   .btn-fantasy:active { transform: translateY(2px); }
 
-  .battle-actions { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-  .btn-arrow { background: #2b1f18; border: 2px solid #8c7a65; border-radius: 6px; color: #f2e4c9; font-size: 20px; padding: 10px 15px; cursor: pointer; }
+  .battle-actions { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; }
+  .btn-arrow { background: #2b1f18; border: 2px solid #8c7a65; border-radius: 6px; color: #f2e4c9; font-size: 16px; padding: 10px 12px; cursor: pointer; }
   .btn-arrow.disabled { opacity: 0.3; pointer-events: none; }
 
   /* === ボトムナビゲーション === */
@@ -229,11 +229,20 @@
 
       
     <!-- ボタンにIDを追加 -->
-    <div class="battle-actions">
-      <button id="btn-prev" class="btn-arrow">◀</button>
-      <button id="btn-challenge" class="btn-fantasy" style="margin: 0; width: 60%; font-size: 22px;">挑戦！</button>
-      <button id="btn-next" class="btn-arrow">▶</button>
-    </div>
+     <div class="battle-actions">
+        <!-- ★追加：5層戻るボタン -->
+        <button id="btn-prev-5" class="btn-arrow disabled">⏪</button>
+        <!-- 既存：1層戻るボタン -->
+        <button id="btn-prev" class="btn-arrow disabled">◀</button>
+        
+        <button id="btn-challenge" class="btn-fantasy" style="margin: 0; flex-grow: 1; max-width: 50%; font-size: 22px;">挑戦！</button>
+        <button id="btn-surrender" class="btn-fantasy" style="display:none; margin: 0; flex-grow: 1; max-width: 50%; font-size: 22px; background:linear-gradient(to bottom, #555, #222); border-color:#8c7a65;">降参する</button>
+        
+        <!-- 既存：1層進むボタン -->
+        <button id="btn-next" class="btn-arrow disabled">▶</button>
+        <!-- ★追加：5層進むボタン -->
+        <button id="btn-next-5" class="btn-arrow disabled">⏩</button>
+      </div>
 
 <!-- ★ 追加：音量コントロールUI -->
       <div id="volume-control-panel" style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 5px 0 10px 0; padding: 5px 10px; background: rgba(0,0,0,0.3); border-radius: 20px; border: 1px solid #4a3b26;">

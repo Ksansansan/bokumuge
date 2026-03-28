@@ -410,13 +410,18 @@ async function updateFloorUI(floorNum) {
   if (raidBuffLv >= 2) {
     ticketCount += 1;
   }
-  if (raidBuffLv >= 6) {
+  if (raidBuffLv >= 5) {
     ticketCount += 2;
   }
   
   const lckMult = getLckBonusMultiplier(currentLck);
   const gekidoProb = (0.005 * lckMult).toFixed(4);
-
+if (raidBuffLv >= 8) {
+    gekidoProb *= 2;
+  }
+  else if (raidBuffLv >= 4) {
+    ticketCount *= 1.5;
+  }
   document.getElementById('drop-list').innerHTML = `
     <li style="color:#fff;">装備ガチャチケット <span style="font-weight:bold;">x${ticketCount}</span> (ボス100%)</li>
     <li style="color:#5ce6e6;">${floorData.biome.mobDrop}[図鑑] (雑魚20%)</li>

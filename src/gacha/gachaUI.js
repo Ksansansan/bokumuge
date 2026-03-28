@@ -98,6 +98,7 @@ async function doGacha() {
   const probs = getActualProbabilities(currentLck); 
   const probValue = probs[result.rarityIndex]; 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
+  let autoPullCount = 0;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
@@ -138,7 +139,7 @@ function startAutoGacha(stopRarityIndex) {
     }
     playerRef.inventory["装備ガチャチケット"]--;
     updateTicketCount();
-
+    autoPullCount++;
      const res = pullGacha(currentLck); 
      const probVal = probs[res.rarityIndex]; 
     const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
@@ -159,6 +160,10 @@ function startAutoGacha(stopRarityIndex) {
     logEl.innerHTML = `[${TYPE_NAMES[res.type]}] <span class="r-${res.rarityId}">[${res.rarityId}] ${res.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;
     logArea.prepend(logEl);
     if(logArea.children.length > 20) logArea.lastChild.remove();
+    if (autoPullCount >= 20) {
+      autoPullCount = 0;
+      savePlayerData(playerRef); // ※awaitせず裏で投げっぱなしにして止めない
+    }
 
     if (stopRarityIndex !== -1 && res.rarityIndex >= stopRarityIndex) {
       playSound('win');

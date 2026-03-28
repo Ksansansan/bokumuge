@@ -424,6 +424,7 @@ async function updateFloorUI(floorNum) {
 }
 // --- ⚔️ バトル実行 ---
 btnChallenge.addEventListener('click', () => {
+  btnChallenge.blur();
   const floorData = generateFloorData(player.floor);
   // ★戦闘には「バフ込みステータス」を渡す
   const battleStats = getBattleStats(player);
@@ -536,19 +537,43 @@ btnChallenge.addEventListener('click', () => {
     document.getElementById('ui-e-gauge').style.width = `${(eGaugeVal / 1000) * 100}%`;
 
     // --- バトルの終了判定 (降参・ドロップ色分け・d エラー修正) ---
-    if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
-      document.getElementById('btn-surrender-modal').style.display = 'none';
+     if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
+      document.getElementById('btn-challenge').style.display = 'block';
+      document.getElementById('btn-surrender').style.display = 'none';
 
-      if (result.drops.length > 0) {
-        if(!player.inventory) player.inventory = {};
+      // ★ 降参時用：再生されたイベントの中から「実際に倒した敵の数」を数える
+      let defeatedCount = 0;
+      for (let i = 0; i < eventIndex; i++) {
+        if (result.events[i].type === 'defeat') defeatedCount++;
+      }
+
+      // ★ 獲得ドロップのフィルタリング
+      let earnedDrops =[];
+      if (isSurrendered) {
+        // 降参時は、倒した敵の数（defeatedCount）と同じ個数のドロップアイテムだけを先頭から抽出する
+        // （※雑魚は1種類しか落とさないため、大まかに「倒した数＝獲得枠」として処理）
+        let addedTypes = 0;
+        for (const dropItem of result.drops) {
+          if (addedTypes < defeatedCount) {
+            earnedDrops.push(dropItem);
+            addedTypes += dropItem.count; // 複数個ドロップしている場合はその分消費
+          }
+        }
+      } else {
+        // 通常の勝利・敗北（HP0）なら、計算結果の全ドロップを獲得
+        earnedDrops = result.drops;
+      }
+
+      // ★ ドロップ品の獲得と表示処理
+      if (earnedDrops.length > 0) {
+        if (!player.inventory) player.inventory = {};
         const dropListEl = document.getElementById('battle-drop-list');
         dropListEl.innerHTML = '';
         
         let hasGekidoUpdate = false;
 
-        // ★ d 変数エラーの修正と色分け
-        result.drops.forEach(dropItem => {
+        earnedDrops.forEach(dropItem => {
           const currentCount = player.inventory[dropItem.name] || 0;
           const newCount = currentCount + dropItem.count;
           player.inventory[dropItem.name] = newCount;
@@ -562,7 +587,7 @@ btnChallenge.addEventListener('click', () => {
           li.innerHTML = `<span style="color:${color}">${dropItem.name}</span> <span style="color:#fff; font-weight:bold;">x${dropItem.count}</span> を獲得！`;
           dropListEl.appendChild(li);
 
-          // マスター(81個)到達ニュース
+          // マスター(81個)到達ニュース（チケットは除外）
           if (dropItem.type !== 'gacha' && currentCount < 81 && newCount >= 81) {
             addGlobalNews(`👑 【マスター到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が ${dropItem.name} をマスター(MAX)にしました！`, 4);
           }
@@ -573,14 +598,15 @@ btnChallenge.addEventListener('click', () => {
         });
         document.getElementById('battle-drop-result').style.display = 'block';
         
-        // ★ ドロップ処理がすべて終わってからバフを再計算する
+        updateTicketCount(); // チケット枚数を即時反映
+        
         if (hasGekidoUpdate) {
-          applyGekidoBonus();
+          applyGekidoBonus(); // 魔の激動の遡及レベルアップ
         }
-         updateTicketCount(); 
-        updateCollectionUI(); 
+        updateCollectionUI(); // 図鑑の表示更新
       }
 
+      // ★ 勝敗の最終処理
       if (result.isWin && !isSurrendered) {
         playSound('win');
         handleVictory(result, floorData.floor); 
@@ -588,9 +614,10 @@ btnChallenge.addEventListener('click', () => {
         playSound('error');
         resultText.textContent = isSurrendered ? `🏳️ 降参しました` : `💀 敗北...`;
         resultText.style.color = '#ff6b6b';
-        savePlayerData(player); 
+        savePlayerData(player); // 負け・降参でもドロップと回数は保存する
+        updateCollectionUI();
       }
-      updateCollectionUI();
+      
       cancelAnimationFrame(animationId);
       return;
     }

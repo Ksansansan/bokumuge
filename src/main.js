@@ -540,7 +540,7 @@ btnChallenge.addEventListener('click', () => {
      if (currentFrame >= result.totalFrames || eventIndex >= result.events.length) {
       btnCloseBattle.style.display = 'block';
       document.getElementById('btn-challenge').style.display = 'block';
-      document.getElementById('btn-surrender').style.display = 'none';
+      document.getElementById('btn-surrender-modal').style.display = 'none';
 
       // ★ 降参時用：再生されたイベントの中から「実際に倒した敵の数」を数える
       let defeatedCount = 0;

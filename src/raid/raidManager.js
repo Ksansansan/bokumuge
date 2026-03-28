@@ -1,6 +1,6 @@
 // src/raid/raidManager.js
 
-import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward } from '../firebase.js';
+import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward, getReliableTime } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 import { startRaidBattleAnimation } from './raidBattle.js';
@@ -30,7 +30,7 @@ export function cancelRaidWaitingIfActive() {
 }
 
 function getRaidSchedule() {
-  const now = new Date();
+ const now = new Date(getReliableTime()); 
   const h = now.getHours();
   const m = now.getMinutes();
   

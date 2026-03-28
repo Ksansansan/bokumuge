@@ -453,7 +453,7 @@ btnChallenge.addEventListener('click', () => {
   let currentFrame = 0, eventIndex = 0;
   let pMaxHp = 1, pHp = 1, eMaxHp = 1, eHp = 1;
   let pGaugeVal = 0, eGaugeVal = 0, currentEnemyAgi = 0;
-  
+  let battleAcquiredDrops = []; 
   const timerBar = document.getElementById('battle-timer-bar');
   const timerText = document.getElementById('battle-timer-text');
 

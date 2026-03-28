@@ -98,7 +98,6 @@ async function doGacha() {
   const probs = getActualProbabilities(currentLck); 
   const probValue = probs[result.rarityIndex]; 
   const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
-  let autoPullCount = 0;
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
@@ -129,7 +128,7 @@ function startAutoGacha(stopRarityIndex) {
   const logArea = document.getElementById('gacha-log-area');
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const probs = getActualProbabilities(currentLck);
-  
+  let autoPullCount = 0;
   const buffLv = getCachedBuffLevel();
   const intervalMs = (buffLv >= 8) ? 66 : 100; // 神速の抽選
   

@@ -96,16 +96,25 @@ async function doGacha() {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck;
   const result = pullGacha(currentLck);
   const probs = getActualProbabilities(currentLck); 
-  const probValue = probs[result.rarityIndex]; 
-  const probStr = `(${probs[result.rarityIndex].toFixed(4)}%)`;
+  let probValue;
+  let probStr;
+  if (result.rarityId === "SEC") {
+    // SECの基本確率にLCK倍率を掛ける
+    const lckMult = getLckBonusMultiplier(currentLck);
+    probValue = RARITY_DATA[result.rarityIndex].prob * lckMult;
+    probStr = `(${probVal.toFixed(4)}%)`;
+  } else {
+    probValue = probs[result.rarityIndex];
+    probStr = `(${probVal.toFixed(4)}%)`;
+  }
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
-   if (result.rarityId === "SEC") {
+   if (result.rarityId === "SEC" && probValue <= 0.2) {
      playSound('win');
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
   } 
-  if (result.rarityId === "GEN") {
+  else if (result.rarityId === "GEN") {
     const isFirst = await checkAndSaveFirstGenesis(playerRef.name, probStr);
     if (isFirst) {
       addGlobalNews(`✨✨ 【世界初】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${probStr} を引き当て、${TYPE_NAMES[result.type]}[GEN] ${result.name} を世界で初めて獲得しました！！`, 1);
@@ -144,17 +153,26 @@ function startAutoGacha(stopRarityIndex) {
     updateTicketCount();
     autoPullCount++;
      const res = pullGacha(currentLck); 
-     const probVal = probs[res.rarityIndex]; 
-    const probStr = `(${probs[res.rarityIndex].toFixed(4)}%)`;
+     let probValue;
+  let probStr;
+  if (result.rarityId === "SEC") {
+    // SECの基本確率にLCK倍率を掛ける
+    const lckMult = getLckBonusMultiplier(currentLck);
+    probValue = RARITY_DATA[result.rarityIndex].prob * lckMult;
+    probStr = `(${probVal.toFixed(4)}%)`;
+  } else {
+    probValue = probs[result.rarityIndex];
+    probStr = `(${probVal.toFixed(4)}%)`;
+  }
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
-    if (result.rarityId === "SEC") {
+    if (result.rarityId === "SEC" && probValue <= 0.2) {
       playSound('win');
       stopAutoGacha();
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
   } 
      // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
-  if (res.rarityId === "GEN") {
+  else if (res.rarityId === "GEN") {
     const isFirst = await checkAndSaveFirstGenesis(playerRef.name, probStr);
     if (isFirst) {
       addGlobalNews(`✨✨ 【世界初】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${probStr} を引き当て、${TYPE_NAMES[result.type]}[GEN] ${result.name} を世界で初めて獲得しました！！`, 1);

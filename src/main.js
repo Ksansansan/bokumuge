@@ -786,7 +786,7 @@ async function renderRanking() {
       else if(currentRankId === 'collectionCount') displayScore += ' 個';
       else if(currentRankId === 'bugReports') displayScore += ' 件'; // ★追加
       else if(currentRankId === 'firstGenesis') displayScore = item.score; // ★(xx%)のまま出す
-      else if(["rockPush", "daruma", "1to20", "command"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
+      else if(["rockPush", "daruma", "1to20", "command","clover"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';
       else if(currentRankId === 'chicken') displayScore = item.score.toFixed(2) + ' m';
       else if(currentRankId === 'guard' || currentRankId === 'slot') displayScore = formatNumber(item.score) + ' pt';
 

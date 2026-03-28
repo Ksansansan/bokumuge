@@ -609,7 +609,7 @@ btnChallenge.addEventListener('click', () => {
       return;
     }
     animationId = requestAnimationFrame(renderLoop);
-  }
+  })
   animationId = requestAnimationFrame(renderLoop);
 });
 

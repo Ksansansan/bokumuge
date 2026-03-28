@@ -185,8 +185,8 @@ export function generateFloorData(targetFloor) {
 
   const buffLv = getCachedBuffLevel();
   let gekidoProb = 0.01;
-  if (buffLv >= 9) gekidoProb *= 2.0;      // 真深淵の記憶
-  else if (buffLv >= 5) gekidoProb *= 1.5; // 深淵の記憶
+  if (buffLv >= 8) gekidoProb *= 2.0;      // 真深淵の記憶
+  else if (buffLv >= 4) gekidoProb *= 1.5; // 深淵の記憶
 
   return {
     floor, isMaxFloor: floor >= MAX_FLOOR, stageName,

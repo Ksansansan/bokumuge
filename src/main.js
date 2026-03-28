@@ -320,6 +320,25 @@ function init() {
     }
   });
 
+   document.getElementById('btn-prev-5').addEventListener('click', () => {
+    if (player.floor > 5) {
+      player.floor -= 5;
+    } else {
+      player.floor = 1; // 5以下なら1に戻す
+    }
+    updateFloorUI(player.floor);
+  });
+
+  document.getElementById('btn-next-5').addEventListener('click', () => {
+    const maxFloor = player.maxClearedFloor || 1;
+    if (player.floor + 5 <= maxFloor) {
+      player.floor += 5;
+    } else {
+      player.floor = maxFloor; // はみ出す場合は最高到達層で止まる
+    }
+    updateFloorUI(player.floor);
+  });
+  
   document.getElementById('btn-next').addEventListener('click', () => {
     // 自分が今までクリアした最高階層（maxClearedFloor）まで移動可能
     if (player.floor < (player.maxClearedFloor || 1)) {
@@ -356,26 +375,29 @@ async function updateFloorUI(floorNum) {
    // ★ 修正：階層移動ボタンの透明化 (disabled クラスの付け外し)
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
-
+ const prev5Btn = document.getElementById('btn-prev-5'); // ★
+  const next5Btn = document.getElementById('btn-next-5'); // ★
+   const maxFloor = player.maxClearedFloor || 1;
+  // 1層戻る・5層戻る
   if (floorNum <= 1) {
-    prevBtn.classList.add('disabled');
-    prevBtn.style.opacity = "0.3";
-    prevBtn.style.pointerEvents = "none";
+    prevBtn.classList.add('disabled'); prevBtn.style.opacity = "0.3"; prevBtn.style.pointerEvents = "none";
+    prev5Btn.classList.add('disabled'); prev5Btn.style.opacity = "0.3"; prev5Btn.style.pointerEvents = "none";
   } else {
-    prevBtn.classList.remove('disabled');
-    prevBtn.style.opacity = "1";
-    prevBtn.style.pointerEvents = "auto";
+    prevBtn.classList.remove('disabled'); prevBtn.style.opacity = "1"; prevBtn.style.pointerEvents = "auto";
+    
+    // ★現在の階層が5以下なら「5層戻る」も押せない（または押しても1層になるので押せるようにしても良いが、ここでは1に飛べるように活性化させる）
+    prev5Btn.classList.remove('disabled'); prev5Btn.style.opacity = "1"; prev5Btn.style.pointerEvents = "auto";
   }
 
-  // 自分の最高到達階層（maxClearedFloor）より先には行けない
-  if (floorNum >= (player.maxClearedFloor || 1)) {
-    nextBtn.classList.add('disabled');
-    nextBtn.style.opacity = "0.3";
-    nextBtn.style.pointerEvents = "none";
+  // 1層進む・5層進む
+  if (floorNum >= maxFloor) {
+    nextBtn.classList.add('disabled'); nextBtn.style.opacity = "0.3"; nextBtn.style.pointerEvents = "none";
+    next5Btn.classList.add('disabled'); next5Btn.style.opacity = "0.3"; next5Btn.style.pointerEvents = "none";
   } else {
-    nextBtn.classList.remove('disabled');
-    nextBtn.style.opacity = "1";
-    nextBtn.style.pointerEvents = "auto";
+    nextBtn.classList.remove('disabled'); nextBtn.style.opacity = "1"; nextBtn.style.pointerEvents = "auto";
+    
+    // ★あと数層で限界に達する場合でも、MAXに飛べるようにボタンは活性化しておく
+    next5Btn.classList.remove('disabled'); next5Btn.style.opacity = "1"; next5Btn.style.pointerEvents = "auto";
   }
 
   // ★ドロップの色分けと、ガチャチケ枚数のLCK加算

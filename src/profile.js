@@ -134,7 +134,7 @@ export async function openProfileModal(username) {
     { id: '1to20', name: '1〜20早押し王', isTotal: false },
     { id: 'command', name: 'コマンド入力王', isTotal: false },
     { id: 'clover', name: '四つ葉探し王', isTotal: false },
-    { id: 'slot', name: 'スロット王', isTotal: false }
+    { id: 'slot', name: 'スロット王', isTotal: false },
     { id: 'bugReports', name: 'バグ報告数', isTotal: false },
     { id: 'firstGenesis', name: '初ジェネシス賞', isTotal: false },
   ];

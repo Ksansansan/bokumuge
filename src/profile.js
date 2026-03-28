@@ -119,10 +119,17 @@ export async function openProfileModal(username) {
     { id: 'tournament', name: '大会獲得賞金', isTotal: false },
     { id: 'floor', name: '最高到達層', isTotal: false },
     { id: 'firstClearCount', name: '初クリア数', isTotal: false },
-    { id: 'str', name: 'STRランキング', isTotal: true },
-    { id: 'vit', name: 'VITランキング', isTotal: true },
-    { id: 'agi', name: 'AGIランキング', isTotal: true },
-    { id: 'lck', name: 'LCKランキング', isTotal: true },
+     // 基礎値（賞金対象）
+    { id: 'str', name: 'STR (基礎値)', isTotal: false },
+    { id: 'vit', name: 'VIT (基礎値)', isTotal: false },
+    { id: 'agi', name: 'AGI (基礎値)', isTotal: false },
+    { id: 'lck', name: 'LCK (基礎値)', isTotal: false },
+    
+    // 総合値（賞金対象外）
+    { id: 'str', name: 'STR (総合値)', isTotal: true },
+    { id: 'vit', name: 'VIT (総合値)', isTotal: true },
+    { id: 'agi', name: 'AGI (総合値)', isTotal: true },
+    { id: 'lck', name: 'LCK (総合値)', isTotal: true },
     { id: 'totalLv', name: '総特訓レベル', isTotal: false },
     { id: 'winCount', name: '累計勝利数', isTotal: false },
     { id: 'gachaCount', name: '累計ガチャ回数', isTotal: false },
@@ -185,6 +192,7 @@ export async function openProfileModal(username) {
 
     // ★ 賞金の計算 (tournament.js の仕様に合わせる)
     if (IS_TOURNAMENT_MODE && rt.id !== 'tournament') {
+      if (!rt.isTotal || !['str','vit','agi','lck'].includes(rt.id)) {
       // 順位報酬
       if (myRankIdx !== -1) {
         prizeYen += getPrizeForRank(rt.id, myRankIdx);
@@ -203,6 +211,7 @@ export async function openProfileModal(username) {
         let bugScore = u.bugReports || 0;
         prizeYen += bugScore * 10;
       }
+    }
     }
 
     // 表示テキストのフォーマット

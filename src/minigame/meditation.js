@@ -10,7 +10,7 @@ let onUpdateUI = null;
 const buffLv = getCachedBuffLevel();
 
 let MAX_OFFLINE_MS = 12 * 60 * 60 * 1000; // 12時間
-if (buffLv >= 4) MAX_OFFLINE_MS = 24 * 60 * 60 * 1000; // 魂の超休息
+if (buffLv >= 9) MAX_OFFLINE_MS = 24 * 60 * 60 * 1000; // 魂の超休息
 else if (buffLv >= 1) MAX_OFFLINE_MS = 18 * 60 * 60 * 1000; // 魂の休息
 let STAT_TICK_MS = 20 * 60 * 1000; // 20分
 let TICKET_TICK_MS = 10 * 60 * 1000; // 10分

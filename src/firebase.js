@@ -272,8 +272,8 @@ export async function getRankingData(rankId, isTotal = false) {
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
 
   if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"].includes(rankId)) {
-    const dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
-
+    let dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
+      if (rankId === 'floor') dbField = 'maxClearedFloor';
     // ★身内用なので全件取得してJSでソートする
     const querySnapshot = await getDocs(collection(db, "users"));
     querySnapshot.forEach((doc) => {

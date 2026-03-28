@@ -143,7 +143,7 @@ function startAutoGacha(stopRarityIndex) {
   const probs = getActualProbabilities(currentLck);
   let autoPullCount = 0;
   const buffLv = getCachedBuffLevel();
-  const intervalMs = (buffLv >= 8) ? 66 : 100; // 神速の抽選
+  const intervalMs = (buffLv >= 7) ? 66 : 100; // 神速の抽選
   
   autoInterval = setInterval(async () => {
     if ((playerRef.inventory?.["装備ガチャチケット"] || 0) <= 0) {

@@ -54,7 +54,7 @@ export function applyMinigameResult(player, statKey, expGained, baseGained) {
  */
 export function getLevelMultiplier(level, totalLevel) {
   // 基本倍率: 1.12^n倍
-  const baseMult = Math.floor(100 * Math.pow(1.12, (level - 1)))/100;
+  const baseMult = Math.floor(100 * Math.pow(1.15, (level - 1)))/100;
   
   // ★シナジーボーナス: 合計Lv 1につき +1% の全体底上げ
   // STR Lv50まで上げたら、VIT Lv1でも最初から 1.5倍 でスタートできる！

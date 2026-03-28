@@ -382,8 +382,17 @@ async function updateFloorUI(floorNum) {
   let ticketCount = 1;
   const currentLck = player.battleStats?.lck || player.lck || 0;
   if (currentLck >= 100) {
-    ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
+    ticketCount += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
   }
+   import { getCachedBuffLevel } from './firebase.js'; // 関数がインポートされているか確認
+  const raidBuffLv = getCachedBuffLevel();
+  if (raidBuffLv >= 2) {
+    ticketCount += 1;
+  }
+  if (raidBuffLv >= 6) {
+    ticketCount += 2;
+  }
+  
   const lckMult = getLckBonusMultiplier(currentLck);
   const gekidoProb = (0.005 * lckMult).toFixed(4);
 

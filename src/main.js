@@ -587,12 +587,6 @@ btnChallenge.addEventListener('click', () => {
         updateTicketCount();
       }
         
-        if (hasGekidoUpdate) {
-          applyGekidoBonus(); // 魔の激動の遡及レベルアップ
-        }
-        updateCollectionUI(); // 図鑑の表示更新
-      }
-
       // ★ 勝敗の最終処理
       if (result.isWin && !isSurrendered) {
         playSound('win');
@@ -609,7 +603,7 @@ btnChallenge.addEventListener('click', () => {
       return;
     }
     animationId = requestAnimationFrame(renderLoop);
-  })
+  }
   animationId = requestAnimationFrame(renderLoop);
 });
 

@@ -48,61 +48,61 @@ export async function getGlobalConfig() {
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
   
-  // 1. まず現在のデータが存在するか（pinが設定されているか）確認
-  let userSnap = await getDoc(userRef);
+  // ★修正1：絶対に「書き込む」前に「読み込む」。これで上書き事故は100%起きない。
+  const userSnap = await getDoc(userRef);
 
+  // フライングチェックは、すでに取得済みの getReliableTime() を使う
+  const now = getReliableTime();
+  // SERVER_RELEASE_DATE は firebase.js 上部に定義したリリース日時（1743141600000等）です
+  if (now < SERVER_RELEASE_DATE && username !== "Ksansansan") {
+    return { success: false, message: "【サーバー応答】まだリリース時刻になっていません。" };
+  }
+
+  // --- 既存ユーザーのログイン ---
   if (userSnap.exists() && userSnap.data().pin) {
-    // --- 既存ユーザー（ログイン） ---
     const data = userSnap.data();
+    
     if (data.pin === pin) {
-      // パスワードが合っていればログイン時間を更新
+      // パスワードが合っていたら、ここで初めてログイン時間を更新
       await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
-      
-      // サーバー時間を取得してオフセット計算
-      userSnap = await getDoc(userRef);
-      const updatedData = userSnap.data();
-      const serverTime = updatedData.lastLoginTime.toMillis();
-      serverTimeOffset = serverTime - Date.now();
-      
-      if (!updatedData.timestamps) updatedData.timestamps = {}; 
-      if (!updatedData.meditation) {
-        updatedData.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
-      } 
-      
-      lastSavedPlayerState = JSON.parse(JSON.stringify(updatedData));
-      return { success: true, data: updatedData };
+      if (!data.timestamps) data.timestamps = {};
+      lastSavedPlayerState = JSON.parse(JSON.stringify(data));
+      return { success: true, data: data };
     } else {
       return { success: false, message: "パスワード(4桁)が違います" };
     }
-  } else {
-    // --- 新規登録 ---
+  } 
+  // --- 完全な新規ユーザーの登録 ---
+  else {
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, firstClearCount: 0, inventory: {},
-      exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
+      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, inventory: {},
       bugReports: 0,
-      createdAt: serverTimestamp(),
-      lastLoginTime: serverTimestamp(),
-      timestamps: {}, 
+      exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
+      createdAt: serverTimestamp(), timestamps: {},
+      meditation: { target: 'str', lastStatTime: serverTimestamp(), lastTicketTime: serverTimestamp() }
     };
     
-    // 一度保存してサーバー時間を確定させる
+    // ★修正2：新規データを保存
     await setDoc(userRef, initialData);
     
-    // サーバー時間を取得してオフセットと瞑想初期値を設定
-    userSnap = await getDoc(userRef);
-    const savedData = userSnap.data();
-    const serverTime = savedData.lastLoginTime.toMillis();
-    serverTimeOffset = serverTime - Date.now();
-    
-    savedData.meditation = { target: 'str', lastStatTime: serverTime, lastTicketTime: serverTime };
-    await setDoc(userRef, { meditation: savedData.meditation }, { merge: true });
-    
-    lastSavedPlayerState = JSON.parse(JSON.stringify(savedData));
-    return { success: true, data: savedData };
+    // 保存した直後に再度読み込み、サーバーが刻印した正確な時間を取得してオフセットを更新する
+    const newSnap = await getDoc(userRef);
+    if (newSnap.exists() && newSnap.data().createdAt) {
+      const serverTime = newSnap.data().createdAt.toMillis();
+      // サーバー時間とクライアント（スマホ）の時間のズレを計算して保持
+      serverTimeOffset = serverTime - Date.now();
+      
+      // クライアント側のデータもミリ秒の数値に直しておく
+      initialData.createdAt = serverTime;
+      initialData.meditation.lastStatTime = serverTime;
+      initialData.meditation.lastTicketTime = serverTime;
+    }
+
+    lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
+    return { success: true, data: initialData };
   }
 }
-
 // ==========================================
 // 初クリア者の保存
 // ==========================================

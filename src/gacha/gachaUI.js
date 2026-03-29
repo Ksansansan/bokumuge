@@ -110,7 +110,7 @@ async function doGacha() {
   playerRef.inventory_equip[result.type][result.rarityId] = (playerRef.inventory_equip[result.type][result.rarityId] || 0) + 1;
   playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
   // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
-   if (result.rarityId === "SEC" && probValue <= 0.2) {
+   if (result.rarityId === "SEC") {
      playSound('win');
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
   } 
@@ -166,7 +166,7 @@ function startAutoGacha(stopRarityIndex) {
   }
     playerRef.inventory_equip[res.type][res.rarityId] = (playerRef.inventory_equip[res.type][res.rarityId] || 0) + 1;
     playerRef.gachaCount = (playerRef.gachaCount || 0) + 1;
-    if (res.rarityId === "SEC" && probVal <= 0.2) {
+    if (res.rarityId === "SEC") {
       playSound('win');
       stopAutoGacha();
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);

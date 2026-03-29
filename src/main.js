@@ -420,7 +420,7 @@ if (raidBuffLv >= 8) {
     gekidoProb *= 2;
   }
   else if (raidBuffLv >= 4) {
-    ticketCount *= 1.5;
+    gekidoProb *= 1.5;
   }
   document.getElementById('drop-list').innerHTML = `
     <li style="color:#fff;">装備ガチャチケット <span style="font-weight:bold;">x${ticketCount}</span> (ボス100%)</li>

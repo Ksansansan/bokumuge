@@ -7,15 +7,32 @@ import { playSound } from '../audio.js';
 
 let playerRef = null;
 let onUpdateUI = null;
-const buffLv = getCachedBuffLevel();
 
-let MAX_OFFLINE_MS = 12 * 60 * 60 * 1000; // 12時間
-if (buffLv >= 9) MAX_OFFLINE_MS = 24 * 60 * 60 * 1000; // 魂の超休息
-else if (buffLv >= 1) MAX_OFFLINE_MS = 18 * 60 * 60 * 1000; // 魂の休息
-let STAT_TICK_MS = 20 * 60 * 1000; // 20分
-let TICKET_TICK_MS = 10 * 60 * 1000; // 10分
-if (buffLv >= 3) { // 瞑想の真極意 (-25%)
-    STAT_TICK_MS *= 0.75; TICKET_TICK_MS *= 0.75;
+// ★ バフを考慮した現在の設定値を返す関数を作成
+function getMeditationConfig() {
+  const buffLv = getCachedBuffLevel();
+  
+  let maxMs = 12 * 60 * 60 * 1000;
+  if (buffLv >= 9) maxMs = 24 * 60 * 60 * 1000;
+  else if (buffLv >= 1) maxMs = 18 * 60 * 60 * 1000;
+
+  let statTick = 20 * 60 * 1000;
+  let ticketTick = 10 * 60 * 1000;
+  if (buffLv >= 3) {
+    statTick *= 0.75;
+    ticketTick *= 0.75;
+  }
+
+  return { 
+    maxMs, 
+    statTick, 
+    ticketTick, 
+    buffLv,
+    // 表示用テキスト
+    maxHour: maxMs / (60 * 60 * 1000),
+    statMin: statTick / (60 * 1000),
+    ticketMin: ticketTick / (60 * 1000)
+  };
 }
 
 export function initMeditation(playerObj, updateUIFn) {
@@ -23,9 +40,8 @@ export function initMeditation(playerObj, updateUIFn) {
   onUpdateUI = updateUIFn;
 
   const selectEl = document.getElementById('md-target-select');
-  selectEl.value = playerRef.meditation.target;
+  if(selectEl) selectEl.value = playerRef.meditation.target;
   
-  // ターゲット変更時
   selectEl.addEventListener('change', (e) => {
     playerRef.meditation.target = e.target.value;
     savePlayerData(playerRef);
@@ -34,17 +50,22 @@ export function initMeditation(playerObj, updateUIFn) {
 
   document.getElementById('md-btn-claim').addEventListener('click', claimRewards);
 
-  // 1秒ごとに表示を更新
   setInterval(updateDisplay, 1000);
   updateDisplay();
 }
 
 function updateDisplay() {
   const now = getReliableTime();
+  // ★ 最新のバフ設定を取得
+  const config = getMeditationConfig();
   
-  // 最大12時間の制限を考慮して経過時間を計算
-  const elapsedStat = Math.min(now - playerRef.meditation.lastStatTime, MAX_OFFLINE_MS);
-  const elapsedTicket = Math.min(now - playerRef.meditation.lastTicketTime, MAX_OFFLINE_MS);
+  // ラベルテキストの更新
+  document.getElementById('md-max-hour-label').textContent = config.maxHour;
+  document.getElementById('md-tick-label').innerHTML = 
+    `<span style="color:#5ce6e6;">${config.ticketMin}分ごとにチケット</span> / <span style="color:#ff6b6b;">${config.statMin}分ごとに基礎値</span>`;
+
+  const elapsedStat = Math.min(now - playerRef.meditation.lastStatTime, config.maxMs);
+  const elapsedTicket = Math.min(now - playerRef.meditation.lastTicketTime, config.maxMs);
   
   const displayMs = Math.max(elapsedStat, elapsedTicket);
   
@@ -55,34 +76,30 @@ function updateDisplay() {
   document.getElementById('md-elapsed-time').textContent = 
     `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
-  // 報酬回数の計算
-  const statTicks = Math.floor(elapsedStat / STAT_TICK_MS);
-  const ticketTicks = Math.floor(elapsedTicket / TICKET_TICK_MS);
+  const statTicks = Math.floor(elapsedStat / config.statTick);
+  const ticketTicks = Math.floor(elapsedTicket / config.ticketTick);
 
-  // ステータス獲得量計算: 5 × (特訓Lvによるボーナス)
   const target = playerRef.meditation.target;
   const totalLevel = playerRef.lv.str + playerRef.lv.vit + playerRef.lv.agi + playerRef.lv.lck;
   const multiplier = getLevelMultiplier(playerRef.lv[target], totalLevel);
   const statGain = statTicks * Math.floor(5 * multiplier);
 
-  // チケット獲得量計算 (バトルと同じ式)
   const currentLck = playerRef.battleStats?.lck || playerRef.lck || 0;
   let ticketsPerTick = 1;
   if (currentLck >= 100) {
     ticketsPerTick += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
   }
-    if(buffLv >= 2) ticketsPerTick++;
-    if(buffLv >= 5) ticketsPerTick+=2;
+  // レイドバフの直接加算
+  if(config.buffLv >= 2) ticketsPerTick++;
+  if(config.buffLv >= 5) ticketsPerTick+=2;
+
   const ticketGain = ticketTicks * ticketsPerTick;
 
-  // UI反映
   document.getElementById('md-est-stats').textContent = `+${formatNumber(statGain)}`;
   const colors = { str:"#ff6b6b", vit:"#6be6ff", agi:"#94ff6b", lck:"#ffd166" };
   document.getElementById('md-est-stats').style.color = colors[target];
-  
   document.getElementById('md-est-tickets').textContent = `${formatNumber(ticketGain)} 枚`;
   
-  // 受け取りボタンの活性化
   const btn = document.getElementById('md-btn-claim');
   if (statGain > 0 || ticketGain > 0) {
     btn.style.opacity = 1;
@@ -95,12 +112,13 @@ function updateDisplay() {
 
 async function claimRewards() {
   const now = getReliableTime();
+  const config = getMeditationConfig();
   
-  const elapsedStat = Math.min(now - playerRef.meditation.lastStatTime, MAX_OFFLINE_MS);
-  const elapsedTicket = Math.min(now - playerRef.meditation.lastTicketTime, MAX_OFFLINE_MS);
+  const elapsedStat = Math.min(now - playerRef.meditation.lastStatTime, config.maxMs);
+  const elapsedTicket = Math.min(now - playerRef.meditation.lastTicketTime, config.maxMs);
   
-  const statTicks = Math.floor(elapsedStat / STAT_TICK_MS);
-  const ticketTicks = Math.floor(elapsedTicket / TICKET_TICK_MS);
+  const statTicks = Math.floor(elapsedStat / config.statTick);
+  const ticketTicks = Math.floor(elapsedTicket / config.ticketTick);
 
   if (statTicks === 0 && ticketTicks === 0) return;
 
@@ -112,29 +130,29 @@ async function claimRewards() {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck || 0;
   let ticketsPerTick = 1;
   if (currentLck >= 100) {
-    ticketsPerTick += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
+    ticketsPerTick += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
   }
+  if(config.buffLv >= 2) ticketsPerTick++;
+  if(config.buffLv >= 5) ticketsPerTick+=2;
+
   const ticketGain = ticketTicks * ticketsPerTick;
 
-  // 報酬付与
   if (statGain > 0) {
     playerRef[target] += statGain;
-    // 受け取った分だけ時間を進める（端数を持ち越す）
-    playerRef.meditation.lastStatTime += statTicks * STAT_TICK_MS;
+    playerRef.meditation.lastStatTime += statTicks * config.statTick;
   }
   
   if (ticketGain > 0) {
     if (!playerRef.inventory) playerRef.inventory = {};
     playerRef.inventory["装備ガチャチケット"] = (playerRef.inventory["装備ガチャチケット"] || 0) + ticketGain;
-    playerRef.meditation.lastTicketTime += ticketTicks * TICKET_TICK_MS;
+    playerRef.meditation.lastTicketTime += ticketTicks * config.ticketTick;
   }
 
-  // 12時間制限に引っかかっていた場合、時間を現在時刻にリセットする（無駄な端数蓄積を防ぐため）
-  if (elapsedStat === MAX_OFFLINE_MS) playerRef.meditation.lastStatTime = now;
-  if (elapsedTicket === MAX_OFFLINE_MS) playerRef.meditation.lastTicketTime = now;
+  // 上限に達していた場合の時間リセット処理を修正
+  if (elapsedStat >= config.maxMs) playerRef.meditation.lastStatTime = now;
+  if (elapsedTicket >= config.maxMs) playerRef.meditation.lastTicketTime = now;
 
   playSound('win');
-
   if (onUpdateUI) onUpdateUI();
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
   updateTicketCount();

@@ -61,7 +61,7 @@ export async function calculateTournamentPrizes() {
   allUsers.forEach(u => {
     if (initPlayer(u.name)) {
       // 階層歩合 (1層につき1円, 25層で+20円, 51層で+30円)
-      let floorScore = u.floor || 1;
+     const floorScore = u.maxClearedFloor || u.floor || 1;
       let floorYen = floorScore; 
       if (floorScore > 25) floorYen += 20;
       if (floorScore >= 51) floorYen += 30;

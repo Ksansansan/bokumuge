@@ -113,15 +113,16 @@ async function doGacha() {
    if (result.rarityId === "SEC") {
      playSound('win');
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
-  } 
-  else if (result.rarityId === "GEN") {
+  }
+  else if (probValue <= 0.2) {
+    addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
+  }
+  if (result.rarityId === "GEN") {
     const isFirst = await checkAndSaveFirstGenesis(playerRef.name, probStr);
     if (isFirst) {
       addGlobalNews(`✨✨ 【世界初】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${probStr} を引き当て、${TYPE_NAMES[result.type]}[GEN] ${result.name} を世界で初めて獲得しました！！`, 1);
     }
   // ★ 0.2%以下の激レアを引いたらニュース送信 (優先度3)
-  }else if (probValue <= 0.2) {
-    addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[result.type]}[${result.rarityId}] ${result.name} ${probStr} を引き当てました！`, 3);
   }
   const logEl = document.createElement('div');
   // ★ レア度 [${result.rarityId}] と 確率 ${probStr} を追加
@@ -171,16 +172,18 @@ function startAutoGacha(stopRarityIndex) {
       stopAutoGacha();
     addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
   } 
+  else if (probVal <= 0.2) {
+      addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
+    }
      // ★修正：ファースト・ジェネシス判定 ＆ ニュース送信
-  else if (res.rarityId === "GEN") {
+  if (res.rarityId === "GEN") {
     const isFirst = await checkAndSaveFirstGenesis(playerRef.name, probStr);
     if (isFirst) {
       addGlobalNews(`✨✨ 【世界初】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${probStr} を引き当て、${TYPE_NAMES[result.type]}[GEN] ${result.name} を世界で初めて獲得しました！！`, 1);
     }
      // ★ 0.2%以下ニュース
-  }else if (probVal <= 0.2) {
-      addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);
-    }
+  }
+   
 
     const logEl = document.createElement('div');
     logEl.innerHTML = `[${TYPE_NAMES[res.type]}] <span class="r-${res.rarityId}">[${res.rarityId}] ${res.name}</span> <span style="font-size:10px; color:#aaa;">${probStr}</span> を獲得！`;

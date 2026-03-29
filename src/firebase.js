@@ -53,10 +53,6 @@ export async function loginOrRegister(username, pin) {
 
   // フライングチェックは、すでに取得済みの getReliableTime() を使う
   const now = getReliableTime();
-  // SERVER_RELEASE_DATE は firebase.js 上部に定義したリリース日時（1743141600000等）です
-  if (now < SERVER_RELEASE_DATE && username !== "Ksansansan") {
-    return { success: false, message: "【サーバー応答】まだリリース時刻になっていません。" };
-  }
 
   // --- 既存ユーザーのログイン ---
   if (userSnap.exists() && userSnap.data().pin) {

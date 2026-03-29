@@ -1,6 +1,6 @@
 // src/raid/raidManager.js
 
-import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward, getReliableTime } from '../firebase.js';
+import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward, getReliableTime, savePlayerData } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 import { startRaidBattleAnimation } from './raidBattle.js';
@@ -186,7 +186,7 @@ async function checkAndRenderRaid() {
         <button id="btn-claim-raid" class="btn-fantasy" style="width:100%; padding:10px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">報酬を受け取る</button>
       `;
 
-      document.getElementById('btn-claim-raid').addEventListener('click', async (e) => {
+       document.getElementById('btn-claim-raid').addEventListener('click', async (e) => {
         e.target.disabled = true;
         e.target.textContent = "受け取り中...";
         
@@ -198,11 +198,28 @@ async function checkAndRenderRaid() {
           playerRef.inventory["装備ガチャチケット"] = (playerRef.inventory["装備ガチャチケット"] || 0) + rewardTickets;
           updateTicketCount();
           
+          // ★追加：増えたチケットを即座にプレイヤーデータとしてセーブする
+          await savePlayerData(playerRef);
+          
+          // ★追加：通信ラグでボタンが復活しないよう、ローカルのレイドデータも「受け取り済み」に書き換えてしまう
+          if (isFromLastRaid) {
+            currentRaidData.lastRaidData.participants[playerRef.name].claimed = true;
+          } else {
+            currentRaidData.participants[playerRef.name].claimed = true;
+          }
+          
           container.dataset.state = ''; // 状態リセット
-          checkAndRenderRaid(); // 再描画
+          checkAndRenderRaid(); // 再描画（ローカルがclaimed=trueになったので、次の画面へ進む）
         } else {
+          // 既に受け取っていた場合やエラーの場合
           e.target.disabled = false;
-          e.target.textContent = "エラー。再試行";
+          e.target.textContent = "既に受け取り済み、またはエラー";
+          
+          // エラーになった場合でも、念のため状態をリセットして再描画
+          setTimeout(() => {
+            container.dataset.state = '';
+            checkAndRenderRaid();
+          }, 1500);
         }
       });
     }

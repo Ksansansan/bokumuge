@@ -116,7 +116,7 @@ export function startRaidBattleAnimation(player, bossData, myData) {
   let bBaseVit = 270;
     for (let i = 2; i <= bossData.level; i++) {
       // 倍率を計算（3.0から開始し、Lvが上がるごとに0.25ずつ減る。下限1.5）
-      let multiplier = Math.max(1.5, 3.0 - (i - 2) * 0.25);
+      let multiplier = Math.max(1.5, 3.0 - (i - 2) * 0.3);
       bBaseVit = Math.floor(bBaseVit * multiplier);
     }
   

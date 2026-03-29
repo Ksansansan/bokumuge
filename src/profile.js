@@ -7,7 +7,7 @@ import { playSound } from './audio.js';
 import { generateFloorData, getDropStatType } from './battle/enemyGen.js';
 import { getPrizeForRank } from './tournament.js'; // ★インポート
 
-const RARITY_INDEX = { "C":0, "UC":1, "R":2, "HR":3, "SR":4, "SSR":5, "ER":6, "UR":7, "LR":8, "MR":9, "GR":10, "XR":11, "GEN":12 };
+const RARITY_INDEX = { "C":0, "UC":1, "R":2, "HR":3, "SR":4, "SSR":5, "ER":6, "UR":7, "LR":8, "MR":9, "GR":10, "XR":11, "GEN":12, "SEC":13 };
 
 function getCollectionRank(count) {
   if (count >= 81) return { rank: 5, name: "マスター", color: "#ff6b6b", mult: 8 }; 

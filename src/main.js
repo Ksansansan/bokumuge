@@ -1031,17 +1031,6 @@ document.addEventListener('click', (e) => {
 });
 
 // src/main.js
-
-// ==========================================
-// 📰 ニューステロップ制御 (ホバー停止・割り込み・ループ完全対応)
-// ==========================================
-let currentNewsQueue =[];
-let currentNewsIndex = 0;
-let lastTopNewsId = null; // 割り込み検知用（現在の再生中IDではない）
-let isNewsPlaying = false;
-let isNewsPaused = false;
-let currentTransformX = null; // 一時停止時のX座標保存用
-
 // ==========================================
 // 📰 ニューステロップ制御 (setTimeoutによる完全制御版)
 // ==========================================

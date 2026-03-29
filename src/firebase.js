@@ -469,50 +469,37 @@ export async function submitRaidDamage(playerName, newDamage, maxTries = 5) {
 }
 
 // ★追加：レイド報酬の受け取り処理
-export async function claimRaidReward(playerName, ticketAmount, isFromLastRaid = false) {
+export async function claimRaidReward(playerName, tickets, isFromLastRaid) {
   const raidRef = doc(db, "global", "raidState");
-  const userRef = doc(db, "users", playerName);
-  
   try {
-    await runTransaction(db, async (t) => {
-       const raidDoc = await t.get(raidRef);
-       const userDoc = await t.get(userRef);
-       
-       if(raidDoc.exists()) {
-          const data = raidDoc.data();
-          
-          if (isFromLastRaid) {
-            // ★ 前回のレイド (lastRaidData) の報酬を受け取る場合
-            if(data.lastRaidData && data.lastRaidData.participants && data.lastRaidData.participants[playerName]) {
-               let newParticipants = { ...data.lastRaidData.participants };
-               newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
-               // lastRaidData の中身だけを更新
-               let newLastRaidData = { ...data.lastRaidData, participants: newParticipants };
-               t.update(raidRef, { lastRaidData: newLastRaidData });
-            }
-          } else {
-            // ★ 現在のレイドの報酬を受け取る場合
-            if(data.participants && data.participants[playerName]) {
-               let newParticipants = { ...data.participants };
-               newParticipants[playerName] = { ...newParticipants[playerName], claimed: true };
-               t.update(raidRef, { participants: newParticipants });
-            }
-          }
-       }
-       
-       
-       if(userDoc.exists()) {
-          const uData = userDoc.data();
-          let newInventory = { ...(uData.inventory || {}) };
-          newInventory["装備ガチャチケット"] = (newInventory["装備ガチャチケット"] || 0) + ticketAmount;
-          t.update(userRef, { inventory: newInventory });
-       }
-    });
-    return true;
-  } catch(e) {
-    console.error("報酬受け取りエラー:", e);
-    return false;
+    const snap = await getDoc(raidRef);
+    if (!snap.exists()) return false;
+    
+    const data = snap.data();
+
+    if (isFromLastRaid) {
+      if (data.lastRaidData && data.lastRaidData.participants && data.lastRaidData.participants[playerName]) {
+        // ★ サーバー側で「すでに受け取り済みか」をチェック（二重受け取り防止）
+        if (data.lastRaidData.participants[playerName].claimed) return false; 
+        
+        data.lastRaidData.participants[playerName].claimed = true;
+        await setDoc(raidRef, { lastRaidData: data.lastRaidData }, { merge: true });
+        return true;
+      }
+    } else {
+      if (data.participants && data.participants[playerName]) {
+        // ★ サーバー側で「すでに受け取り済みか」をチェック
+        if (data.participants[playerName].claimed) return false; 
+        
+        data.participants[playerName].claimed = true;
+        await setDoc(raidRef, { participants: data.participants }, { merge: true });
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error("報酬受け取りエラー:", err);
   }
+  return false;
 }
 
 // ==========================================

@@ -1123,40 +1123,48 @@ function playNextNews(htmlText, isResume = false) {
     el.style.transform = `translateX(${currentTransformX}px)`;
   }
 
+  // ★ 修正：魔法の1行。ブラウザに「今、間違いなく右端（または停止位置）にいるぞ」と強制的に再計算（リフロー）させる
+  void el.offsetHeight;
+
   isNewsPlaying = true;
 
   // ブラウザの描画更新を待ってからアニメーション開始
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (isNewsPaused) return; // 処理中にマウスが乗ったら中止
+    if (isNewsPaused) return; // 処理中にマウスが乗ったら中止
 
-      const textWidth = el.offsetWidth;
-      // 現在地(currentTransformX)から、左端(-textWidth)までの距離を計算
-      const remainingDist = currentTransformX + textWidth;
+    const textWidth = el.offsetWidth;
+    // 現在地(currentTransformX)から、左端(-textWidth)までの距離を計算
+    const remainingDist = currentTransformX + textWidth;
+    
+    // 念のためのフェイルセーフ（万が一距離が0以下なら即終了して次へ）
+    if (remainingDist <= 0) {
+      isNewsPlaying = false;
+      currentTransformX = null;
+      if (!isNewsPaused) onNewsEnd();
+      return;
+    }
+    
+    const speed = 70; // 1秒間に70px進む
+    const duration = remainingDist / speed;
+
+    // 移動開始
+    el.style.transition = `transform ${duration}s linear`;
+    el.style.transform = `translateX(-${textWidth}px)`;
+
+    el.ontransitionend = (e) => {
+      // transform 以外のアニメーション終了イベントを無視する
+      if (e.target !== el || e.propertyName !== 'transform') return; 
       
-      const speed = 70; // 1秒間に70px進む
-      const duration = remainingDist / speed;
-
-      // 移動開始
-      el.style.transition = `transform ${duration}s linear`;
-      el.style.transform = `translateX(-${textWidth}px)`;
-
-      // ★ 修正2：子が発火したイベント(例：名前hover時の色変化)を無視する
-      el.ontransitionend = (e) => {
-        if (e.target !== el || e.propertyName !== 'transform') return; 
-        
-        // 完全に流れ終わった時の処理
-        isNewsPlaying = false;
-        currentTransformX = null;
-        
-        if (!isNewsPaused) {
-          onNewsEnd();
-        }
-      };
-    });
+      // 完全に流れ終わった時の処理
+      isNewsPlaying = false;
+      currentTransformX = null;
+      
+      if (!isNewsPaused) {
+        onNewsEnd();
+      }
+    };
   });
 }
-
 function onNewsEnd() {
   if (currentNewsQueue.length > 0) {
     // ★ 修正3：インデックスを進めて、次のニュースを右端から流す (isResume = false)

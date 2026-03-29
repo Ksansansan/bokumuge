@@ -147,9 +147,18 @@
     transition: color 0.2s, transform 0.1s;
   }
   .clickable-name:hover {
-    color: #fff !important;
-    transform: scale(1.05);
-  }
+  color: #5ce6e6 !important;
+  text-shadow: 0 0 8px #5ce6e6;
+  /* transform: scale(1.05);  <- ★ 削除（テロップ中だと位置がズレるため） */
+  background: rgba(92, 230, 230, 0.1); /* どこを触ってるか分かりやすくする */
+  border-radius: 2px;
+}
+
+/* ニューステロップがマウスホバー時に少し暗くなって「止まってる感」を出す */
+.news-ticker:hover {
+  background: #111;
+  border-color: #5ce6e6;
+}
 
 </style>
 </head>

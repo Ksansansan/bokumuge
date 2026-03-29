@@ -1038,10 +1038,34 @@ let currentNewsIndex = 0;
 let currentPlayingId = null;
 let isNewsPlaying = false;
 
+let isNewsPaused = false; // ★追加：マウスホバー判定
+
 function initNewsTicker() {
+  const container = document.querySelector('.news-ticker');
+  
   subscribeNews((newsList) => {
     currentNewsQueue = newsList;
     updateNewsDisplay();
+  });
+
+  // ★追加：マウスを乗せたら一時停止、離したら再開
+  container.addEventListener('mouseenter', () => {
+    const el = document.querySelector('.news-text');
+    el.style.transitionProperty = 'none'; // 遷移を一時停止
+    // 現在の位置で固定
+    const computedStyle = window.getComputedStyle(el);
+    el.style.transform = computedStyle.transform;
+    isNewsPaused = true;
+  });
+
+  container.addEventListener('mouseleave', () => {
+    isNewsPaused = false;
+    // 再開（現在のニュースを流し直す）
+    if (currentNewsQueue.length > 0) {
+      playNextNews(currentNewsQueue[currentNewsIndex].text, true); 
+    } else {
+      playNextNews("🔔 ぼくらの無限塔へようこそ！", true);
+    }
   });
 }
 
@@ -1050,65 +1074,65 @@ function updateNewsDisplay() {
     if (!isNewsPlaying) playNextNews("🔔 ぼくらの無限塔へようこそ！");
     return;
   }
-  
   const topNews = currentNewsQueue[0];
-  
-  // 新規ニュース（割り込み）
   if (currentPlayingId !== topNews.id) {
     currentPlayingId = topNews.id;
     playSound('win');
     currentNewsIndex = 0;
-    
-    // 今流れているものを強制キャンセルして上書き
-    const el = document.querySelector('.news-text');
-    el.removeEventListener('transitionend', onNewsEnd);
     playNextNews(topNews.text);
-  } 
-  // 停止中なら再生
-  else if (!isNewsPlaying) {
+  } else if (!isNewsPlaying && !isNewsPaused) {
     playNextNews(currentNewsQueue[currentNewsIndex].text);
   }
 }
 
-// 右端から流して左に消えるロジック
-function playNextNews(htmlText) {
+// ★修正版：バブリング防止と一時停止対応
+function playNextNews(htmlText, isResume = false) {
+  if (isNewsPaused && !isResume) return; // 一時停止中は新規再生しない（再開時は除く）
+  
   isNewsPlaying = true;
   const el = document.querySelector('.news-text');
   const container = document.querySelector('.news-ticker');
   
-  // CSSアニメーションを無効化し、HTMLをセット
-  el.style.transition = 'none';
-  el.style.animation = 'none';
-  el.innerHTML = htmlText;
-  
-  // 画面の描画を待つ
+  // バブリングで勝手に消えるのを防ぐため、古いリスナーを確実に除去
+  el.ontransitionend = null; 
+
+  if (!isResume) {
+    el.style.transition = 'none';
+    el.innerHTML = htmlText;
+    const containerWidth = container.offsetWidth;
+    el.style.transform = `translateX(${containerWidth}px)`;
+  }
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      // 初期位置をコンテナの右端ギリギリ見えない場所にセット
+      if (isNewsPaused) return; // 直前でマウスが乗ったら中止
+
       const containerWidth = container.offsetWidth;
-      el.style.transform = `translateX(${containerWidth}px)`;
+      const textWidth = el.offsetWidth;
+      // 現在のtransform位置から計算（再開時にも対応）
+      const currentX = new WebKitCSSMatrix(window.getComputedStyle(el).transform).m41;
+      const remainingDist = currentX + textWidth;
       
-      requestAnimationFrame(() => {
-        // テキストの長さを取得し、移動距離と速度を計算
-        const textWidth = el.offsetWidth;
-        const totalDist = containerWidth + textWidth;
-        const speed = 80; // 1秒間に70px進む (長文ほど表示時間が長くなる)
-        const duration = totalDist / speed;
-        
-        // 移動開始
-        el.style.transition = `transform ${duration}s linear`;
-        el.style.transform = `translateX(-${textWidth}px)`;
-        
-        el.removeEventListener('transitionend', onNewsEnd);
-        el.addEventListener('transitionend', onNewsEnd, { once: true });
-      });
+      const speed = 70; 
+      const duration = remainingDist / speed;
+
+      el.style.transition = `transform ${duration}s linear`;
+      el.style.transform = `translateX(-${textWidth}px)`;
+
+      // ★修正：addEventListener('transitionend') ではなく ontansitionend を使用して
+      // e.target をチェックすることで、子要素（名前）のイベントを無視する
+      el.ontransitionend = (e) => {
+        if (e.target !== el) return; // ★重要：自分以外のイベント（名前のホバー等）は無視！
+        onNewsEnd();
+      };
     });
   });
 }
 
-// 流れ終わったら次を呼ぶ
 function onNewsEnd() {
   isNewsPlaying = false;
+  if (isNewsPaused) return; // マウスが乗っているなら次へ行かない
+  
   if (currentNewsQueue.length > 0) {
     currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
     playNextNews(currentNewsQueue[currentNewsIndex].text);

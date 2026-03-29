@@ -170,7 +170,7 @@ function startAutoGacha(stopRarityIndex) {
     if (res.rarityId === "SEC") {
       playSound('win');
       stopAutoGacha();
-    addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[result.type]}[SEC] ${result.name} を手に入れました！！ 🌈🌈`, 1);
+    addGlobalNews(`🌈🌈 【シークレット発見！！】<span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が${probStr}を引き当て、${TYPE_NAMES[res.type]}[SEC] ${res.name} を手に入れました！！ 🌈🌈`, 1);
   } 
   else if (probVal <= 0.2) {
       addGlobalNews(`✨ ラッキー！ <span class="clickable-name" data-name="${playerRef.name}" style="color:#5ce6e6; font-weight:bold;">${playerRef.name}</span> が ${TYPE_NAMES[res.type]}[${res.rarityId}] ${res.name} ${probStr} を引き当てました！`, 3);

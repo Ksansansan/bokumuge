@@ -144,6 +144,9 @@ export async function openProfileModal(username) {
     { id: 'slot', name: 'スロット王', isTotal: false },
     { id: 'bugReports', name: 'バグ報告数', isTotal: false },
     { id: 'firstGenesis', name: '初ジェネシス賞', isTotal: false },
+    { id: 'secretCount', name: 'シークレット所持数', isTotal: false }, // ★追加
+    { id: 'genesisCount', name: 'ジェネシス所持数', isTotal: false } // ★追加
+    
   ];
 
   let results =[];
@@ -220,7 +223,7 @@ export async function openProfileModal(username) {
       else if (rt.id === 'floor') scoreText = score + ' 層';
       else if (rt.id === 'winCount' || rt.id === 'firstClearCount') scoreText = score + ' 勝';
       else if (rt.id === 'gachaCount') scoreText = score + ' 回';
-      else if (rt.id === 'collectionCount') scoreText = score + ' 個';
+      else if (rt.id === 'collectionCount'|| rt.id === 'genesisCount' || rt.id === 'secretCount') scoreText = score + ' 個';
       else if (rt.id === 'bugReports') scoreText = score + ' 件';
       else if (rt.id === 'firstGenesis') scoreText = score; 
       else if (rt.id === 'totalLv') scoreText = 'Lv.' + score;

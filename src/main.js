@@ -415,7 +415,7 @@ async function updateFloorUI(floorNum) {
   }
   
   const lckMult = getLckBonusMultiplier(currentLck);
-  const gekidoProb = (0.005 * lckMult).toFixed(4);
+  let gekidoProb = (0.005 * lckMult).toFixed(4);
 if (raidBuffLv >= 8) {
     gekidoProb *= 2;
   }

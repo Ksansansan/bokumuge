@@ -1042,6 +1042,19 @@ let isNewsPlaying = false;
 let isNewsPaused = false;
 let currentTransformX = null; // 一時停止時のX座標保存用
 
+// ==========================================
+// 📰 ニューステロップ制御 (setTimeoutによる完全制御版)
+// ==========================================
+let currentNewsQueue =[];
+let currentNewsIndex = 0;
+let lastTopNewsId = null;
+let isNewsPlaying = false;
+let isNewsPaused = false;
+let currentTransformX = 0;
+let newsTimeoutId = null; // ★追加：setTimeoutのID管理
+let currentDuration = 0;
+let animationStartTime = 0;
+
 function initNewsTicker() {
   const container = document.querySelector('.news-ticker');
   const el = document.querySelector('.news-text');
@@ -1051,17 +1064,17 @@ function initNewsTicker() {
     updateNewsDisplay();
   });
 
-  // マウスを乗せたら一時停止
+  // マウスホバーでの一時停止
   container.addEventListener('mouseenter', () => {
     if (!isNewsPlaying) return;
     isNewsPaused = true;
+    if (newsTimeoutId) clearTimeout(newsTimeoutId); // タイマー停止
     
     // 現在のX座標を計算して固定
     const computedStyle = window.getComputedStyle(el);
     const matrix = new WebKitCSSMatrix(computedStyle.transform);
     currentTransformX = matrix.m41;
     
-    // CSSアニメーションを強制停止して現在地に固定
     el.style.transition = 'none';
     el.style.transform = `translateX(${currentTransformX}px)`;
   });
@@ -1071,7 +1084,6 @@ function initNewsTicker() {
     if (!isNewsPaused) return;
     isNewsPaused = false;
     
-    // 現在のニュースの続きから再生 (isResume = true)
     if (currentNewsQueue.length > 0) {
       playNextNews(currentNewsQueue[currentNewsIndex].text, true); 
     } else {
@@ -1088,16 +1100,15 @@ function updateNewsDisplay() {
   
   const topNews = currentNewsQueue[0];
   
-  // ★ 修正1：前回見た「最も優先度の高いニュース」のIDが変わったか？（割り込み発生）
+  // 割り込み判定 (優先度が高い/新しいニュースが来た時)
   if (lastTopNewsId !== topNews.id) {
     lastTopNewsId = topNews.id;
-    playSound('win'); // ピロリン♪
+    playSound('win'); 
     currentNewsIndex = 0;
     
-    // 新しいニュースなので、右端からやり直す (isResume = false)
+    if (newsTimeoutId) clearTimeout(newsTimeoutId); // 現在のタイマーを破棄
     playNextNews(topNews.text, false);
   } 
-  // 割り込みはないが、現在何も再生されていない（初期化直後など）場合
   else if (!isNewsPlaying && !isNewsPaused) {
     playNextNews(currentNewsQueue[currentNewsIndex].text, false);
   }
@@ -1107,67 +1118,54 @@ function playNextNews(htmlText, isResume = false) {
   const el = document.querySelector('.news-text');
   const container = document.querySelector('.news-ticker');
   
-  // 安全のため古いリスナーを剥がす
-  el.ontransitionend = null; 
+  if (newsTimeoutId) clearTimeout(newsTimeoutId);
 
   if (!isResume) {
-    // 新規再生：文字を入れ替え、コンテナの右端（見えない場所）にセット
     el.style.transition = 'none';
     el.innerHTML = htmlText;
-    const containerWidth = container.offsetWidth;
-    currentTransformX = containerWidth; // スタート位置を右端にする
+    currentTransformX = container.offsetWidth; // コンテナの右端からスタート
     el.style.transform = `translateX(${currentTransformX}px)`;
   } else {
-    // 再開：文字はそのまま、前回保存したX座標からスタート
     el.style.transition = 'none';
     el.style.transform = `translateX(${currentTransformX}px)`;
   }
 
-  // ★ 修正：魔法の1行。ブラウザに「今、間違いなく右端（または停止位置）にいるぞ」と強制的に再計算（リフロー）させる
-  void el.offsetHeight;
+  void el.offsetHeight; // リフロー強制
 
   isNewsPlaying = true;
+  animationStartTime = performance.now();
 
-  // ブラウザの描画更新を待ってからアニメーション開始
   requestAnimationFrame(() => {
-    if (isNewsPaused) return; // 処理中にマウスが乗ったら中止
+    if (isNewsPaused) return; 
 
     const textWidth = el.offsetWidth;
-    // 現在地(currentTransformX)から、左端(-textWidth)までの距離を計算
     const remainingDist = currentTransformX + textWidth;
     
-    // 念のためのフェイルセーフ（万が一距離が0以下なら即終了して次へ）
     if (remainingDist <= 0) {
       isNewsPlaying = false;
-      currentTransformX = null;
       if (!isNewsPaused) onNewsEnd();
       return;
     }
     
     const speed = 70; // 1秒間に70px進む
-    const duration = remainingDist / speed;
+    currentDuration = remainingDist / speed;
 
-    // 移動開始
-    el.style.transition = `transform ${duration}s linear`;
+    // CSSで移動を開始
+    el.style.transition = `transform ${currentDuration}s linear`;
     el.style.transform = `translateX(-${textWidth}px)`;
 
-    el.ontransitionend = (e) => {
-      // transform 以外のアニメーション終了イベントを無視する
-      if (e.target !== el || e.propertyName !== 'transform') return; 
-      
-      // 完全に流れ終わった時の処理
+    // ★修正：transitionend に頼らず、計算した時間後に次を呼ぶ
+    newsTimeoutId = setTimeout(() => {
       isNewsPlaying = false;
-      currentTransformX = null;
-      
-      if (!isNewsPaused) {
-        onNewsEnd();
-      }
-    };
+      currentTransformX = container.offsetWidth; // 次のために位置をリセット
+      if (!isNewsPaused) onNewsEnd();
+    }, currentDuration * 1000);
   });
 }
+
 function onNewsEnd() {
   if (currentNewsQueue.length > 0) {
-    // ★ 修正3：インデックスを進めて、次のニュースを右端から流す (isResume = false)
+    // インデックスを進めて次のニュースを呼ぶ
     currentNewsIndex = (currentNewsIndex + 1) % currentNewsQueue.length;
     playNextNews(currentNewsQueue[currentNewsIndex].text, false);
   } else {

@@ -179,6 +179,22 @@ export async function savePlayerData(player) {
   player.gachaCount = player.gachaCount || 0;
   player.genesisCount = player.genesisCount || 0; // ★追加
   player.secretCount = player.secretCount || 0;   // ★追加
+
+   // ★ 修正：実際の装備インベントリから GEN と SEC の所持数を再計算
+  let actualGenesisCount = 0;
+  let actualSecretCount = 0;
+  
+  if (player.inventory_equip) {
+    ["str", "vit", "agi", "lck"].forEach(type => {
+      const category = player.inventory_equip[type] || {};
+      actualGenesisCount += (category["GEN"] || 0);
+      actualSecretCount += (category["SEC"] || 0);
+    });
+  }
+  
+  player.genesisCount = actualGenesisCount; // ランキング用フィールドを更新
+  player.secretCount = actualSecretCount;   // ランキング用フィールドを更新
+  
   if (!player.timestamps) player.timestamps = {};
   
   const dataToSave = { ...player };

@@ -417,10 +417,10 @@ async function updateFloorUI(floorNum) {
   const lckMult = getLckBonusMultiplier(currentLck);
   let gekidoProb = (0.005 * lckMult).toFixed(4);
 if (raidBuffLv >= 8) {
-    gekidoProb *= 2;
+    gekidoProb = (gekidoProb *2).toFixed(4);
   }
   else if (raidBuffLv >= 4) {
-    gekidoProb *= 1.5;
+    gekidoProb = (gekidoProb *1.5).toFixed(4);
   }
   document.getElementById('drop-list').innerHTML = `
     <li style="color:#fff;">装備ガチャチケット <span style="font-weight:bold;">x${ticketCount}</span> (ボス100%)</li>

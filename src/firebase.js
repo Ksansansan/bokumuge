@@ -177,6 +177,8 @@ export async function savePlayerData(player) {
   }, 0);
   
   player.gachaCount = player.gachaCount || 0;
+  player.genesisCount = player.genesisCount || 0; // ★追加
+  player.secretCount = player.secretCount || 0;   // ★追加
   if (!player.timestamps) player.timestamps = {};
   
   const dataToSave = { ...player };
@@ -267,7 +269,7 @@ export async function getRankingData(rankId, isTotal = false) {
   const rankings =[];
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
 
-  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"].includes(rankId)) {
+  if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount","genesisCount", "secretCount"].includes(rankId)) {
     let dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
       if (rankId === 'floor') dbField = 'maxClearedFloor';
     // ★身内用なので全件取得してJSでソートする

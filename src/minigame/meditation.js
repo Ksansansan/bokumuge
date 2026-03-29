@@ -69,8 +69,10 @@ function updateDisplay() {
   const currentLck = playerRef.battleStats?.lck || playerRef.lck || 0;
   let ticketsPerTick = 1;
   if (currentLck >= 100) {
-    ticketsPerTick += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3)));
+    ticketsPerTick += Math.max(0, Math.floor(Math.log(currentLck / 100) / Math.log(3) * 1.25));
   }
+    if(buffLv >= 2) ticketsPerTick++;
+    if(buffLv >= 5) ticketsPerTick+=2;
   const ticketGain = ticketTicks * ticketsPerTick;
 
   // UI反映

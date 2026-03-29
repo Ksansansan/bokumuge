@@ -834,7 +834,7 @@ async function renderRanking() {
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
       else if(currentRankId === 'winCount' || currentRankId === 'firstClearCount') displayScore += ' 勝';
       else if(currentRankId === 'gachaCount') displayScore += ' 回';
-      else if(currentRankId === 'collectionCount') displayScore += ' 個';
+      else if(currentRankId === 'collectionCount' || currentRankId === 'genesisCount' || currentRankId === 'secretCount') displayScore += ' 個';
       else if(currentRankId === 'bugReports') displayScore += ' 件'; // ★追加
       else if(currentRankId === 'firstGenesis') displayScore = item.score; // ★(xx%)のまま出す
       else if(["rockPush", "daruma", "1to20", "command","clover"].includes(currentRankId)) displayScore = item.score.toFixed(2) + ' 秒';

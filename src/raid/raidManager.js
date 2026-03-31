@@ -1,6 +1,6 @@
 // src/raid/raidManager.js
 
-import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward, getReliableTime, savePlayerData } from '../firebase.js';
+import { subscribeRaidData, updateRaidState, toggleRaidWaiting, getCachedBuffLevel, GLOBAL_BUFFS, claimRaidReward, getReliableTime, savePlayerData, initializeRaidWithTransaction } from '../firebase.js';
 import { formatNumber } from '../main.js';
 import { playSound } from '../audio.js';
 import { startRaidBattleAnimation } from './raidBattle.js';
@@ -116,24 +116,7 @@ async function checkAndRenderRaid() {
       baseHp = Math.floor(baseHp * multiplier);
     }
     
-    let prevData = null;
-    if (currentRaidData && currentRaidData.participants) {
-      prevData = {
-        level: currentRaidData.level,
-        maxHp: currentRaidData.maxHp,
-        currentHp: currentRaidData.currentHp,
-        isDefeated: currentRaidData.isDefeated,
-        participants: currentRaidData.participants
-      };
-    }
-
-    await updateRaidState({
-      raidId: sched.currentRaidId,
-      level: nextLv, maxHp: baseHp, currentHp: baseHp,
-      isActive: true, isOpen: false, isDefeated: false,
-      waitingPlayers:[], participants: {},
-      lastRaidData: prevData
-    });
+    await initializeRaidWithTransaction(sched.currentRaidId, nextLv, calculatedMaxHp);
     return;
   }
 

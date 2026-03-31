@@ -160,16 +160,20 @@ export async function checkAndSaveFirstClear(player, floor, time) {
 // ==========================================
 export async function savePlayerData(player) {
   const userRef = doc(db, "users", player.name);
+  const now = getReliableTime(); // 今回セーブする時間
 
-  // ★楽観的ロック：サーバーのデータが自分より新しくないか確認
+  // ★ 修正：ロールバックチェックを厳格化
   try {
     const currentSnap = await getDoc(userRef, { source: 'server' });
     if (currentSnap.exists()) {
       const serverData = currentSnap.data();
-      if (serverData.lastSaveTime && player.lastSaveTime && serverData.lastSaveTime > player.lastSaveTime) {
-        console.error("Rollback prevented!");
-        alert("⚠️ 別の端末（またはタブ）でデータが進行しているため、セーブを中止しました。\nページをリロードして最新データを読み込んでください。");
-        return false; // セーブを中止してデータ破壊を防ぐ
+      // サーバー上の最終セーブ時間が、自分の持っている「前回セーブ時間」よりも【新しければ】弾く
+      if (serverData.lastSaveTime && player.lastSaveTime) {
+        if (serverData.lastSaveTime > player.lastSaveTime) {
+          console.error("Rollback prevented! Server:", serverData.lastSaveTime, "Local:", player.lastSaveTime);
+          alert("⚠️ 別の端末（またはタブ）でデータが進行しているため、セーブを中止しました。\nページをリロードして最新データを読み込んでください。");
+          return false; // セーブ中止
+        }
       }
     }
   } catch (e) {
@@ -210,8 +214,8 @@ export async function savePlayerData(player) {
   }
 
   // ★セーブ時間を更新
-  dataToSave.lastSaveTime = now;
-  player.lastSaveTime = now;
+   dataToSave.lastSaveTime = now;
+  player.lastSaveTime = now; // 必須！
 
   delete dataToSave.updateTrainingUI; 
   delete dataToSave.updateStatusUI;

@@ -12,12 +12,14 @@ let countdownInterval = null;
 const RAID_HOURS =[0, 3, 6, 9, 12, 15, 18, 21];
 const RAID_DURATION_MINUTES = 30;
 
+let isRaidDataLoaded = false; 
+
 export function initRaidManager(playerObj) {
   playerRef = playerObj;
   subscribeRaidData((data) => {
     currentRaidData = data;
+    isRaidDataLoaded = true; // ★データを受信したらフラグを立てる
     checkAndRenderRaid();
-    renderGlobalBuffs();
   });
   countdownInterval = setInterval(checkAndRenderRaid, 1000);
 }
@@ -89,12 +91,22 @@ function renderGlobalBuffs() {
 async function checkAndRenderRaid() {
   const container = document.getElementById('raid-content');
   const panel = document.getElementById('raid-panel');
-  const title = document.getElementById('raid-title');
-  if (!container || !panel || !title) return;
+  const title = document.getElementById('raid-title'); // (無い場合はnullになるだけなのでOK)
+  if (!container) return;
+
+  // ★追加：データがロードされるまでは絶対に処理を進めない（リセット防止の要）
+  if (!isRaidDataLoaded) {
+    if (container.dataset.state !== 'loading') {
+      container.dataset.state = 'loading';
+      container.innerHTML = `<div style="font-size:12px; color:#aaa; padding:10px;">サーバーと同期中...</div>`;
+    }
+    return;
+  }
 
   const sched = getRaidSchedule();
 
   // --- 1. 新しいレイドの初期化 ---
+  // isRaidDataLoaded が true なのにデータが無い、またはIDが古い時だけ初期化する
   if (sched.isRaidTime && (!currentRaidData || currentRaidData.raidId !== sched.currentRaidId)) {
     const nextLv = (currentRaidData && currentRaidData.level) ? currentRaidData.level : 1;
     let baseHp = 2700;

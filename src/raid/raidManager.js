@@ -20,6 +20,7 @@ export function initRaidManager(playerObj) {
     currentRaidData = data;
     isRaidDataLoaded = true; // ★データを受信したらフラグを立てる
     checkAndRenderRaid();
+     renderGlobalBuffs();
   });
   countdownInterval = setInterval(checkAndRenderRaid, 1000);
 }

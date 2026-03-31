@@ -43,26 +43,24 @@ export async function getGlobalConfig() {
 }
 
 // ==========================================
-// 簡易ログイン ＆ 新規登録
+// 1. ログイン処理（初期化バグの完全防止）
 // ==========================================
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
   
+  // ★絶対に書き込みを行う前に取得する！
   let userSnap;
   try {
-    // ★修正1：キャッシュ（古いデータ）を無視し、確実にサーバーから最新を取得する
     userSnap = await getDoc(userRef, { source: 'server' });
   } catch (e) {
-    // オフライン等でサーバーに繋がらない場合はキャッシュを許可
-    console.warn("サーバーから直接取得できませんでした。キャッシュを使用します。", e);
     userSnap = await getDoc(userRef);
   }
 
-  // ★修正2：確実にデータ(pin)が存在するかチェックしてからログイン判定
+  // userSnap.exists() だけではなく、pin（中身）があるかどうかも確認
   if (userSnap.exists() && userSnap.data().pin) {
     const data = userSnap.data();
     if (data.pin === pin) {
-      // ログイン成功が確定してから、最後にログイン時刻を更新する
+      // ログイン成功確定後に時間を更新
       await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
       
       if (!data.timestamps) data.timestamps = {};
@@ -72,20 +70,22 @@ export async function loginOrRegister(username, pin) {
       return { success: false, message: "パスワード(4桁)が違います" };
     }
   } else {
-    // 新規登録
+    // 完全に新規の場合のみ初期データを作成
+    const now = getReliableTime();
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
-      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, inventory: {},
+      floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, firstClearCount: 0, inventory: {},
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
-      createdAt: Date.now(), timestamps: {},
-      meditation: { target: 'str', lastStatTime: Date.now(), lastTicketTime: Date.now() },
-      lastLoginTime: serverTimestamp()
+      createdAt: now, timestamps: {},
+      meditation: { target: 'str', lastStatTime: now, lastTicketTime: now },
+      lastSaveTime: now // ★ロールバック防止用のバージョン情報
     };
     await setDoc(userRef, initialData);
     lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
     return { success: true, data: initialData };
   }
 }
+
 // ==========================================
 // 初クリア者の保存
 // ==========================================
@@ -155,37 +155,40 @@ export async function checkAndSaveFirstClear(player, floor, time) {
 // ==========================================
 // プレイヤーデータの自動セーブ（更新日時の追跡処理）
 // ==========================================
+// ==========================================
+// 2. プレイヤーセーブ（ロールバックの完全防止）
+// ==========================================
 export async function savePlayerData(player) {
+  const userRef = doc(db, "users", player.name);
+
+  // ★楽観的ロック：サーバーのデータが自分より新しくないか確認
+  try {
+    const currentSnap = await getDoc(userRef, { source: 'server' });
+    if (currentSnap.exists()) {
+      const serverData = currentSnap.data();
+      if (serverData.lastSaveTime && player.lastSaveTime && serverData.lastSaveTime > player.lastSaveTime) {
+        console.error("Rollback prevented!");
+        alert("⚠️ 別の端末（またはタブ）でデータが進行しているため、セーブを中止しました。\nページをリロードして最新データを読み込んでください。");
+        return false; // セーブを中止してデータ破壊を防ぐ
+      }
+    }
+  } catch (e) {
+    console.warn("オフラインのためバージョンチェックをスキップ");
+  }
+
+  // 保存用データ整形
   player.totalLv = player.lv.str + player.lv.vit + player.lv.agi + player.lv.lck;
   player.winCount = player.winCount || 0;
-   player.collectionCount = Object.entries(player.inventory || {}).reduce((sum, [name, count]) => {
+  player.gachaCount = player.gachaCount || 0;
+  player.firstClearCount = player.firstClearCount || 0;
+  player.collectionCount = Object.entries(player.inventory || {}).reduce((sum, [name, count]) => {
     if (name === "装備ガチャチケット") return sum;
     return sum + Math.min(count, 81);
   }, 0);
   
-  player.gachaCount = player.gachaCount || 0;
-  player.genesisCount = player.genesisCount || 0; // ★追加
-  player.secretCount = player.secretCount || 0;   // ★追加
-
-   // ★ 修正：実際の装備インベントリから GEN と SEC の所持数を再計算
-  let actualGenesisCount = 0;
-  let actualSecretCount = 0;
-  
-  if (player.inventory_equip) {
-    ["str", "vit", "agi", "lck"].forEach(type => {
-      const category = player.inventory_equip[type] || {};
-      actualGenesisCount += (category["GEN"] || 0);
-      actualSecretCount += (category["SEC"] || 0);
-    });
-  }
-  
-  player.genesisCount = actualGenesisCount; // ランキング用フィールドを更新
-  player.secretCount = actualSecretCount;   // ランキング用フィールドを更新
-  
   if (!player.timestamps) player.timestamps = {};
   
   const dataToSave = { ...player };
-  
   if (player.battleStats) {
     dataToSave.rankStr = player.battleStats.str;
     dataToSave.rankVit = player.battleStats.vit;
@@ -193,13 +196,11 @@ export async function savePlayerData(player) {
     dataToSave.rankLck = player.battleStats.lck;
   }
 
-  // ★「前回セーブした時」と比べて数値が上がっていたら、その項目の日時を更新する！
   const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"];
-  const now = serverTimestamp();
+  const now = getReliableTime();
   
   if (lastSavedPlayerState) {
     keysToCheck.forEach(k => {
-      // 記録が伸びた場合のみタイムスタンプを更新（同値なら先着順を維持するため更新しない）
       if (dataToSave[k] > (lastSavedPlayerState[k] || 0)) {
         dataToSave.timestamps[k] = now;
       }
@@ -208,17 +209,18 @@ export async function savePlayerData(player) {
     keysToCheck.forEach(k => dataToSave.timestamps[k] = now);
   }
 
+  // ★セーブ時間を更新
+  dataToSave.lastSaveTime = now;
+  player.lastSaveTime = now;
+
   delete dataToSave.updateTrainingUI; 
   delete dataToSave.updateStatusUI;
   delete dataToSave.battleStats;
 
-  const userRef = doc(db, "users", player.name);
   await setDoc(userRef, dataToSave, { merge: true });
-  
-  // 次の比較用にキャッシュを更新
   lastSavedPlayerState = JSON.parse(JSON.stringify(dataToSave));
+  return true;
 }
-
 // ==========================================
 // ミニゲームの自己ベスト保存・取得
 // ==========================================
@@ -502,6 +504,48 @@ export async function claimRaidReward(playerName, tickets, isFromLastRaid) {
   }
   return false;
 }
+
+export async function initializeRaidWithTransaction(newRaidId, nextLv, baseHp) {
+  const raidRef = doc(db, "global", "raidState");
+  try {
+    await runTransaction(db, async (transaction) => {
+      const sfDoc = await transaction.get(raidRef);
+      // まだデータがない、または前回のレイドのままの場合のみ初期化を実行する
+      if (!sfDoc.exists() || sfDoc.data().raidId !== newRaidId) {
+        
+        let prevData = null;
+        if (sfDoc.exists() && sfDoc.data().participants) {
+          prevData = {
+            level: sfDoc.data().level,
+            maxHp: sfDoc.data().maxHp,
+            currentHp: sfDoc.data().currentHp,
+            isDefeated: sfDoc.data().isDefeated,
+            participants: sfDoc.data().participants
+          };
+        }
+
+        const newData = {
+          raidId: newRaidId,
+          level: nextLv, 
+          maxHp: baseHp, 
+          currentHp: baseHp,
+          isActive: true, 
+          isOpen: false, 
+          isDefeated: false,
+          waitingPlayers:[], // 途切れていた箇所
+          participants: {},
+          lastRaidData: prevData
+        };
+        transaction.set(raidRef, newData, { merge: true });
+      }
+    });
+    return true;
+  } catch (e) {
+    console.error("レイドの初期化トランザクションに失敗: ", e);
+    return false;
+  }
+}
+
 
 // ==========================================
 // ✨ ファースト・ジェネシス賞の管理

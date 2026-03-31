@@ -48,53 +48,40 @@ export async function getGlobalConfig() {
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
   
-  // ★修正1：絶対に「書き込む」前に「読み込む」。これで上書き事故は100%起きない。
-  const userSnap = await getDoc(userRef);
+  let userSnap;
+  try {
+    // ★修正1：キャッシュ（古いデータ）を無視し、確実にサーバーから最新を取得する
+    userSnap = await getDoc(userRef, { source: 'server' });
+  } catch (e) {
+    // オフライン等でサーバーに繋がらない場合はキャッシュを許可
+    console.warn("サーバーから直接取得できませんでした。キャッシュを使用します。", e);
+    userSnap = await getDoc(userRef);
+  }
 
-  // フライングチェックは、すでに取得済みの getReliableTime() を使う
-  const now = getReliableTime();
-
-  // --- 既存ユーザーのログイン ---
+  // ★修正2：確実にデータ(pin)が存在するかチェックしてからログイン判定
   if (userSnap.exists() && userSnap.data().pin) {
     const data = userSnap.data();
-    
     if (data.pin === pin) {
-      // パスワードが合っていたら、ここで初めてログイン時間を更新
+      // ログイン成功が確定してから、最後にログイン時刻を更新する
       await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
+      
       if (!data.timestamps) data.timestamps = {};
       lastSavedPlayerState = JSON.parse(JSON.stringify(data));
       return { success: true, data: data };
     } else {
       return { success: false, message: "パスワード(4桁)が違います" };
     }
-  } 
-  // --- 完全な新規ユーザーの登録 ---
-  else {
+  } else {
+    // 新規登録
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
       floor: 1, maxClearedFloor: 1, winCount: 0, collectionCount: 0, gachaCount: 0, inventory: {},
-      bugReports: 0,
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
-      createdAt: serverTimestamp(), timestamps: {},
-      meditation: { target: 'str', lastStatTime: serverTimestamp(), lastTicketTime: serverTimestamp() }
+      createdAt: Date.now(), timestamps: {},
+      meditation: { target: 'str', lastStatTime: Date.now(), lastTicketTime: Date.now() },
+      lastLoginTime: serverTimestamp()
     };
-    
-    // ★修正2：新規データを保存
     await setDoc(userRef, initialData);
-    
-    // 保存した直後に再度読み込み、サーバーが刻印した正確な時間を取得してオフセットを更新する
-    const newSnap = await getDoc(userRef);
-    if (newSnap.exists() && newSnap.data().createdAt) {
-      const serverTime = newSnap.data().createdAt.toMillis();
-      // サーバー時間とクライアント（スマホ）の時間のズレを計算して保持
-      serverTimeOffset = serverTime - Date.now();
-      
-      // クライアント側のデータもミリ秒の数値に直しておく
-      initialData.createdAt = serverTime;
-      initialData.meditation.lastStatTime = serverTime;
-      initialData.meditation.lastTicketTime = serverTime;
-    }
-
     lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
     return { success: true, data: initialData };
   }

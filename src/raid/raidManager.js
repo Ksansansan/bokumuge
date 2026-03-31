@@ -117,7 +117,7 @@ async function checkAndRenderRaid() {
       baseHp = Math.floor(baseHp * multiplier);
     }
     
-    await initializeRaidWithTransaction(sched.currentRaidId, nextLv, calculatedMaxHp);
+    await initializeRaidWithTransaction(sched.currentRaidId, nextLv, baseHp);
     return;
   }
 

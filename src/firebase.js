@@ -201,7 +201,6 @@ export async function savePlayerData(player) {
   }
 
   const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"];
-  const now = getReliableTime();
   
   if (lastSavedPlayerState) {
     keysToCheck.forEach(k => {

@@ -48,20 +48,36 @@ export async function getGlobalConfig() {
 export async function loginOrRegister(username, pin) {
   const userRef = doc(db, "users", username);
   
-  // ★絶対に書き込みを行う前に取得する！
   let userSnap;
+  let isOfflineFallback = false;
+
   try {
+    // 1. サーバーから確実に最新データを取得する
     userSnap = await getDoc(userRef, { source: 'server' });
   } catch (e) {
-    userSnap = await getDoc(userRef);
+    console.warn("サーバーからの取得に失敗しました。キャッシュを確認します。", e);
+    try {
+      // サーバー通信失敗時はキャッシュを見る
+      userSnap = await getDoc(userRef, { source: 'cache' });
+      isOfflineFallback = true;
+    } catch (cacheErr) {
+      return { success: false, message: "通信エラーが発生しました。電波の良い場所で再度お試しください。" };
+    }
   }
 
-  // userSnap.exists() だけではなく、pin（中身）があるかどうかも確認
-  if (userSnap.exists() && userSnap.data().pin) {
+  // 2. データが存在する場合（ログイン）
+  if (userSnap && userSnap.exists()) {
     const data = userSnap.data();
     if (data.pin === pin) {
-      // ログイン成功確定後に時間を更新
-      await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
+      
+      // オンラインの時だけ最終ログイン時刻を更新する（エラーを防ぐため）
+      if (!isOfflineFallback) {
+        try {
+          await setDoc(userRef, { lastLoginTime: serverTimestamp() }, { merge: true });
+        } catch(e) {
+          console.warn("最終ログイン時刻の更新に失敗(オフラインの可能性)");
+        }
+      }
       
       if (!data.timestamps) data.timestamps = {};
       lastSavedPlayerState = JSON.parse(JSON.stringify(data));
@@ -69,8 +85,15 @@ export async function loginOrRegister(username, pin) {
     } else {
       return { success: false, message: "パスワード(4桁)が違います" };
     }
-  } else {
-    // 完全に新規の場合のみ初期データを作成
+  } 
+  // 3. データが存在しない場合
+  else {
+    // ★ 最重要修正：オフライン（通信エラー）でデータが見えない時は、絶対に上書きしない！
+    if (isOfflineFallback) {
+      return { success: false, message: "サーバーに接続できません。新規登録には通信環境が必要です。" };
+    }
+
+    // サーバーと通信できた上で「存在しない」と確定した場合のみ、初期データを作成する
     const now = getReliableTime();
     const initialData = {
       name: username, pin: pin, str: 25, vit: 20, agi: 20, lck: 10,
@@ -78,11 +101,16 @@ export async function loginOrRegister(username, pin) {
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: now, timestamps: {},
       meditation: { target: 'str', lastStatTime: now, lastTicketTime: now },
-      lastSaveTime: now // ★ロールバック防止用のバージョン情報
+      lastSaveTime: now
     };
-    await setDoc(userRef, initialData);
-    lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
-    return { success: true, data: initialData };
+    
+    try {
+      await setDoc(userRef, initialData);
+      lastSavedPlayerState = JSON.parse(JSON.stringify(initialData));
+      return { success: true, data: initialData };
+    } catch(e) {
+      return { success: false, message: "新規登録に失敗しました。通信環境を確認してください。" };
+    }
   }
 }
 

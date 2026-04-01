@@ -228,7 +228,7 @@ export async function savePlayerData(player) {
     dataToSave.rankLck = player.battleStats.lck;
   }
 
-  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount"];
+  const keysToCheck =["str", "vit", "agi", "lck", "rankStr", "rankVit", "rankAgi", "rankLck", "floor", "maxClearedFloor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount","genesisCount", "secretCount"]];
   
   if (lastSavedPlayerState) {
     keysToCheck.forEach(k => {

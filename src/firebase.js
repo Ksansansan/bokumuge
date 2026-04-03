@@ -128,12 +128,24 @@ export async function getFirstClearRecord(floor) {
 // ==========================================
 export async function addGlobalNews(text, priority) {
   try {
+    const now = Date.now();
+    const d = new Date(now);
+    // HH:MM の形式を作成
+    const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    
+    // ${Time} を実際の時間 (14:30 など) に置換。無ければ末尾に付け足す
+    let finalText = text;
+    finalText += ` <span style="color:#aaa; font-size:10px; margin-left:8px;">(${timeStr})</span>`;
+    
+
     await addDoc(collection(db, "news"), {
-      text: text,
+      text: finalText,
       priority: priority,
-      timestamp: Date.now()
+      timestamp: now
     });
-  } catch (e) { console.warn("ニュース送信失敗", e); }
+  } catch (e) { 
+    console.warn("ニュース送信失敗", e); 
+  }
 }
 
 export function subscribeNews(callback) {

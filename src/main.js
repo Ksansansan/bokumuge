@@ -23,7 +23,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 // ==========================================
 // リリース設定
 // ==========================================
-export const IS_TOURNAMENT_MODE = true;
+export const IS_TOURNAMENT_MODE = false;
 export const IS_PRE_RELEASE = false;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
 export const TOURNAMENT_END_DATE = new Date('2026-04-05T00:00:00+09:00').getTime();

@@ -2,6 +2,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp, query, orderBy, limit, onSnapshot, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { IS_TOURNAMENT_MODE, TOURNAMENT_END_DATE } from './main.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuXSWPC0PFNeRQbPPrA-eUBLx5yTiNvv8",
@@ -16,6 +17,10 @@ const db = getFirestore(app);
 let lastSavedPlayerState = null;
 // ★追加：サーバーとクライアントの時間のズレを保持する変数
 let serverTimeOffset = 0;
+
+function isTournamentEnded() {
+  return IS_TOURNAMENT_MODE && getReliableTime() >= TOURNAMENT_END_DATE;
+}
 
 // 起動時に呼び出す初期同期関数
 export async function syncServerTime() {
@@ -170,6 +175,7 @@ export function subscribeNews(callback) {
 }
 
 export async function checkAndSaveFirstClear(player, floor, time) {
+   if (isTournamentEnded()) return false;
   const docRef = doc(db, "firstClears", `floor_${floor}`);
   const snap = await getDoc(docRef);
 
@@ -199,6 +205,7 @@ export async function checkAndSaveFirstClear(player, floor, time) {
 // 2. プレイヤーセーブ（ロールバックの完全防止）
 // ==========================================
 export async function savePlayerData(player) {
+    if (isTournamentEnded()) return; 
   const userRef = doc(db, "users", player.name);
   const now = getReliableTime(); // 今回セーブする時間
 
@@ -287,6 +294,7 @@ export async function savePlayerData(player) {
 // ==========================================
 // --- 自己ベスト保存時 (1位更新ニュースを追加) ---
 export async function savePersonalBest(userId, gameId, score) {
+  if (isTournamentEnded()) return false;
   const docRef = doc(db, "minigames", gameId, "scores", userId);
   const docSnap = await getDoc(docRef);
   let isNew = false;

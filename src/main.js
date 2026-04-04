@@ -26,7 +26,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 export const IS_TOURNAMENT_MODE = true;
 export const IS_PRE_RELEASE = false;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
-
+export const TOURNAMENT_END_DATE = new Date('2026-04-05T00:00:00+09:00').getTime();
 // ==========================================
 // ⏳ ティザー（カウントダウン）画面の制御
 // ==========================================
@@ -306,7 +306,8 @@ function init() {
   initClover(player, updateTrainingUI);
   initSlot(player, updateTrainingUI);
   initRaidManager(player); 
-
+  initTournamentTimer(); 
+  
   if (IS_TOURNAMENT_MODE) {
     const tBtn = document.getElementById('btn-tournament-rank');
     if (tBtn) tBtn.style.display = 'block';
@@ -346,6 +347,38 @@ function init() {
       updateFloorUI(player.floor);
     }
   });
+}
+
+function initTournamentTimer() {
+  if (!IS_TOURNAMENT_MODE) return;
+  const panel = document.getElementById('tournament-timer-panel');
+  if (panel) panel.style.display = 'block';
+
+  function updateTournamentTimer() {
+    const now = getReliableTime();
+    const diff = TOURNAMENT_END_DATE - now;
+
+    if (diff <= 0) {
+      // 大会終了！
+      document.getElementById('tournament-countdown').style.display = 'none';
+      document.getElementById('tournament-ended-msg').style.display = 'block';
+      return; 
+    }
+
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+    document.getElementById('tc-days').textContent = String(d).padStart(2, '0');
+    document.getElementById('tc-hours').textContent = String(h).padStart(2, '0');
+    document.getElementById('tc-mins').textContent = String(m).padStart(2, '0');
+    document.getElementById('tc-secs').textContent = String(s).padStart(2, '0');
+
+    requestAnimationFrame(updateTournamentTimer);
+  }
+  
+  updateTournamentTimer();
 }
 
 function updateStatusUI() {

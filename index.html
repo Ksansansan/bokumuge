@@ -287,6 +287,22 @@
         <div style="color:#ffd700; font-weight:bold; font-size:14px; text-align:center; margin-bottom:5px;">✨ 発動中のグローバルバフ ✨</div>
         <ul id="raid-buff-list" style="margin:0; padding-left:20px; font-size:12px; color:#ddd; line-height:1.6;"></ul>
       </div>
+
+      <!-- 🏆 大会終了カウントダウンパネル -->
+      <div id="tournament-timer-panel" class="panel" style="margin-top: 20px; border-color: #ffd700; background: radial-gradient(circle at center, #2b2511, #141108); display: none; box-shadow: 0 0 15px rgba(255,215,0,0.2);">
+        <div style="color:#ffd700; font-weight:bold; font-size:16px; text-align:center; border-bottom:1px solid #ffd700; padding-bottom:5px; margin-bottom: 15px;">🏆 大会終了まで</div>
+        
+        <div id="tournament-countdown" style="display: flex; gap: 15px; justify-content: center;">
+          <div class="time-box"><span id="tc-days" class="t-val" style="font-size:32px;">00</span><span class="t-lbl">DAYS</span></div>
+          <div class="time-box"><span id="tc-hours" class="t-val" style="font-size:32px;">00</span><span class="t-lbl">HOURS</span></div>
+          <div class="time-box"><span id="tc-mins" class="t-val" style="font-size:32px;">00</span><span class="t-lbl">MINS</span></div>
+          <div class="time-box"><span id="tc-secs" class="t-val" style="font-size:32px; color:#ff6b6b;">00</span><span class="t-lbl">SECS</span></div>
+        </div>
+        
+        <div id="tournament-ended-msg" style="display:none; color:#ff6b6b; font-weight:bold; text-align:center; font-size:18px; line-height:1.5;">
+          大会は終了しました！<br>ランキングと報酬が確定しました。
+        </div>
+      </div>
       
     </section>
 

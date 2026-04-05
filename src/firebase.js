@@ -231,6 +231,10 @@ export async function saveRTARecord(player, floor, timeMs) {
 // ==========================================
 export async function savePlayerData(player) {
     if (isTournamentEnded()) return; 
+   if (player.isRTA && player.rtaClearTime && lastSavedPlayerState && lastSavedPlayerState.rtaClearTime) {
+    console.log("【RTA】10層クリア済みのため、データの保存は凍結されています。");
+    return; 
+  }
    const collectionName = player.isRTA ? "users_rta" : "users";
   const userRef = doc(db, collectionName, player.name);
   const now = getReliableTime(); // 今回セーブする時間
@@ -321,6 +325,10 @@ export async function savePlayerData(player) {
 // --- 自己ベスト保存時 (1位更新ニュースを追加) ---
 export async function savePersonalBest(userId, gameId, score, isRTA = false) {
   if (isTournamentEnded()) return false;
+   // ★ 追加：RTAクリア後はミニゲームの記録も更新させない
+  if (isRTA && lastSavedPlayerState && lastSavedPlayerState.rtaClearTime) {
+    return false;
+  }
   const collectionName = isRTA ? "minigames_rta" : "minigames";
   const docRef = doc(db, collectionName, gameId, "scores", userId);
   const docSnap = await getDoc(docRef);

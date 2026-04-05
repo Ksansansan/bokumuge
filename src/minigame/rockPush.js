@@ -164,7 +164,7 @@ async function finishGame() {
   await savePlayerData(playerRef);
 
   // 自己ベスト更新
-  const isNewRecord = await savePersonalBest(playerRef.name, "rockPush", time);
+  const isNewRecord = await savePersonalBest(playerRef.name, "rockPush", time, playerRef.isRTA);
 
   // リザルト表示
   document.getElementById('rp-res-time').textContent = time.toFixed(2) + " 秒";

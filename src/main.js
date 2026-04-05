@@ -325,7 +325,7 @@ function init() {
     // ニュース非表示＆タイマー表示
     document.getElementById('header-news-ticker').style.display = 'none';
     document.getElementById('header-rta-timer').style.display = 'block';
-    
+     
     // レイド非表示
     const raidPanel = document.getElementById('raid-panel');
     if(raidPanel) raidPanel.style.display = 'none';
@@ -334,6 +334,7 @@ function init() {
     document.getElementById('normal-rank-top').style.display = 'none';
     document.getElementById('normal-rank-bottom').style.display = 'none';
     document.getElementById('rta-rank-area').style.display = 'flex';
+    document.getElementById('special-rank-area').style.display = 'none';
     
     // タイマースタート
     startRTATimer();
@@ -880,7 +881,7 @@ async function renderRanking() {
   if (currentRankId === 'tournament') {
     data = await calculateTournamentPrizes();
   } else {
-    data = await getRankingData(currentRankId, isTotalMode);
+    data = await getRankingData(currentRankId, isTotalMode, player.isRTA); 
   }
   
   // ▼ 自分のスコアを取得

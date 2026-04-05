@@ -264,7 +264,7 @@ async function finishGame() {
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 
   await savePlayerData(playerRef);
-  const isNewRecord = await savePersonalBest(playerRef.name, "command", finalTime);
+  const isNewRecord = await savePersonalBest(playerRef.name, "command", finalTime, playerRef.isRTA);
 
   document.getElementById('cm-res-time').textContent = finalTime.toFixed(2) + " 秒";
   document.getElementById('cm-res-rank').textContent = rank.name;

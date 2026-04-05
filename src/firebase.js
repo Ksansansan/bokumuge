@@ -374,7 +374,7 @@ export async function getUserProfile(username) {
 // ==========================================
 // ランキングデータの取得（JSでソートする方式に変更）
 // ==========================================
-export async function getRankingData(rankId, isTotal = false) {
+export async function getRankingData(rankId, isTotal = false, isRTA = false) {
   const rankings =[];
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
    const userCollection = isRTA ? "users_rta" : "users";

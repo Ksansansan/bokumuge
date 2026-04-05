@@ -51,7 +51,16 @@ export async function getGlobalConfig() {
 // 1. ログイン処理（初期化バグの完全防止）
 // ==========================================
 export async function loginOrRegister(username, pin) {
-  const userRef = doc(db, "users", username);
+  const collectionName = isRTA ? "users_rta" : "users";
+  const otherCollectionName = isRTA ? "users" : "users_rta";
+
+  // 逆のモードで登録されていないかチェック（名前の重複防止）
+  const otherSnap = await getDoc(doc(db, otherCollectionName, username));
+  if (otherSnap.exists()) {
+    return { success: false, message: `この名前は${isRTA ? '通常' : 'RTA'}モードで登録されています` };
+  }
+  
+  const userRef = doc(db, collectionName, username);
   
   let userSnap;
   let isOfflineFallback = false;
@@ -106,7 +115,9 @@ export async function loginOrRegister(username, pin) {
       exp: { str: 0, vit: 0, agi: 0, lck: 0 }, lv:  { str: 1, vit: 1, agi: 1, lck: 1 }, totalLv: 4,
       createdAt: now, timestamps: {},
       meditation: { target: 'str', lastStatTime: now, lastTicketTime: now },
-      lastSaveTime: now
+      lastSaveTime: now,
+       isRTA: isRTA, // ★ 追加
+      rtaRecords: {} // ★ 追加 { '1': time, '5': time, '10': time }
     };
     
     try {
@@ -199,14 +210,29 @@ export async function checkAndSaveFirstClear(player, floor, time) {
 }
 
 // ==========================================
-// プレイヤーデータの自動セーブ（更新日時の追跡処理）
+// RTAのタイムを保存
 // ==========================================
+export async function saveRTARecord(player, floor, timeMs) {
+  if (!player.isRTA) return;
+  if (!player.rtaRecords) player.rtaRecords = {};
+  if (player.rtaRecords[floor]) return; // 既に記録済みなら無視
+
+  player.rtaRecords[floor] = timeMs;
+  if (floor === 10) {
+    player.rtaClearTime = timeMs; // 10層クリアで最終タイム確定
+  }
+
+  const userRef = doc(db, "users_rta", player.name);
+  await setDoc(userRef, { rtaRecords: player.rtaRecords, rtaClearTime: player.rtaClearTime || null }, { merge: true });
+}
+
 // ==========================================
 // 2. プレイヤーセーブ（ロールバックの完全防止）
 // ==========================================
 export async function savePlayerData(player) {
     if (isTournamentEnded()) return; 
-  const userRef = doc(db, "users", player.name);
+   const collectionName = player.isRTA ? "users_rta" : "users";
+  const userRef = doc(db, collectionName, player.name);
   const now = getReliableTime(); // 今回セーブする時間
 
   // ★ 修正：ロールバックチェックを厳格化
@@ -400,7 +426,20 @@ export async function getRankingData(rankId, isTotal = false) {
       return a.timestamp - b.timestamp; // 同値なら先着順
     });
   }
-  
+   // ★ RTAランキングの取得ロジック
+  if (rankId === 'rta10') {
+    // 10層をクリアした人（rtaClearTimeがある人）だけを取得し、タイムの短い順(asc)に並べる
+    const querySnapshot = await getDocs(query(collection(db, "users_rta"), orderBy("rtaClearTime", "asc"), limit(50)));
+    querySnapshot.forEach((doc) => {
+      const d = doc.data();
+      if (d.rtaClearTime && d.name && d.name !== "undefined") {
+        rankings.push({ 
+          name: d.name, 
+          score: d.rtaClearTime, // ミリ秒
+          rtaRecords: d.rtaRecords // 1層、5層の記録
+        });
+      }
+      
   return rankings.slice(0, 10);
 }
 

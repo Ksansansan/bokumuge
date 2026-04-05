@@ -439,8 +439,8 @@ export async function getRankingData(rankId, isTotal = false) {
           rtaRecords: d.rtaRecords // 1層、5層の記録
         });
       }
-    }
-}
+    })
+  }
       
   return rankings.slice(0, 10);
 }

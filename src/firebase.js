@@ -366,7 +366,7 @@ export async function getPersonalBest(userId, gameId) {
 
 // ★ 追加：特定ユーザーの全データを取得
 export async function getUserProfile(username) {
-  const userSnap = await getDoc(doc(db, "users", username));
+  let userSnap = await getDoc(doc(db, "users", username));
   if (!userSnap.exists()) {
     userSnap = await getDoc(doc(db, "users_rta", username));
   }

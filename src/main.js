@@ -331,11 +331,10 @@ function init() {
     if(raidPanel) raidPanel.style.display = 'none';
 
     // 順位タブをRTA専用にする
-    document.getElementById('normal-rank-top').style.display = 'none';
-    document.getElementById('normal-rank-bottom').style.display = 'none';
     document.getElementById('rta-rank-area').style.display = 'flex';
     document.getElementById('special-rank-area').style.display = 'none';
-    
+     document.querySelector('.btn-show-ranking[data-rank-id="floor"]').style.display = 'none';
+    document.querySelector('.btn-show-ranking[data-rank-id="firstClearCount"]').style.display = 'none';
     // タイマースタート
     startRTATimer();
   } else {

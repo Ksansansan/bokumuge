@@ -217,6 +217,10 @@
         <span id="btn-toggle-pin" style="position: absolute; right: 10px; top: 12px; font-size: 20px; cursor: pointer; user-select: none;">👁️</span>
       </div>
       
+      <label style="display:flex; align-items:center; justify-content:center; color:#ffeb85; font-size:14px; margin-bottom:15px; cursor:pointer; font-weight:bold;">
+        <input type="checkbox" id="login-rta-mode" style="margin-right:8px; transform:scale(1.2);"> ⏱️ 10層攻略RTAモード
+      </label>
+      
       <button id="btn-login" class="btn-fantasy" style="width: 100%; margin: 0; padding: 12px;">ゲームスタート</button>
       <p id="login-error" style="color: #ff6b6b; font-size: 13px; text-align: center; margin-top: 15px; height: 30px; line-height: 1.2;"></p>
     </div>
@@ -228,6 +232,9 @@
     <div class="user-info">
       <span class="username clickable-name">Null</span>
       <div class="news-ticker"><span class="news-text">🔔 ぼくらの無限塔へようこそ！</span></div>
+      <div id="header-rta-timer" style="display:none; flex-grow:1; text-align:center; color:#5ce6e6; font-size:22px; font-family:monospace; font-weight:bold; letter-spacing:2px; text-shadow:0 0 8px rgba(92,230,230,0.5);">
+        00:00.00
+      </div>
     </div>
     <div class="status-bar">
       <div class="stat" style="color:#ff6b6b;">STR <span id="val-str">0</span></div>
@@ -490,7 +497,7 @@
         <p style="font-size:13px; color:#aaa; text-align:center; margin-bottom:15px;">見たいランキングを選んでください</p>
         
         <!-- ランキングボタン一覧 -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div id="normal-rank-top" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <!-- 本編系ランキング -->
           <button class="btn-fantasy btn-show-ranking" data-rank-id="floor" style="font-size:13px; padding:8px; margin:0;">👑 最高到達層</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="firstClearCount" style="font-size:13px; padding:8px; margin:0; background: linear-gradient(to bottom, #b16bff, #4a0d4a);">👑 初クリア数</button>
@@ -507,7 +514,7 @@
         </div>
 
          <!-- ★ ミニゲーム系ランキング (横4列に変更) -->
-         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 100%; border-top: 1px dashed #4a3b26; padding-top: 12px; margin-top: 12px;">
+         <div id="normal-rank-bottom" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 100%; border-top: 1px dashed #4a3b26; padding-top: 12px; margin-top: 12px;">
           <button class="btn-fantasy btn-show-ranking" data-rank-id="rockPush" style="font-size:10px; padding:12px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2;">大岩プッシュ王</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="daruma" style="font-size:10px; padding:12px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #7a3a20, #4a1d0d); line-height:1.2;">だるま落とし王</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="chicken" style="font-size:10px; padding:12px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #205c7a, #0d314a); line-height:1.2;">崖っぷち王</button>
@@ -519,6 +526,7 @@
           <button class="btn-fantasy btn-show-ranking" data-rank-id="slot" style="font-size:10px; padding:12px 2px; margin:0; width:100%; background: linear-gradient(to bottom, #d4af37, #8a6d1c); line-height:1.2;">スロット王</button>
         </div>
 
+        
         <!-- ★追加：大会賞金ランキングボタン（デフォルトは非表示、JSでONにする） -->
         <button id="btn-tournament-rank" class="btn-fantasy btn-show-ranking" data-rank-id="tournament" style="display:none; width:100%; margin-top:15px; font-size:16px; padding:12px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; border-color:#fff; box-shadow: 0 0 10px rgba(212,175,55,0.5);">
           🏆 大会獲得賞金 (3/28〜4/4)
@@ -532,6 +540,12 @@
        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
           <button class="btn-fantasy btn-show-ranking" data-rank-id="genesisCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #d4af37, #444);">✨ ジェネシス所持数</button>
           <button class="btn-fantasy btn-show-ranking" data-rank-id="secretCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #fff, #444); color:#000;">✨ シークレット所持数</button>
+        </div>
+
+         <!-- ★追加：RTAモード用のランキングエリア（初期は非表示） -->
+        <div id="rta-rank-area" style="display: none; flex-direction: column; gap: 10px;">
+          <p style="font-size:12px; color:#aaa; text-align:center; margin-bottom:5px;">RTAモード専用のランキングです</p>
+          <button class="btn-fantasy btn-show-ranking" data-rank-id="rta10" style="font-size:16px; padding:15px; margin:0; background: linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">⏱️ 10層攻略RTA ランキング</button>
         </div>
         
       </div>

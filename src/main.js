@@ -1,7 +1,7 @@
 // src/main.js
 import { simulateBattle } from './battle/battleCalc.js';
 import { generateFloorData, BIOMES, getDropStatType } from './battle/enemyGen.js';
-import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime } from './firebase.js'; import { getCachedBuffLevel } from './firebase.js';
+import { loginOrRegister, savePlayerData, getRankingData, checkAndSaveFirstClear, getFirstClearRecord, subscribeNews, addGlobalNews, getPersonalBest, getGlobalConfig, getReliableTime, syncServerTime, saveRTARecord, getCachedBuffLevel } from './firebase.js';
 import { getLckBonusMultiplier } from './gacha/equipment.js';
 import { getRequiredExp, getLevelMultiplier } from './minigame/minigameCore.js';
 import { initGachaUI, updateTicketCount } from './gacha/gachaUI.js';
@@ -243,8 +243,10 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   btnLogin.textContent = "通信中...";
   errorEl.textContent = "";
 
+   const isRTA = document.getElementById('login-rta-mode').checked;
+  
   try {
-    const res = await loginOrRegister(username, pin);
+     const res = await loginOrRegister(username, pin, isRTA);
 
     if (res.success) {
       player = res.data;
@@ -284,9 +286,62 @@ btnMute.addEventListener('click', () => {
 });
 
 // ==========================================
+// ⏱️ RTAモードのタイマー表示関数
+// ==========================================
+export function formatRtaTime(msTime) {
+  const ms = Math.floor((msTime % 1000) / 10);
+  const s = Math.floor((msTime / 1000) % 60);
+  const m = Math.floor(msTime / 60000);
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+}
+
+function startRTATimer() {
+  const timerEl = document.getElementById('header-rta-timer');
+  
+  function updateTimer() {
+    let elapsed = 0;
+    if (player.rtaClearTime) {
+      elapsed = player.rtaClearTime; // 10層クリア済みならストップ
+      timerEl.style.color = '#ffd166'; // クリア後は金色に
+    } else {
+      elapsed = getReliableTime() - player.createdAt;
+    }
+    
+    timerEl.textContent = formatRtaTime(elapsed);
+    
+    if (!player.rtaClearTime) {
+      requestAnimationFrame(updateTimer);
+    }
+  }
+  updateTimer();
+}
+
+// ==========================================
 // 🎮 ゲーム初期化とUI更新
 // ==========================================
 function init() {
+  // ★ 追加：RTAモード時のUI切り替え
+  if (player.isRTA) {
+    // ニュース非表示＆タイマー表示
+    document.getElementById('header-news-ticker').style.display = 'none';
+    document.getElementById('header-rta-timer').style.display = 'block';
+    
+    // レイド非表示
+    const raidPanel = document.getElementById('raid-panel');
+    if(raidPanel) raidPanel.style.display = 'none';
+
+    // 順位タブをRTA専用にする
+    document.getElementById('normal-rank-top').style.display = 'none';
+    document.getElementById('normal-rank-bottom').style.display = 'none';
+    document.getElementById('rta-rank-area').style.display = 'flex';
+    
+    // タイマースタート
+    startRTATimer();
+  } else {
+    initNewsTicker(); // 通常モードのみニュースを回す
+    initRaidManager(player); // 通常モードのみレイドを動かす
+  }
+  
   updateStatusUI();
   updateTrainingUI();
   updateFloorUI(player.floor);
@@ -295,7 +350,6 @@ function init() {
   player.updateStatusUI = updateStatusUI; 
   player.updateTrainingUI = updateTrainingUI; 
   initGachaUI(player, updateStatusUI);
-  initNewsTicker();
   initMeditation(player, updateTrainingUI);
   initRockPush(player, updateTrainingUI); 
   initDaruma(player, updateTrainingUI);
@@ -305,7 +359,6 @@ function init() {
   initCommand(player, updateTrainingUI);
   initClover(player, updateTrainingUI);
   initSlot(player, updateTrainingUI);
-  initRaidManager(player); 
   initTournamentTimer(); 
   
   if (IS_TOURNAMENT_MODE) {
@@ -861,7 +914,17 @@ async function renderRanking() {
       const selfClass = isMe ? 'rank-row-self' : '';
       
       let displayScore = item.score;
-      if (currentRankId === 'tournament') displayScore += ' 円';
+      let rtaDetailsHtml = '';
+       // ★ RTAランキングのフォーマット
+      if (currentRankId === 'rta10') {
+        displayScore = formatRtaTime(item.score);
+        
+        const r1 = item.rtaRecords?.['1'] ? formatRtaTime(item.rtaRecords['1']) : '--:--.--';
+        const r5 = item.rtaRecords?.['5'] ? formatRtaTime(item.rtaRecords['5']) : '--:--.--';
+        // スコアの下に小さく 1層と5層のタイムを表示
+        rtaDetailsHtml = `<div style="font-size:10px; color:#aaa; margin-top:2px;">(1層: ${r1} / 5層: ${r5})</div>`;
+      }
+      else if (currentRankId === 'tournament') displayScore += ' 円';
       else if(["str", "vit", "agi", "lck"].includes(currentRankId)) displayScore = formatNumber(item.score);
       else if(currentRankId === 'floor') displayScore += ' 層';
       else if(currentRankId === 'totalLv') displayScore = 'Lv.' + displayScore;
@@ -894,7 +957,10 @@ async function renderRanking() {
             <span style="font-weight:bold; color:${color}; font-size:16px; margin-right:8px;">${index + 1}位.</span>
             <span class="clickable-name" data-name="${item.name}" style="font-weight:bold; color:#fff;">${item.name} ${isMe ? '<span style="color:#5ce6e6; font-size:10px; margin-left:4px;">(あなた)</span>' : ''}</span>
           </div>
+          <div style="text-align:right;">
           <span style="font-weight:bold; color:#fff; font-family:monospace;">${displayScore} ${prizeHtml}</span>
+          ${rtaDetailsHtml}
+          </div>
         </div>
       `;
     });
@@ -939,8 +1005,27 @@ async function handleVictory(result, floorNum) {
     if (!player.maxClearedFloor || floorNum >= player.maxClearedFloor) {
       player.maxClearedFloor = floorNum + 1;
 
+      // ★ RTAモードの打刻処理 (1層, 5層, 10層)
+      if (player.isRTA) {
+        if ([1, 5, 10].includes(floorNum)) {
+          const elapsed = getReliableTime() - player.createdAt;
+          if (!player.rtaRecords) player.rtaRecords = {};
+          
+          if (!player.rtaRecords[floorNum]) {
+            player.rtaRecords[floorNum] = elapsed;
+            await saveRTARecord(player, floorNum, elapsed);
+            
+            if (floorNum === 10) {
+              player.rtaClearTime = elapsed; // これが入るとタイマーが止まる
+              playSound('win');
+              alert(`🎉 10層攻略 完了！！\nクリアタイム: ${formatRtaTime(elapsed)}\nお疲れ様でした！ランキングを確認しましょう！`);
+            }
+          }
+        }
+      }
+      // 通常の5層ごとのニュースはRTAモードでは出さない
       // ★ 5層ごとの突破ニュース (まだ誰もクリアしていない階層は「初クリア」が流れるので除外気味で)
-      if (floorNum % 5 === 0 && !isFirst) {
+      else if (floorNum % 5 === 0 && !isFirst) {
         addGlobalNews(`🎌 【到達】<span class="clickable-name" data-name="${player.name}" style="color:#5ce6e6; font-weight:bold;">${player.name}</span> が第${floorNum}層を突破しました！`, 5);
       }
       // ★削除: player.floor = floorNum + 1; （勝手に次の階層へ進まないようにした！）

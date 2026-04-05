@@ -440,6 +440,7 @@ export async function getRankingData(rankId, isTotal = false) {
         });
       }
     }
+}
       
   return rankings.slice(0, 10);
 }

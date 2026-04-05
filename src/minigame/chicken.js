@@ -250,7 +250,7 @@ async function finishGame(isFall, remainingDist) {
   // 自己ベスト記録（落下は除外）
   let isNewRecord = false;
   if (!isFall) {
-    isNewRecord = await savePersonalBest(playerRef.name, "chicken", remainingDist);
+    isNewRecord = await savePersonalBest(playerRef.name, "chicken", remainingDist, playerRef.isRTA);
   }
 
   // --- 表示の更新 ---

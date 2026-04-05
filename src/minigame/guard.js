@@ -388,7 +388,7 @@ async function finishGame() {
 
   await savePlayerData(playerRef);
 
-  const isNewRecord = await savePersonalBest(playerRef.name, "guard", finalScore);
+  const isNewRecord = await savePersonalBest(playerRef.name, "guard", finalScore, playerRef.isRTA);
 
   dom.viewResult.querySelector('#gd-res-score').textContent = finalScore;
   dom.viewResult.querySelector('#gd-res-time').textContent = `${elapsedTime.toFixed(2)} s`;

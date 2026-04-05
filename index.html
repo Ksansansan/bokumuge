@@ -531,17 +531,17 @@
         <button id="btn-tournament-rank" class="btn-fantasy btn-show-ranking" data-rank-id="tournament" style="display:none; width:100%; margin-top:15px; font-size:16px; padding:12px; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000; border-color:#fff; box-shadow: 0 0 10px rgba(212,175,55,0.5);">
           🏆 大会獲得賞金 (3/28〜4/4)
         </button>
-
-        <!-- ★追加：初ジェネシスとバグ報告ボタン -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="firstGenesis" style="font-size:13px; padding:8px; margin:0; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">✨ 初ジェネシス賞</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="bugReports" style="font-size:13px; padding:8px; margin:0; background:linear-gradient(to bottom, #4a4a4a, #222);">🐛 バグ報告 王</button>
+        <div id="special-rank-area">
+          <!-- ★追加：初ジェネシスとバグ報告ボタン -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+            <button class="btn-fantasy btn-show-ranking" data-rank-id="firstGenesis" style="font-size:13px; padding:8px; margin:0; background:linear-gradient(to bottom, #d4af37, #8a6d1c); color:#000;">✨ 初ジェネシス賞</button>
+            <button class="btn-fantasy btn-show-ranking" data-rank-id="bugReports" style="font-size:13px; padding:8px; margin:0; background:linear-gradient(to bottom, #4a4a4a, #222);">🐛 バグ報告 王</button>
+          </div>
+         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <button class="btn-fantasy btn-show-ranking" data-rank-id="genesisCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #d4af37, #444);">✨ ジェネシス所持数</button>
+            <button class="btn-fantasy btn-show-ranking" data-rank-id="secretCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #fff, #444); color:#000;">✨ シークレット所持数</button>
+          </div>
         </div>
-       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="genesisCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #d4af37, #444);">✨ ジェネシス所持数</button>
-          <button class="btn-fantasy btn-show-ranking" data-rank-id="secretCount" style="font-size:12px; padding:8px; margin:0; background: linear-gradient(to bottom, #fff, #444); color:#000;">✨ シークレット所持数</button>
-        </div>
-
          <!-- ★追加：RTAモード用のランキングエリア（初期は非表示） -->
         <div id="rta-rank-area" style="display: none; flex-direction: column; gap: 10px;">
           <p style="font-size:12px; color:#aaa; text-align:center; margin-bottom:5px;">RTAモード専用のランキングです</p>

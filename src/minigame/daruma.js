@@ -214,7 +214,7 @@ async function finishGame() {
   if (onUpdateCallback) onUpdateCallback();
   await savePlayerData(playerRef);
 
-  const isNewRecord = await savePersonalBest(playerRef.name, "daruma", time);
+  const isNewRecord = await savePersonalBest(playerRef.name, "daruma", time, playerRef.isRTA);
 
   document.getElementById('dm-res-time').textContent = time.toFixed(2) + " 秒";
   document.getElementById('dm-res-rank').textContent = rank.name;

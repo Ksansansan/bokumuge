@@ -319,9 +319,10 @@ export async function savePlayerData(player) {
 // ミニゲームの自己ベスト保存・取得
 // ==========================================
 // --- 自己ベスト保存時 (1位更新ニュースを追加) ---
-export async function savePersonalBest(userId, gameId, score) {
+export async function savePersonalBest(userId, gameId, score, isRTA = false) {
   if (isTournamentEnded()) return false;
-  const docRef = doc(db, "minigames", gameId, "scores", userId);
+  const collectionName = isRTA ? "minigames_rta" : "minigames";
+  const docRef = doc(db, collectionName, gameId, "scores", userId);
   const docSnap = await getDoc(docRef);
   let isNew = false;
   
@@ -338,7 +339,7 @@ export async function savePersonalBest(userId, gameId, score) {
   }
 
   // ★ 1位を更新したかチェックしてニュース送信 (優先度2)
-  if (isNew) {
+  if (isNew && !isRTA) {
     const ranks = await getRankingData(gameId);
     if (ranks.length > 0 && ranks[0].name === userId) {
       const gNames = { rockPush: "大岩プッシュ", daruma: "だるま落とし", chicken: "崖っぷちダッシュ", guard: "飛来物ガード", '1to20': "1〜20 早押し", command: "コマンド早入力", clover: "四つ葉探し", slot: "狙え！スロット" };
@@ -368,12 +369,14 @@ export async function getUserProfile(username) {
 export async function getRankingData(rankId, isTotal = false) {
   const rankings =[];
   const statMap = { str: "rankStr", vit: "rankVit", agi: "rankAgi", lck: "rankLck" };
-
+   const userCollection = isRTA ? "users_rta" : "users";
+  const minigameCollection = isRTA ? "minigames_rta" : "minigames";
+  
   if (["str", "vit", "agi", "lck", "floor", "totalLv", "winCount", "collectionCount", "gachaCount", "firstClearCount","genesisCount", "secretCount"].includes(rankId)) {
     let dbField = (isTotal && statMap[rankId]) ? statMap[rankId] : rankId;
       if (rankId === 'floor') dbField = 'maxClearedFloor';
     // ★身内用なので全件取得してJSでソートする
-    const querySnapshot = await getDocs(collection(db, "users"));
+     const querySnapshot = await getDocs(query(collection(db, userCollection)));
     querySnapshot.forEach((doc) => {
       const d = doc.data();
       const score = d[dbField] || d[rankId] || 0;
@@ -409,9 +412,24 @@ export async function getRankingData(rankId, isTotal = false) {
     });
     rankings.sort((a, b) => b.score - a.score);
   }
+    // ★ RTAランキングの取得ロジック
+  else if (rankId === 'rta10') {
+    // 10層をクリアした人（rtaClearTimeがある人）だけを取得し、タイムの短い順(asc)に並べる
+    const querySnapshot = await getDocs(query(collection(db, "users_rta"), orderBy("rtaClearTime", "asc")));
+    querySnapshot.forEach((doc) => {
+      const d = doc.data();
+      if (d.rtaClearTime && d.name && d.name !== "undefined") {
+        rankings.push({ 
+          name: d.name, 
+          score: d.rtaClearTime, // ミリ秒
+          rtaRecords: d.rtaRecords // 1層、5層の記録
+        });
+      }
+    })
+  }
    else {
     // ミニゲーム系
-    const querySnapshot = await getDocs(collection(db, "minigames", rankId, "scores"));
+     const querySnapshot = await getDocs(query(collection(db, minigameCollection, rankId, "scores")));
     querySnapshot.forEach((doc) => {
       const d = doc.data();
       rankings.push({ name: d.userId, score: d.time, timestamp: d.timestamp || serverTimestamp() });
@@ -426,21 +444,7 @@ export async function getRankingData(rankId, isTotal = false) {
       return a.timestamp - b.timestamp; // 同値なら先着順
     });
   }
-   // ★ RTAランキングの取得ロジック
-  if (rankId === 'rta10') {
-    // 10層をクリアした人（rtaClearTimeがある人）だけを取得し、タイムの短い順(asc)に並べる
-    const querySnapshot = await getDocs(query(collection(db, "users_rta"), orderBy("rtaClearTime", "asc"), limit(50)));
-    querySnapshot.forEach((doc) => {
-      const d = doc.data();
-      if (d.rtaClearTime && d.name && d.name !== "undefined") {
-        rankings.push({ 
-          name: d.name, 
-          score: d.rtaClearTime, // ミリ秒
-          rtaRecords: d.rtaRecords // 1層、5層の記録
-        });
-      }
-    })
-  }
+   
       
   return rankings.slice(0, 10);
 }

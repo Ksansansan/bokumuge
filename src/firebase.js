@@ -50,7 +50,7 @@ export async function getGlobalConfig() {
 // ==========================================
 // 1. ログイン処理（初期化バグの完全防止）
 // ==========================================
-export async function loginOrRegister(username, pin) {
+export async function loginOrRegister(username, pin, isRTA = false) {
   const collectionName = isRTA ? "users_rta" : "users";
   const otherCollectionName = isRTA ? "users" : "users_rta";
 

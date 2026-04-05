@@ -240,7 +240,7 @@ async function finishGame() {
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 
   await savePlayerData(playerRef);
-  const isNewRecord = await savePersonalBest(playerRef.name, "clover", finalTime);
+  const isNewRecord = await savePersonalBest(playerRef.name, "clover", finalTime, playerRef.isRTA);
 
   document.getElementById('cv-res-time').textContent = finalTime.toFixed(2) + " 秒";
   document.getElementById('cv-res-rank').textContent = rank.name;

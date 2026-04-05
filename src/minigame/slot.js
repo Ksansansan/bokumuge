@@ -325,7 +325,7 @@ async function finishGame() {
   if (playerRef.updateStatusUI) playerRef.updateStatusUI();
 
   await savePlayerData(playerRef);
-  const isNewRecord = await savePersonalBest(playerRef.name, "slot", finalScore);
+  const isNewRecord = await savePersonalBest(playerRef.name, "slot", finalScore, playerRef.isRTA);
 
   dom.viewResult.querySelector('#sl-res-score').textContent = finalScore;
   

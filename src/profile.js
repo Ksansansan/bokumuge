@@ -170,6 +170,7 @@ export async function openProfileModal(username) {
     { id: 'genesisCount', name: 'ジェネシス所持数', isTotal: false } // ★追加
     
   ];
+  }
 
   let results =[];
   

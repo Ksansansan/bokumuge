@@ -17,7 +17,7 @@ import { initClover, openCloverModal } from './minigame/clover.js';
 import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound, setVolume, toggleMute, getAudioSettings } from './audio.js'; // 追加
 import { openProfileModal } from './profile.js';
-import { initRaidManager, cancelRaidWaitingIfActive } from './raid/raidManager.js';
+import { initRaidManager, cancelRaidWaitingIfActive, fetchAndApplyGlobalBuffsOnly } from './raid/raidManager.js';
 import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
 
 // ==========================================
@@ -335,6 +335,7 @@ function init() {
     document.getElementById('special-rank-area').style.display = 'none';
      document.querySelector('.btn-show-ranking[data-rank-id="floor"]').style.display = 'none';
     document.querySelector('.btn-show-ranking[data-rank-id="firstClearCount"]').style.display = 'none';
+    fetchAndApplyGlobalBuffsOnly(); 
     // タイマースタート
     startRTATimer();
   } else {

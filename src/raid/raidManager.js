@@ -69,6 +69,14 @@ function getRaidSchedule() {
   return { isRaidTime, timeStr, currentRaidId };
 }
 
+export function fetchAndApplyGlobalBuffsOnly() {
+  subscribeRaidData((data) => {
+    // firebase.js 側で getCachedBuffLevel() がこの data.defeatedCount を
+    // 返すように設計されているため、同期するだけでゲーム全体にバフが適用されます。
+    // （もしUIにバフ一覧を出したい場合は、ここで renderGlobalBuffs() のようなものを呼ぶことも可能です）
+  });
+}
+
 function renderGlobalBuffs() {
   const buffLv = getCachedBuffLevel();
   const panel = document.getElementById('raid-buff-panel');

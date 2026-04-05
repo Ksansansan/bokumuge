@@ -302,7 +302,7 @@ async function finishGame() {
 
   await savePlayerData(playerRef);
 
-  const isNewRecord = await savePersonalBest(playerRef.name, "1to20", finalTime);
+  const isNewRecord = await savePersonalBest(playerRef.name, "1to20", finalTime, playerRef.isRTA);
 
   // リザルト構築
   document.getElementById('ot-res-time').textContent = finalTime.toFixed(2) + " 秒";

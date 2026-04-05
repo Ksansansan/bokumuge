@@ -1,7 +1,7 @@
 // src/profile.js
 
 import { getUserProfile, getRankingData } from './firebase.js';
-import { formatNumber, IS_TOURNAMENT_MODE } from './main.js';
+import { formatNumber, IS_TOURNAMENT_MODE, formatRtaTime } from './main.js';
 import { EQUIP_NAMES, RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { playSound } from './audio.js';
 import { generateFloorData, getDropStatType } from './battle/enemyGen.js';
@@ -115,7 +115,29 @@ export async function openProfileModal(username) {
   document.getElementById('prof-equips').innerHTML = eqHtml;
 
   // --- 4. ランキングと賞金の計算・表示 ---
-  const rankTargets =[
+  let rankTargets =[];
+  if (u.isRTA) {
+    rankTargets =[
+      { id: 'rta10', name: '10層攻略RTA', isTotal: false },
+      { id: 'str', name: 'STRランキング', isTotal: true },
+      { id: 'vit', name: 'VITランキング', isTotal: true },
+      { id: 'agi', name: 'AGIランキング', isTotal: true },
+      { id: 'lck', name: 'LCKランキング', isTotal: true },
+      { id: 'totalLv', name: '総特訓レベル', isTotal: false },
+      { id: 'winCount', name: '累計勝利数', isTotal: false },
+      { id: 'gachaCount', name: '累計ガチャ回数', isTotal: false },
+      { id: 'collectionCount', name: '収集コレクター', isTotal: false },
+      { id: 'rockPush', name: '大岩プッシュ王', isTotal: false },
+      { id: 'daruma', name: 'だるま落とし王', isTotal: false },
+      { id: 'chicken', name: '崖っぷち王', isTotal: false },
+      { id: 'guard', name: '飛来物ガード王', isTotal: false },
+      { id: '1to20', name: '1〜20早押し王', isTotal: false },
+      { id: 'command', name: 'コマンド入力王', isTotal: false },
+      { id: 'clover', name: '四つ葉探し王', isTotal: false },
+      { id: 'slot', name: 'スロット王', isTotal: false }
+    ];
+  } else {
+    rankTargets =[
     { id: 'tournament', name: '大会獲得賞金', isTotal: false },
     { id: 'floor', name: '最高到達層', isTotal: false },
     { id: 'firstClearCount', name: '初クリア数', isTotal: false },
@@ -190,6 +212,7 @@ export async function openProfileModal(username) {
       else if (rt.id === 'firstClearCount') score = u.firstClearCount || 0;
       else if (rt.id === 'collectionCount') score = u.collectionCount || 0;
       else if (rt.id === 'bugReports') score = u.bugReports || 0;
+       else if (rt.id === 'rta10') score = u.rtaClearTime || null;
       // ミニゲームとジェネシスは圏外なら null (表示しない)
     }
 
@@ -230,6 +253,7 @@ export async function openProfileModal(username) {
       else if (['rockPush','daruma','1to20','command','clover'].includes(rt.id)) scoreText = score.toFixed(2) + ' 秒';
       else if (rt.id === 'chicken') scoreText = score.toFixed(2) + ' m';
       else if (rt.id === 'guard' || rt.id === 'slot') scoreText = formatNumber(score) + ' pt';
+      else if (rt.id === 'rta10') scoreText = formatRtaTime(score);
     }
 
     // 大会総賞金と初ジェネシス(未取得)のスキップ処理

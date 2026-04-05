@@ -160,7 +160,7 @@ export async function openProfileModal(username) {
       // tournament.js の calculateTournamentPrizes をインポートして使用しても良いですが、
       // ここではプロフィールのロードを軽くするため、データ取得をスキップして後で表示調整します。
     } else {
-      data = await getRankingData(rt.id, rt.isTotal);
+      data = await getRankingData(rt.id, rt.isTotal, u.isRTA);
     }
     
     const myRankIdx = data.findIndex(d => d.name === username);

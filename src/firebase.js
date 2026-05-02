@@ -455,7 +455,10 @@ export async function getRankingData(rankId, isTotal = false, isRTA = false) {
       return a.timestamp - b.timestamp; // 同値なら先着順
     });
   }
-   
+  
+   if (rankId === 'rta10') {
+    return rankings; // RTA10層ランキングは無制限で全件返す！
+  }
       
   return rankings.slice(0, 10);
 }

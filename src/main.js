@@ -915,7 +915,7 @@ async function renderRanking() {
       if (isMe && index < 10) iAmInTop10 = true; // 上位10人に入っているか
 
       // 表示を10位で打ち切る（大会賞金ランキングは全員表示してもOKだが、ここでは10位までとする）
-      if (currentRankId !== 'tournament' && index >= 10) return;
+      if (currentRankId !== 'tournament' && currentRankId !== 'rta10' && index >= 10) return;
 
       const color = index < 3 ? colors[index] : colors[3];
       const bg = isMe ? 'rgba(92, 230, 230, 0.2)' : (index < 3 ? `rgba(${index===0?'255,215,0':index===1?'192,192,192':'205,127,50'}, 0.1)` : 'rgba(0,0,0,0.3)');

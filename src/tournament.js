@@ -92,3 +92,52 @@ export async function calculateTournamentPrizes() {
   result.sort((a, b) => b.score - a.score);
   return result;
 }
+
+// ==========================================
+// ⏱️ RTAモード専用 賞金計算ロジック
+// ==========================================
+
+// RTAの順位報酬とタイムボーナスを返す
+export function getRTAPrizeForRank(index, timeMs) {
+  let yen = 0;
+  
+  // 1位〜10位の順位報酬
+  const rtaRankPrizes =[200, 150, 100, 80, 50, 40, 30, 20, 10, 10];
+  if (index < rtaRankPrizes.length) {
+    yen += rtaRankPrizes[index];
+  }
+
+  // タイムボーナス（歩合制：一番高い条件のみ適用）
+  if (timeMs > 0) {
+    if (timeMs < 180000) {
+      yen += 40; // 3分（180秒）切り
+    } else if (timeMs < 240000) {
+      yen += 25; // 4分（240秒）切り
+    } else if (timeMs < 300000) {
+      yen += 15; // 5分（300秒）切り
+    }
+  }
+
+  return yen;
+}
+
+// RTA用の「大会獲得賞金ランキング」データを生成する
+export async function calculateRTATournamentPrizes() {
+  // RTAのランキングデータを取得 (isTotal=false, isRTA=true)
+  const data = await getRankingData('rta10', false, true); 
+  const playerPrizes = {};
+
+  data.forEach((item, index) => {
+    // 順位とタイム(item.score)を渡して金額を計算
+    playerPrizes[item.name] = getRTAPrizeForRank(index, item.score);
+  });
+
+  const result = Object.keys(playerPrizes).map(name => ({
+    name: name,
+    score: playerPrizes[name]
+  }));
+  
+  // 金額が高い順にソート
+  result.sort((a, b) => b.score - a.score);
+  return result;
+}

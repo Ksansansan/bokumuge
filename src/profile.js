@@ -5,7 +5,7 @@ import { formatNumber, IS_TOURNAMENT_MODE, formatRtaTime } from './main.js';
 import { EQUIP_NAMES, RARITY_DATA, calcEquipLevel, getEquipStats } from './gacha/equipment.js';
 import { playSound } from './audio.js';
 import { generateFloorData, getDropStatType } from './battle/enemyGen.js';
-import { getPrizeForRank } from './tournament.js'; // ★インポート
+import { getPrizeForRank, getRTAPrizeForRank } from './tournament.js'; // ★追加
 
 const RARITY_INDEX = { "C":0, "UC":1, "R":2, "HR":3, "SR":4, "SSR":5, "ER":6, "UR":7, "LR":8, "MR":9, "GR":10, "XR":11, "GEN":12, "SEC":13 };
 
@@ -219,26 +219,32 @@ export async function openProfileModal(username) {
 
     // ★ 賞金の計算 (tournament.js の仕様に合わせる)
     if (IS_TOURNAMENT_MODE && rt.id !== 'tournament') {
-      if (!rt.isTotal || !['str','vit','agi','lck'].includes(rt.id)) {
-      // 順位報酬
-      if (myRankIdx !== -1) {
-        prizeYen += getPrizeForRank(rt.id, myRankIdx);
-      }
       
-      // 歩合報酬 (圏外でももらえる！)
-      if (rt.id === 'floor') {
-        let floorScore = u.floor || 1;
-        prizeYen += floorScore;
-        if (floorScore > 25) prizeYen += 20;
-        if (floorScore >= 51) prizeYen += 30;
-      } else if (rt.id === 'totalLv') {
-        let lvScore = u.totalLv || 4;
-        prizeYen += Math.floor(lvScore / 2);
-      } else if (rt.id === 'bugReports') {
-        let bugScore = u.bugReports || 0;
-        prizeYen += bugScore * 10;
+      // ★ 修正：対象ユーザーがRTAかどうかで計算を分ける
+      if (u.isRTA) {
+        // RTAプレイヤーの賞金計算（10層RTAのタイムがある場合のみ）
+        if (rt.id === 'rta10' && score) {
+           // 圏外の場合は index に 999999 を渡して順位報酬を0にし、タイムボーナスだけ貰う
+           prizeYen += getRTAPrizeForRank(myRankIdx !== -1 ? myRankIdx : 999999, score);
+        }
+      } else {
+        // 通常プレイヤーの賞金計算
+        if (myRankIdx !== -1) {
+          prizeYen += getPrizeForRank(rt.id, myRankIdx);
+        }
+        if (rt.id === 'floor') {
+          let floorScore = u.floor || 1;
+          prizeYen += floorScore;
+          if (floorScore > 25) prizeYen += 20;
+          if (floorScore >= 51) prizeYen += 30;
+        } else if (rt.id === 'totalLv') {
+          let lvScore = u.totalLv || 4;
+          prizeYen += Math.floor(lvScore / 2);
+        } else if (rt.id === 'bugReports') {
+          let bugScore = u.bugReports || 0;
+          prizeYen += bugScore * 10;
+        }
       }
-    }
     }
 
     // 表示テキストのフォーマット

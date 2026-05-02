@@ -457,7 +457,7 @@ export async function getRankingData(rankId, isTotal = false, isRTA = false) {
   }
    
       
-  return rankings.slice(0, 51);
+  return rankings.slice(0, 10);
 }
 
 

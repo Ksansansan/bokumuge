@@ -111,9 +111,11 @@ export function getRTAPrizeForRank(index, timeMs) {
   if (timeMs > 0) {
     if (timeMs < 180000) {
       yen += 40; // 3分（180秒）切り
-    } else if (timeMs < 240000) {
+    } 
+    if (timeMs < 240000) {
       yen += 25; // 4分（240秒）切り
-    } else if (timeMs < 300000) {
+    } 
+    if (timeMs < 300000) {
       yen += 15; // 5分（300秒）切り
     }
   }

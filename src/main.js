@@ -18,7 +18,7 @@ import { initSlot, openSlotModal } from './minigame/slot.js';
 import { playSound, setVolume, toggleMute, getAudioSettings } from './audio.js'; // 追加
 import { openProfileModal } from './profile.js';
 import { initRaidManager, cancelRaidWaitingIfActive, fetchAndApplyGlobalBuffsOnly } from './raid/raidManager.js';
-import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; // ★インポート追加
+import { calculateTournamentPrizes, getPrizeForRank, calculateRTATournamentPrizes, getRTAPrizeForRank } from './tournament.js'; 
 
 // ==========================================
 // リリース設定
@@ -26,7 +26,7 @@ import { calculateTournamentPrizes, getPrizeForRank } from './tournament.js'; //
 export const IS_TOURNAMENT_MODE = false;
 export const IS_PRE_RELEASE = false;
 export const RELEASE_DATE = new Date('2026-03-28T15:00:00+09:00').getTime();
-export const TOURNAMENT_END_DATE = new Date('2026-04-05T00:00:00+09:00').getTime();
+export const TOURNAMENT_END_DATE = new Date('2026-05-07T00:00:00+09:00').getTime();
 // ==========================================
 // ⏳ ティザー（カウントダウン）画面の制御
 // ==========================================
@@ -363,8 +363,12 @@ function init() {
   initTournamentTimer(); 
   
   if (IS_TOURNAMENT_MODE) {
+     // ★ 修正：大会モードONなら、RTAモードでも「大会獲得賞金」ボタンを表示する
     const tBtn = document.getElementById('btn-tournament-rank');
-    if (tBtn) tBtn.style.display = 'block';
+    if (tBtn) {
+      tBtn.style.display = IS_TOURNAMENT_MODE ? 'block' : 'none';
+    }
+     startRTATimer();
   }
 
   // ◀ ▶ ボタン
@@ -878,10 +882,14 @@ async function renderRanking() {
   let data =[];
   
   // ★大会賞金ランキングの場合の特別処理
-  if (currentRankId === 'tournament') {
-    data = await calculateTournamentPrizes();
+   if (currentRankId === 'tournament') {
+    if (player.isRTA) {
+      data = await calculateRTATournamentPrizes(); // RTA用の計算
+    } else {
+      data = await calculateTournamentPrizes();    // 通常の計算
+    }
   } else {
-    data = await getRankingData(currentRankId, isTotalMode, player.isRTA); 
+    data = await getRankingData(currentRankId, isTotalMode, player.isRTA);
   }
   
   // ▼ 自分のスコアを取得
@@ -943,9 +951,14 @@ async function renderRanking() {
       if (IS_TOURNAMENT_MODE && currentRankId !== 'tournament') {
         const isStatusTotal = (["str", "vit", "agi", "lck"].includes(currentRankId) && isTotalMode);
         
-        if (!isStatusTotal) {
-          // ★修正：歩合計算のため、生スコア(item.score)も渡す
-          const yen = getPrizeForRank(currentRankId, index, item.score);
+       if (!isStatusTotal) {
+          let yen = 0;
+          // ★ 修正：RTAモードなら RTA用の関数を使う
+          if (player.isRTA && currentRankId === 'rta10') {
+             yen = getRTAPrizeForRank(index, item.score);
+          } else if (!player.isRTA) {
+             yen = getPrizeForRank(currentRankId, index, item.score);
+          }
           if (yen > 0) {
             prizeHtml = `<span style="color:#ffd166; font-size:12px; margin-left:8px;">(+${yen}円)</span>`;
           }

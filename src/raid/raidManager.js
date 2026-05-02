@@ -26,6 +26,7 @@ export function initRaidManager(playerObj) {
 }
 
 export function cancelRaidWaitingIfActive() {
+  if (!playerRef) return; 
   if (currentRaidData && !currentRaidData.isOpen && currentRaidData.waitingPlayers?.includes(playerRef.name)) {
     toggleRaidWaiting(playerRef.name, false);
   }
